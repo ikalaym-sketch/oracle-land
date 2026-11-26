@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 145_leon.js
- * Version : r3.128.0  (2026-11-27)　r3.128.0：逐招修正（跳躍 ×1.6、飛燕連腳前進 ×1.8、雙牙劍氣 ×1.6、追刺地槍翻轉、落下系晶術加高縮小、投槍跳起、粉塵爆發、魔人闇加大停留、剎牙交叉、千裂虛光閃／翔破裂光閃擊飛、魔人千裂衝／魔神煉獄殺頂著打、義憐聖靈斬上移、英文秘奧義放大／以目標為中心／全畫面）；秘奧義加名稱與畫面壓暗
+ * Version : r3.128.2  (2026-11-27)　r3.128.2：落下系晶術改成從約 2.6 身高處加速落下、落地才判定＋震動；擊飛的敵人在招式期間維持浮空、收招後暈 0.75 秒
+ * 舊版    : r3.128.0  (2026-11-27)　r3.128.0：逐招修正（跳躍 ×1.6、飛燕連腳前進 ×1.8、雙牙劍氣 ×1.6、追刺地槍翻轉、落下系晶術加高縮小、投槍跳起、粉塵爆發、魔人闇加大停留、剎牙交叉、千裂虛光閃／翔破裂光閃擊飛、魔人千裂衝／魔神煉獄殺頂著打、義憐聖靈斬上移、英文秘奧義放大／以目標為中心／全畫面）；秘奧義加名稱與畫面壓暗
  * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：身體上下位移照原版（正＝往下、負＝往上），飛連斬／飛連雙閃等也有跳起
  * 舊版    : r3.127.3  (2026-11-27)　r3.127.3：跳躍招式真的跳起（H.hop 在繪製時套用）；魔神煉獄殺闇氣圈以身體為中心；負向之門／邪惡領域／黑洞持續吸怪（約 3 身高，極意 4）
  * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：身法改用目前武器（不借打刀），各武器專屬身法照常；分身殘影畫成里歐
@@ -119,8 +120,8 @@
      j＝跳躍倍率（預設 JUMP）；dx＝前進距離倍率；wz＝雙牙劍氣大小；ff＝特效左右翻轉；fall／fz＝落下物起點高度倍率／大小；arc＝詠唱跳起高度（身高倍）；
      burst＝交叉點粉塵爆發；sz／hold＝特效大小／最後一格停留毫秒；x2＝剎牙第二刀時間（交叉在前方）；launch＝擊飛高度（身高倍）；carry＝頂著敵人往前打；n＝段數；
      dy／dxs＝低位特效往上／往前（原始單位）；tgt＝特效以目標為中心；screen＝全畫面判定 */
-  const JUMP = 1.6, TUNE = { kogahazan: { j: 1.8 }, hienrenkyaku: { dx: 1.8 }, majinken_souga: { wz: 1.6 }, stingrave: { ff: 1 },
-    pikohan: { fall: 1.5, fz: 1.2 }, pikopikohammer: { fall: 1.5, fz: 1.2 }, press: { fall: 1.5, fz: 1.2 }, ceilingfall: { fall: 1.5, fz: 1.2 }, stonewall: { fall: 1.5, fz: 1.2 },
+  const JUMP = 1.6, FALLD = 420, TUNE = { kogahazan: { j: 1.8 }, hienrenkyaku: { dx: 1.8 }, majinken_souga: { wz: 1.6 }, stingrave: { ff: 1 },
+    pikohan: { fall: 2.6, fz: 1.2 }, pikopikohammer: { fall: 2.6, fz: 1.2 }, press: { fall: 2.6, fz: 1.2 }, ceilingfall: { fall: 2.6, fz: 1.2 }, stonewall: { fall: 2.6, fz: 1.2 },
     devilspear: { up: 1 }, demonslance: { up: 1 }, earthbit: { up: 1 }, demonslancezero: { up: 1, sz: 1.2 }, funjinreppashou: { burst: 1 }, marian: { sz: 1.5, hold: 400 }, majinkensetsuga: { x2: [470, 770] },
     senretsukokousen: { launch: 0.5 }, shouharekkousen: { launch: 0.7 }, majinsenretsushou: { carry: 1 }, majinrengokusatsu: { carry: 1, n: 13 },
     girenshoureizan: { dy: -85, dxs: 45 }, surviving_hollin: { sz: 2.4, screen: 1, flat: 1 }, raintive_orion: { sz: 1.8, tgt: 1, flat: 1 }, celestial_earth: { sz: 1.8, tgt: 1, flat: 1 } };
@@ -128,7 +129,7 @@
   let LGS = [];
   /* 晶術連放：第一段命中 0.35 秒後，在目標附近（前方偏移）再放一次；不畫身體、傷害同第一發 */
   function echo(p) { const u = p.u, i0 = u.tl.findIndex(e => e[4].some(f => f[6] !== 3)); if (i0 < 0) return; const t0 = u.tl[i0][0] - TK;
-    CASTS.push(Object.assign({}, p, { sub: 2, echo: 0, lg: false, t: t0, pi: i0, hi: p.HS.findIndex(h => h >= t0), tg: null, rel: 1, t3: -1, got: null, pw: null, bs: null,
+    CASTS.push(Object.assign({}, p, { sub: 2, echo: 0, lg: false, fs: undefined, landed: 0, air: null, t: t0, pi: i0, hi: p.HS.findIndex(h => h >= t0), tg: null, rel: 1, t3: -1, got: null, pw: null, bs: null,
       tx: p.tx + 70 * p.K * p.face, ty: p.ty + 12, k: -1 })); if (CASTS[CASTS.length - 1].hi < 0) CASTS[CASTS.length - 1].hi = p.HS.length; }
   /* 黑火殘留：取最後 8 格有特效的畫面循環播放 3 秒，每 0.5 秒對範圍內敵人造成總傷害 8% */
   function linger(c) { const F = c.u.tl.filter(e => e[4].some(f => f[6] !== 3)).slice(-8); if (!F.length) return; LGS.push({ c: Object.assign({}, c, { got: null }), F, t: 0, n: 0 }); }
@@ -176,7 +177,8 @@
   const zOf = (c, f) => f[6] === 0 ? c.sk : f[6] === 3 ? (c.wz || 1) : (c.fz || 1);
   function fxPos(c, f) { const k = c.K, fc = c.face, z = zOf(c, f);
     if (f[6] === 1) return [H.x + f[1] * k * fc * z, H.y + f[2] * k * z, H.y];
-    if (f[6] === 2) return [c.tx + f[1] * k * fc * z, c.ty + f[2] * k * z * (f[2] < 0 && c.T && c.T.fall ? c.T.fall : 1), c.ty];   /* fall：落下物起點加高 */
+    if (f[6] === 2) { let dy = 0; if (c.T && c.T.fall && c.fs !== undefined) { const q = Math.min(1, (c.t - c.fs) / FALLD); dy = (1 - q * q) * c.T.fall * G.HERO_H * SC.depth(c.ty); }   /* r3.128.2 fall：從高處加速落下（原素材位置固定，落下感改用程式位移） */
+      return [c.tx + f[1] * k * fc * z, c.ty + f[2] * k * z - dy, c.ty]; }
     if (f[6] === 3) { if (c.t3 < 0) c.t3 = c.t; return [c.x0 + (180 + 0.75 * (c.t - c.t3)) * k * fc, c.y0 - 85 * k, c.y0]; }
     if (c.aura && c.aura.has(f[0])) return [H.x, H.y - (c.hop || 0) - 72 * k, H.y];   /* r3.128.0：闇氣圈直接以身體（含跳起）為中心 */
     const T = c.T || {};
@@ -199,12 +201,13 @@
   function stepCast(c) { const tl = c.u.tl; c.t += TK * (c.spd || 1);
     if (c.echo === 1 && c.HS.length && c.t >= c.HS[0] + 350) { c.echo = 2; echo(c); }
     if (c.tg && c.tg.st !== 'dead' && !c.rel) { c.tx = c.tg.x; c.ty = c.tg.y; }
-    while (c.pi < tl.length && tl[c.pi][0] <= c.t) { const e = tl[c.pi]; if (e[4].some(f => f[6] === 2)) c.rel = 1; if (e[4].length) { c.lastE = e; c.lastT = c.t; const T = c.T || {}; if (T.x2 && c.t < T.x2[0] && e[4][0][6] === 0) { c.s1 = fxPos(c, e[4][0]); (c.s1L || (c.s1L = [])).push(e); } } for (const f of e[4]) if (f[6] === 3) hitAt(c, f, 1, false, c.pw || (c.pw = new Set())); c.pi++; }
-    while (c.hi < c.HS.length && c.HS[c.hi] <= c.t) { const f = fxAt(c.u, c.HS[c.hi]), lastH = c.hi === c.HS.length - 1; c.hi++; if (!f) continue;
+    while (c.pi < tl.length && tl[c.pi][0] <= c.t) { const e = tl[c.pi]; if (e[4].some(f => f[6] === 2)) { c.rel = 1; if (c.fs === undefined) c.fs = c.t; } if (e[4].length) { c.lastE = e; c.lastT = c.t; const T = c.T || {}; if (T.x2 && c.t < T.x2[0] && e[4][0][6] === 0) { c.s1 = fxPos(c, e[4][0]); (c.s1L || (c.s1L = [])).push(e); } } for (const f of e[4]) if (f[6] === 3) hitAt(c, f, 1, false, c.pw || (c.pw = new Set())); c.pi++; }
+    if (c.T && c.T.fall && c.fs !== undefined && !c.landed && c.t >= c.fs + FALLD) { c.landed = 1; SC.shake = Math.max(SC.shake || 0, 7); for (let i = 0; i < 6; i++) G.FX.push({ k: 'dust', x: c.tx + (Math.random() - 0.5) * 80, y: c.ty, t: 0, life: 22 }); }   /* 落地衝擊 */
+    while (c.hi < c.HS.length && c.HS[c.hi] <= c.t && !(c.T && c.T.fall && !c.landed)) {   /* 落下中先不判定，落地才打 */ const f = fxAt(c.u, c.HS[c.hi]), lastH = c.hi === c.HS.length - 1; c.hi++; if (!f) continue;
       if (c.code === 'heal') { healTeam(0.15 + 0.02 * (c.lv - 1) + (c.gk ? 0.05 : 0)); continue; }
       let n = hitAt(c, f, 1, lastH, new Set());
       const T = c.T || {}, hh = G.HERO_H * SC.depth(c.y0);
-      if (T.launch && c.got && G.KT && G.KT.lift) for (const e of c.got) if (e.st !== 'dead' && (c.hi === 1 || e.lz > 0)) G.KT.lift(e, c.hi === 1 ? T.launch : T.launch * 0.75);   /* 第一下擊飛，之後追打空中的敵人 */
+      if (T.launch && c.got && G.KT && G.KT.lift) for (const e of c.got) if (e.st !== 'dead' && (c.hi === 1 || (c.air && c.air.has(e)))) { G.KT.lift(e, c.hi === 1 ? T.launch : T.launch * 0.75); (c.air || (c.air = new Set())).add(e); }   /* 第一下擊飛，之後追打空中的敵人 */
       if (T.burst && lastH) { const [bx2, by2] = fxPos(c, f); if (G.VX && G.VX.s2) G.VX.s2('fx_dust', { x: bx2, y: c.y0, k: 2.2, sy: 0.7, life: 34, a: 0.95 }); for (let i = 0; i < 10; i++) G.FX.push({ k: 'dust', x: bx2 + (Math.random() - 0.5) * hh * 1.6, y: c.y0 + (Math.random() - 0.5) * 30, t: 0, life: 26 + i * 2 });
         SC.shake = Math.max(SC.shake || 0, 8); for (const e of G.E) { if (e.st === 'dead' || e.delay > 0 || Math.hypot(e.x - bx2, (e.y - c.y0) * 1.5) > hh * 1.7) continue; G.damageOni(e, c.per * 1.5, true); if (!e.boss && !e.bb) { const nx = e.x + c.face * hh * 0.5; if (SC.walkable(nx, e.y)) e.x = nx; } } }   /* 粉塵裂破衝：交叉點粉塵爆發＋範圍傷害＋擊退 */
       if (T.screen && lastH) { const hw = SC.view().vw / 2 + 40; SC.shake = Math.max(SC.shake || 0, 14); G.flash = Math.max(G.flash || 0, 10); for (const e of G.E) if (e.st !== 'dead' && e.delay <= 0 && Math.abs(e.x - H.x) < hw) G.damageOni(e, c.per * 2, true); }   /* Surviving Hollin：全畫面衝擊 */
@@ -221,8 +224,9 @@
       const up = Math.max(0, -(e[3] || 0)) * c.K; c.lift = up * ((T.j || JUMP) - 1);   /* r3.128.0：跳躍加高（特效同步加高） */
       const hh = G.HERO_H * SC.depth(H.y), aT = c.lock * 0.7, arc = T.arc && c.t < aT ? Math.sin(Math.PI * c.t / aT) * T.arc * hh : 0;   /* 惡魔投槍／之槍：詠唱時跳起 */
       const e3 = e[3] || 0; c.hop = H.hop = (T.up ? Math.max(0, e3) : T.flat || c.tk === '晶術' ? -Math.min(0, e3) : -e3) * c.K + c.lift + arc;   /* up：原始 y 為正＝往上（投槍類跳起）；晶術／flat：正值（施法姿勢偏移）不往下沉 */
+      if (c.air) for (const q of c.air) { if (q.st === 'dead') continue; q.stun = Math.max(q.stun || 0, c.t < c.lock ? 20 : 0); if (c.t < c.lock && (q.lz || 0) < hh * (T.launch || 0.5) * 0.45 && (q.lzv || 0) <= 0 && G.KT) G.KT.lift(q, (T.launch || 0.5) * 0.55); }   /* r3.128.2：招式期間浮空的敵人維持在空中（落下就再托起），不能動 */
       if (T.carry && c.got && c.t < c.lock) for (const q of c.got) { if (q.st === 'dead' || q.boss || q.bb) continue; const px = H.x + c.face * hh * 0.75, nx = q.x + (px - q.x) * 0.35, ny = q.y + (H.y - q.y) * 0.2; if (SC.walkable(nx, ny)) { q.x = nx; q.y = ny; } q.stun = Math.max(q.stun || 0, 10); }   /* 頂著敵人往前打 */
-      if (c.t >= c.lock) end(); }   /* r3.127.4：照原版 y 位移（正＝往下、負＝往上），跳躍高度＝相對變化，與特效位置一致 */
+      if (c.t >= c.lock) { if (c.air) for (const q of c.air) if (q.st !== 'dead') q.stun = Math.max(q.stun || 0, 45); end(); } }   /* 收招：浮空的敵人落地後再暈 0.75 秒 */   /* r3.127.4：照原版 y 位移（正＝往下、負＝往上），跳躍高度＝相對變化，與特效位置一致 */
     return c.t < c.dur + 40 + ((c.T && c.T.hold) || 0); }
   const canLink = c => c && c.k >= 0 && c.t >= c.hitT && c.t < c.lock;
   let lastHp = -1;
