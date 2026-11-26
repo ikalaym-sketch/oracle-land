@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 95_board.js
- * Version : r3.104.2  (2026-11-26)　r3.104.2：公告板貼地（補回圖下緣透明邊）、影子改柔邊、不畫互動光暈；發光標記改柔邊
+ * Version : r3.133.0  (2026-11-27)　r3.133.0：各章「探索區討伐」支線改成公告板的指名委託（完成前常駐，最多 2 張）
+ * 舊版    : r3.104.2  (2026-11-26)　r3.104.2：公告板貼地（補回圖下緣透明邊）、影子改柔邊、不畫互動光暈；發光標記改柔邊
  * 舊版    : r3.56.0  (2026-11-24)　r3.56.0：聚落公告板移到路邊
  * 舊版    : r3.55.0  (2026-11-23)
  * 變更    : r3.55.0 新增。委託公告板（藥路聚落 W_R01_01、兩岸城 hub_city）：隨機委託，補第一章起的練功與收入。
@@ -37,14 +38,20 @@
       o.to = L2 ? rnd(L2) : null; o.n = 1; o.item = rnd(['藥包', '信', '修好的茶碗', '一束草藥', '護符']); o.title = '送信：' + o.item; o.desc = '把「' + o.item + '」交給' + (o.to ? o.to : nm(town) + '的居民'); }
     return o; }
   function refresh(force) { const b = BD(), P = HUB.cur(); if (!force && b.offer.length && Date.now() - b.gen < LIFE && b.P === P) return; b.gen = Date.now(); b.P = P; b.offer = [];
-    for (let i = 0; i < 8 && b.offer.length < 3; i++) { const o = make(); if (o && !b.offer.some(x => x.map === o.map && x.t === o.t)) b.offer.push(o); } G.SAVE.markDirty(); }
+    for (let i = 0; i < 8 && b.offer.length < 3; i++) { const o = make(); if (o && !b.offer.some(x => x.map === o.map && x.t === o.t)) b.offer.push(o); } named(b); G.SAVE.markDirty(); }
+  /* r3.133.0：指名委託——原本各章的「探索區討伐」支線（104_side s2_a）改貼在公告板上，完成前一直都在（最多 2 張） */
+  function named(b) { const S = G.SIDE2 && G.SIDE2.SIDE, F = G.SAVE.data.flags, P = Math.min(12, HUB.cur()); if (!S) return; let n = 0;
+    for (const [c, ua, na, ta, la, ra] of S) { if (c > P || n >= 2) continue; const ex = 'E' + String(c).padStart(2, '0') + '_' + (c % 2 ? 1 : 2), d = G.D.scenes[ex], key = 's2a' + c;
+      if (!d || F['s2a_' + c] || (Q.state && Q.state('c' + c + '_s2_a')) || b.act.some(x => x.s2a === c)) continue; n++; if (b.offer.some(x => x.s2a === c)) continue;
+      const xn = d.name.replace(/^探索・/, ''); b.offer.unshift({ id: key, t: 'kill', map: ex, lv: Math.max(1, d.lv || 1), k: 0, n: 8, s2a: c, who: na, reply: ra, ask: la, title: '指名：' + ta, desc: na + '：「' + la + '」（探索區「' + xn + '」打倒 8 隻）' }); } }
   /* ---------- 結算 ---------- */
   function reward(o) { const lv = Math.max(o.lv, Math.min(G.RPG.d().lv, o.lv + 6)), k = o.t === 'elite' ? 16 : o.t === 'gather' ? 12 : o.t === 'deliver' ? 8 : 10 + o.n * 0.4, d = G.RPG.d();
     const exp = Math.round((10 + lv * 6) * k), gold = Math.round((20 + lv * 8) * (k / 3)); R.gainExp(exp); d.gold += gold; const mk = Object.keys(R.MATS), m = rnd(mk); d.mats[m] = (d.mats[m] || 0) + 2 + Math.floor(lv / 10);
     let tx = '經驗 +' + exp + '　錢 +' + gold + '　' + R.MATS[m].n;
     if (o.t === 'elite' || (o.t === 'gather' && Math.random() < 0.5) || Math.random() < 0.2) { let it = null; for (let i = 0; i < 120; i++) { it = R.roll(lv, (G.D.scenes[o.map] || {}).region || 'wind'); if (it.q >= 2) break; } if (it.q < 2) it.q = 2; if (o.t === 'elite' && it.q < 3) it.q = 3; if (R.addItem(it)) tx += '　' + R.QUAL[it.q].n + '・' + R.name(it); }
     G.SAVE.markDirty(); return tx; }
-  function done(o) { const b = BD(); b.act = b.act.filter(x => x.id !== o.id); HUB.marks = HUB.marks.filter(m => !m.bq || m.bq !== o.id); G.UI.banner('委託完成　' + o.title, reward(o)); }
+  function done(o) { const b = BD(); b.act = b.act.filter(x => x.id !== o.id); HUB.marks = HUB.marks.filter(m => !m.bq || m.bq !== o.id); G.UI.banner('委託完成　' + o.title, reward(o));
+    if (o.s2a) { G.SAVE.data.flags['s2a_' + o.s2a] = 1; G.SAVE.markDirty(); G.STORY.later(90, () => { if (!G.DLG.active()) G.DLG.start([say(o.who, o.reply), say(o.who, '（' + o.who + '託人送來了謝禮。）')]); }); } }
   function prog(o) { o.k++; G.SAVE.markDirty(); if (o.k >= o.n) done(o); else G.UI.toast(o.title + '　' + o.k + '／' + o.n); }
   /* 擊殺計數 */
   const k0 = R.onKill.bind(R); R.onKill = function (e) { k0(e); if (!e || e.qid || e.train) return; for (const o of BD().act.slice()) {
@@ -63,7 +70,7 @@
   /* ---------- 公告板 ---------- */
   let BU = null; G.ANIM.load('pr_village').then(u => { BU = u; }, () => 0);
   function spot() { const o = POS[SC.id]; if (!o) return null; return (SC.snap && SC.snap(o[0], o[1], 'open', 160)) || o; }
-  function openBoard() { refresh(); const b = BD(), L = [];
+  function openBoard() { refresh(); const b = BD(), L = []; named(b);
     for (const o of b.offer) L.push({ label: '【接】' + o.title + '　' + o.desc, then: [act(() => { if (b.act.length >= MAX) return G.UI.toast('最多同時接 ' + MAX + ' 張委託'); b.offer = b.offer.filter(x => x !== o); b.act.push(o); G.SAVE.markDirty(); G.UI.banner('接下委託', o.desc); setup(); })] });
     for (const o of b.act) L.push({ label: '【放棄】' + o.title + '（' + o.k + '／' + o.n + '）', then: [act(() => { b.act = b.act.filter(x => x !== o); HUB.marks = HUB.marks.filter(m => m.bq !== o.id); G.SAVE.markDirty(); G.UI.toast('已放棄：' + o.title); })] });
     const left = Math.max(0, Math.ceil((LIFE - (Date.now() - b.gen)) / 60000));
