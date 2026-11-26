@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 68_xue.js
- * Version : r3.60.0  (2026-11-24)　r3.60.0：合戰地圖不跟隨　r3.56.0：r3.56.0：小雪縮小到主角的 0.88；封印石旁小雪也套劇情動作
+ * Version : r3.127.4  (2026-11-27)　r3.127.4：戰鬥時小雪跑回進圖的入口隱身等待（不再跟著主角跑），打完 1.5 秒回到主角身後
+ * 舊版    : r3.60.0  (2026-11-24)　r3.60.0：合戰地圖不跟隨　r3.56.0：r3.56.0：小雪縮小到主角的 0.88；封印石旁小雪也套劇情動作
  * 舊版    : r3.53.0  (2026-11-23)　r3.53.0：小雪改用動作包（待機／走／跑／轉身／施法／提燈／坐下）
  * 舊版    : r3.31.2  (2026-11-17)　r3.31.2：神社小雪的奉納開場對話只在第一次完整播放
  * 舊版    : r3.31.1  (2026-11-17)　r3.31.1：進神社的位置改到鳥居後方空地（800,575）
@@ -25,18 +26,21 @@
     const e = F().ending; if (e === 'storm' || e === 'nameless') return false;
     if (G.NPC.some(n => n !== X.o && n.name === '小雪' && n.x > -999)) return false;   // 劇情已經安排了小雪
     return true; };
-  function make() { const o = X.o = { npc: 'xue', name: '小雪', x: H.x - 60 * H.face, y: H.y + 6, face: H.face, walking: false, xf: 1, keep: 1 }; const p = SC.snap ? SC.snap(o.x, o.y, 'walk', 200) : null; if (p) { o.x = p[0]; o.y = p[1]; } G.NPC.push(o); X.trail = []; }
+  function make() { if (!X.entry) X.entry = (SC.snap && SC.snap(H.x, H.y, 'walk', 120)) || [H.x, H.y]; const o = X.o = { npc: 'xue', name: '小雪', x: H.x - 60 * H.face, y: H.y + 6, face: H.face, walking: false, xf: 1, keep: 1 }; const p = SC.snap ? SC.snap(o.x, o.y, 'walk', 200) : null; if (p) { o.x = p[0]; o.y = p[1]; } G.NPC.push(o); X.trail = []; }
   function kill() { if (X.o) G.NPC = G.NPC.filter(n => n !== X.o); X.o = null; }
   const foeNear = () => (G.BOSS && G.BOSS.enc && !G.BOSS.enc.done) || G.E.some(e => e.st !== 'dead' && e.hp > 0 && e.delay <= 0 && Math.hypot(e.x - H.x, (e.y - H.y) * 1.5) < 520);
   function target() { const o = X.o;
-    if (foeNear()) { let ex = 0, n = 0; for (const e of G.E) if (e.st !== 'dead' && e.hp > 0) { ex += e.x; n++; } const side = n ? (ex / n > H.x ? -1 : 1) : -H.face; o.safe = 1;
-      const x = Math.max(60, Math.min(SC.def.w - 60, H.x + side * 230)); const p = SC.snap ? SC.snap(x, H.y - 20, 'walk', 220) : null; return p || [x, H.y]; }
+    if (foeNear() || o.hid) { o.safe = 1; return X.entry || [o.x, o.y]; }   /* r3.127.4：戰鬥中跑回入口（進圖位置）躲起來等，不跟著主角跑 */
     o.safe = 0; let t = null; for (let i = X.trail.length - 1; i >= 0; i--) if (Math.hypot(X.trail[i][0] - H.x, X.trail[i][1] - H.y) > 95) { t = X.trail[i]; break; }
     if (!t) { const x = H.x - (H.face || 1) * 90; t = (SC.snap && SC.snap(x, H.y + 10, 'walk', 120)) || [x, H.y]; } return [t[0], t[1] + 4]; }   // 隊伍最後：沿主角走過的路，約 95px 後
   function step() { if (!want()) { kill(); return; } if (!X.o || !G.NPC.includes(X.o)) make(); const o = X.o;
     const last = X.trail[X.trail.length - 1]; if (!last || Math.hypot(last[0] - H.x, last[1] - H.y) > 3) { X.trail.push([H.x, H.y]); if (X.trail.length > 90) X.trail.shift(); }
     if (G.DLG.active() || SC.trans) { o.walking = false; return; }
     const [tx, ty] = target(), dx = tx - o.x, dy = ty - o.y, d = Math.hypot(dx, dy);
+    if (o.hid) { o.walking = false; if (foeNear()) { o.calm = 0; return; } if (++o.calm < 90) return;   // 打完 1.5 秒：回到主角身後出現
+      const bx = H.x - (H.face || 1) * 90, p = (SC.snap && SC.snap(bx, H.y + 10, 'walk', 160)) || [bx, H.y]; o.x = p[0]; o.y = p[1]; o.hid = 0; o.calm = 0; o.safe = 0; return; }
+    if (o.safe && d < 14) { o.hid = 1; o.calm = 0; o.walking = false; return; }   // 到入口：隱身
+    if (o.safe && d > 700) { o.hid = 1; o.calm = 0; return; }   // 入口太遠（傳送進來）：直接隱身
     if (d > 700) { o.x = tx; o.y = ty; o.walking = false; return; }   // 跟丟（傳送、跳躍）直接到位
     const stop = o.safe ? 8 : 18; if (d < stop) { o.walking = false; return; }
     if (!o.safe && Math.hypot(o.x - H.x, (o.y - H.y) * 1.5) < 64 && d < 120) { o.walking = false; return; }   // r3.30.1：別貼在主角身上
@@ -54,7 +58,7 @@
   const ds0 = G.DLG.start; G.DLG.start = function (list, done) { if (Array.isArray(list) && list[0] && list[0].text === XK && list.some(e => e && e.choice)) {
       if (F().xueShrineSeen) list = [{ who: '小雪', text: XS[Math.floor(Math.random() * XS.length)] }].concat(list.slice(1)); else { F().xueShrineSeen = 1; G.SAVE.markDirty(); } }
     return ds0.call(this, list, done); };
-  const en0 = G.STORY.onEnter.bind(G.STORY); G.STORY.onEnter = function (id) { X.o = null; X.trail = [];
+  const en0 = G.STORY.onEnter.bind(G.STORY); G.STORY.onEnter = function (id) { X.o = null; X.trail = []; X.entry = null;
     const sd = G.D.scenes.hub_shrine; if (id === 'hub_shrine' && sd && sd.nodes && F().prologue) sd.nodes.xue_stand = STAND.slice();
     en0(id); };
   let tk = 0; const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0(); try { step(); if (++tk % 20 === 0) shrine(); } catch (e) { console.warn('xue', e); } };
@@ -83,7 +87,7 @@
     if (n === X.o && still > 600 && !foe()) return 'sit';
     if (night() && (G.t >> 8) % 3 === 1) return 'lantern';
     return 'idle'; }
-  const dn0 = G.drawNpc; G.drawNpc = function (n) { if (n.npc !== 'xue' || n.evOff) return dn0(n); U = A.get('n_xue'); if (!U) { if (!A.wait.n_xue) ld(); return dn0(n); }   // 57_mem 可能釋放：每次取，沒有就重載、先畫舊立繪
+  const dn0 = G.drawNpc; G.drawNpc = function (n) { if (n === X.o && n.hid) return; if (n.npc !== 'xue' || n.evOff) return dn0(n); U = A.get('n_xue'); if (!U) { if (!A.wait.n_xue) ld(); return dn0(n); }   // 57_mem 可能釋放：每次取，沒有就重載、先畫舊立繪
     motion(n); if (n === X.o) { if (n._v > 0.6) { if (Math.abs(n._vx) > 0.8) n.face = Math.sign(n._vx); } else if (Math.abs(H.x - n.x) > 40) n.face = Math.sign(H.x - n.x); }   // 平滑方向，避免來回翻面
     else if (!n.walking && Math.abs(H.x - n.x) > 6 && Math.hypot(H.x - n.x, H.y - n.y) < 160) n.face = Math.sign(H.x - n.x);
     if (n._f !== undefined && n._f !== n.face && (n._v || 0) < 1.2 && !(n._turn && G.t - n._turn < 40)) n._turn = G.t; n._f = n.face;

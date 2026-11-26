@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 67_cast.js
- * Version : r3.127.2  (2026-11-27)　r3.127.2：同名合併跳過 noMerge（救援事件的 4 名士兵）
+ * Version : r3.127.4  (2026-11-27)　r3.127.4：戰鬥類事件（入侵、據點、伏擊…）在章節地圖的村莊也讓村民退場
+ * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：同名合併跳過 noMerge（救援事件的 4 名士兵）
  * 舊版    : r3.52.0  (2026-11-23)　r3.52.0：世界／隨機事件期間，任務要找的人不退場（原本整村的人藏起來，任務只剩地上的框）
  * 舊版    : r3.51.1  (2026-11-18)　r3.51.1：清理借用 NPC 時跳過傳送役時雨（原本會把時雨的「渡船／任務地點／副本合戰」選單清掉）
  * 舊版    : r3.41.0  (2026-11-18)　r3.41.0：劇情角色指定圖改成完全同名；世界事件時店家、時雨不退場
@@ -77,7 +78,8 @@
     let n = 0; const tryGo = () => { if (SC.id !== id || ++n > 400) return; if (G.DLG.active() || talkHere(id)) { G.STORY.later(20, tryGo); return; } ms0.call(G.BOSS, id, d, Object.assign({}, o, { wait: 1 })); };
     G.STORY.later(20, tryGo); return true; }; }
   /* ---------- 6. r3.30.2：世界事件（妖怪入侵等）進行中，城裡的人與動物暫時退場，事件結束再回來 ---------- */
-  const evOn = () => !!(G.EV && G.EV.cur && !G.EV.cur.done && !G.EV.cur.skip && SC.def && (SC.def.town || SC.def.safe || D.CAST[SC.id]));
+  const FIGHT = /入侵|據點|浪人團|道摩軍|討伐|奪還|捕|伏擊|攔路|斥候|精英/;   /* r3.127.4：戰鬥類事件在任何有村民的地圖（村莊在章節地圖裡）也退場 */
+  const evOn = () => !!(G.EV && G.EV.cur && !G.EV.cur.done && !G.EV.cur.skip && SC.def && (SC.def.town || SC.def.safe || D.CAST[SC.id] || FIGHT.test(G.EV.cur.n || '')));
   function evSync() { const on = evOn(); for (const n of AM.list) { if (n.shop || n.fer || n.qnew || n.qp || marksOf(n).length) { if (n.evOff) { n.evOff = 0; n.hold = n.hold0 || n.hold; } continue; }   // r3.41.0：店家與傳送役時雨不退場；r3.52.0：任務要找的人（任務生成、調查點站位、身上有任務標記）也不退場
     if (on && !n.evOff) { n.evOff = 1; n.hold0 = n.hold; n.hold = true; n.st = 'idle'; } else if (!on && n.evOff) { n.evOff = 0; n.hold = n.hold0; n.alpha = 0; } }
     for (const m of Q.marks) if (m.n && m.n.evOff && m.x > -999) { m.evX = 1; m.x = -9999; } else if (m.evX && m.n && !m.n.evOff) { m.evX = 0; m.x = m.n.x; m.y = m.n.y; } }   // 退場者的任務標記也先收起
