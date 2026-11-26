@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 145_leon.js
- * Version : r3.127.4  (2026-11-27)　r3.127.4：身體上下位移照原版（正＝往下、負＝往上），飛連斬／飛連雙閃等也有跳起
+ * Version : r3.128.0  (2026-11-27)　r3.128.0：逐招修正（跳躍 ×1.6、飛燕連腳前進 ×1.8、雙牙劍氣 ×1.6、追刺地槍翻轉、落下系晶術加高縮小、投槍跳起、粉塵爆發、魔人闇加大停留、剎牙交叉、千裂虛光閃／翔破裂光閃擊飛、魔人千裂衝／魔神煉獄殺頂著打、義憐聖靈斬上移、英文秘奧義放大／以目標為中心／全畫面）；秘奧義加名稱與畫面壓暗
+ * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：身體上下位移照原版（正＝往下、負＝往上），飛連斬／飛連雙閃等也有跳起
  * 舊版    : r3.127.3  (2026-11-27)　r3.127.3：跳躍招式真的跳起（H.hop 在繪製時套用）；魔神煉獄殺闇氣圈以身體為中心；負向之門／邪惡領域／黑洞持續吸怪（約 3 身高，極意 4）
  * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：身法改用目前武器（不借打刀），各武器專屬身法照常；分身殘影畫成里歐
  * 舊版    : r3.126.1  (2026-11-27)　r3.126.1：刀光只放大圖不移位置、倍率 1.6→1.3；出招被擋住時特效跟著實際身體位置
@@ -108,12 +109,21 @@
   /* r3.127.3：闇氣圈（深色、圍住角色的特效）原始位置在身體前方約 AURA 單位，改成圍在身體中心；圖是否為闇氣依顏色在載入時判定一次 */
   const AURA = { majinrengokusatsu: 50 }, AUC = {};
   function auraSet(code, u) { if (AUC[code]) return AUC[code]; const S = new Set(), cv = document.createElement('canvas'), cx = cv.getContext('2d', { willReadFrequently: true });
-    const ids = new Set(); for (const e of u.tl) for (const f of e[4]) { const dx = f[1] - e[2]; if (Math.abs(dx - AURA[code]) <= 12) ids.add(f[0]); }
+    const ids = new Set(); for (const e of u.tl) for (const f of e[4]) if (f[6] === 0) ids.add(f[0]);   /* r3.128.0：所有深色圈都算（原本只抓固定位置，漏掉移動中的幾格） */
     for (const id of ids) { const fr = u.x[id], im = u.imgs[fr[7]]; if (!im) continue; const w = Math.max(1, fr[2] >> 2), h = Math.max(1, fr[3] >> 2); cv.width = w; cv.height = h;
       try { cx.clearRect(0, 0, w, h); cx.drawImage(im, fr[0], fr[1], fr[2], fr[3], 0, 0, w, h); const D = cx.getImageData(0, 0, w, h).data; let a = 0, l = 0;
         for (let i = 0; i < D.length; i += 4) { const al = D[i + 3]; if (al < 40) continue; a += al; l += al * (D[i] + D[i + 1] + D[i + 2]) / 3; } if (a > 0 && l / a < 70) S.add(id); } catch (e) {} }
     return (AUC[code] = S); }
   const SPF = 1.6, SPS = 1.25;   /* 晶術：特效／判定放大、動畫倍速 */
+  /* r3.128.0：逐招調整（使用者逐招檢查後的修正）
+     j＝跳躍倍率（預設 JUMP）；dx＝前進距離倍率；wz＝雙牙劍氣大小；ff＝特效左右翻轉；fall／fz＝落下物起點高度倍率／大小；arc＝詠唱跳起高度（身高倍）；
+     burst＝交叉點粉塵爆發；sz／hold＝特效大小／最後一格停留毫秒；x2＝剎牙第二刀時間（交叉在前方）；launch＝擊飛高度（身高倍）；carry＝頂著敵人往前打；n＝段數；
+     dy／dxs＝低位特效往上／往前（原始單位）；tgt＝特效以目標為中心；screen＝全畫面判定 */
+  const JUMP = 1.6, TUNE = { kogahazan: { j: 1.8 }, hienrenkyaku: { dx: 1.8 }, majinken_souga: { wz: 1.6 }, stingrave: { ff: 1 },
+    pikohan: { fall: 1.5, fz: 1.2 }, pikopikohammer: { fall: 1.5, fz: 1.2 }, press: { fall: 1.5, fz: 1.2 }, ceilingfall: { fall: 1.5, fz: 1.2 }, stonewall: { fall: 1.5, fz: 1.2 },
+    devilspear: { up: 1 }, demonslance: { up: 1 }, earthbit: { up: 1 }, demonslancezero: { up: 1, sz: 1.2 }, funjinreppashou: { burst: 1 }, marian: { sz: 1.5, hold: 400 }, majinkensetsuga: { x2: [470, 770] },
+    senretsukokousen: { launch: 0.5 }, shouharekkousen: { launch: 0.7 }, majinsenretsushou: { carry: 1 }, majinrengokusatsu: { carry: 1, n: 13 },
+    girenshoureizan: { dy: -85, dxs: 45 }, surviving_hollin: { sz: 2.4, screen: 1, flat: 1 }, raintive_orion: { sz: 1.8, tgt: 1, flat: 1 }, celestial_earth: { sz: 1.8, tgt: 1, flat: 1 } };
   const LING = { jouhamesshouen: 1, majinmessatsuen: 1, shinjinrengokusatsu: 1, majinrengokusatsu: 1 };   /* 黑火殘留 */
   let LGS = [];
   /* 晶術連放：第一段命中 0.35 秒後，在目標附近（前方偏移）再放一次；不畫身體、傷害同第一發 */
@@ -141,16 +151,17 @@
     H.act = null; const s = SC.depth(H.y), K = kOf(s), R = 640 * K;
     let tg = null, bd = 1e9; for (const e of G.E) { if (e.st === 'dead' || e.delay > 0) continue; const dx = (e.x - H.x) * H.face; if (dx < -20 || dx > R || Math.abs(e.y - H.y) > 150) continue; const d = dx + Math.abs(e.y - H.y) * 2; if (d < bd) { bd = d; tg = e; } }
     const ty = m[2], gk = lv >= 5, tot = (m[5] + m[6] * (lv - 1)) * DMGK * (ty === '秘奧義' && gk ? 1.5 : 1), wv = hasWave(u), sg = code === 'majinken_souga';
-    let N = code === 'heal' ? 1 : Math.max(1, m[10] || 1) + (gk && ty === '特技' ? 1 : 0); if (sg) N = 1; const Ns = sg ? 1 : Math.max(wv ? 0 : 1, N - wv), HS = sched(u, Ns);
+    const T = TUNE[code] || {}; let N = code === 'heal' ? 1 : Math.max(1, T.n || m[10] || 1) + (gk && ty === '特技' ? 1 : 0); if (sg) N = 1; const Ns = sg ? 1 : Math.max(wv ? 0 : 1, N - wv), HS = sched(u, Ns);
     const nAll = sg ? 3 : Ns + wv, hitT = HS.length ? HS[HS.length - 1] : u.lock * 0.55;
     CUR = { code, u, lv, k, seg, t: 0, pi: 0, hi: 0, HS, x0: H.x, y0: H.y, face: H.face, K, tg, tx: tg ? tg.x : H.x + 585 * K * H.face, ty: tg ? tg.y : H.y, rel: 0, t3: -1,
-      per: code === 'heal' ? 0 : tot / nAll, lock: u.lock, dur: u.dur, hitT: Math.min(hitT + 60, u.lock * 0.9), tk: ty, gk, sk: ty === '晶術' ? 1 : SLK, big: ty === '晶術' && gk ? 1.5 : 1,
-      aura: AURA[code] ? auraSet(code, u) : null, pull: !!PULL[code], waves: sg ? [300, 450] : null, tot, fz: ty === '晶術' ? SPF : 1, spd: ty === '晶術' ? SPS : 1, echo: ty === '晶術' && code !== 'heal' ? 1 : 0, lg: !!LING[code] };
+      per: code === 'heal' ? 0 : tot / nAll, lock: u.lock, dur: u.dur, hitT: Math.min(hitT + 60, u.lock * 0.9), tk: ty, gk, T, sk: ty === '晶術' ? 1 : SLK * (T.sz || 1), big: ty === '晶術' && gk ? 1.5 : 1,
+      aura: AURA[code] ? auraSet(code, u) : null, pull: !!PULL[code], waves: sg ? [300, 450] : null, tot, fz: ty === '晶術' ? (T.fz || SPF) : 1, spd: ty === '晶術' ? SPS : 1, echo: ty === '晶術' && code !== 'heal' ? 1 : 0, lg: !!LING[code] };
     if (ty === '秘奧義' && gk) H.inv = Math.max(H.inv, Math.round(u.lock / TK) + 6);   /* 秘奧義極意：演出中無敵 */
+    if (ty === '秘奧義') { G.UI.banner('秘奧義・' + m[1], ''); if (G.VX && G.VX.dim) G.VX.dim(Math.round(u.lock / TK), 0.55); }   /* r3.128.0：跟秘傳一樣：名稱＋畫面壓暗 */
     CASTS.push(CUR); H.st = 'skill'; H.t = 0; H.hop = 0; H.inv = Math.max(H.inv, 6); if (G.AU) G.AU.sfx('swing'); return true; }
   /* 雙牙的劍氣：用魔神劍的劍氣格，從劍氣出現那一刻開始播（不畫身體、不打身體判定） */
   function wave(p) { const u = A.get('lv_majinken'); if (!u) return; const i0 = u.tl.findIndex(e => e[4].some(f => f[6] === 3)); if (i0 < 0) return;
-    CASTS.push({ code: 'majinken', u, sub: 1, lv: p.lv, t: u.tl[i0][0] - TK, pi: i0, hi: 0, HS: [], x0: H.x, y0: H.y, face: p.face, K: p.K, tx: p.tx, ty: p.ty, rel: 1, t3: -1, per: p.per, lock: 0, dur: u.dur, sk: 1, big: 1 }); }
+    CASTS.push({ code: 'majinken', u, sub: 1, lv: p.lv, t: u.tl[i0][0] - TK, pi: i0, hi: 0, HS: [], x0: H.x, y0: H.y, face: p.face, K: p.K, tx: p.tx, ty: p.ty, rel: 1, t3: -1, per: p.per, lock: 0, dur: u.dur, sk: 1, big: (p.T && p.T.wz) || 1, wz: (p.T && p.T.wz) || 1 }); }
   function healTeam(p) { const T = [H].concat((G.PARTY && G.PARTY.list || []).filter(P => P.st !== 'down' && P.hp > 0)); for (const q of T) healOne(q, p); }
   function healOne(q, p) { const v = Math.round(q.hpMax * p); q.hp = Math.min(q.hpMax, q.hp + v); G.NUMS && G.NUMS.push({ x: q.x, y: q.y - G.HERO_H * SC.depth(q.y), v: '+' + v, t: 0, col: '#8fe0a0' }); }
   function end() { if (CUR) { CUR = null; H.st = 'idle'; H.hop = 0; H.t = 0; } }
@@ -162,13 +173,18 @@
     if (!(d.sk[code] > 0)) { G.UI.toast(META[code][1] + '：尚未學會'); return false; }
     if (Math.abs(G.IN.mx) > 0.2) H.face = Math.sign(G.IN.mx); return start(code, k, seg); }
   /* 特效位置（世界座標）：回傳 [x, y, 地面深度] */
-  const zOf = (c, f) => f[6] === 0 ? c.sk : f[6] === 3 ? 1 : (c.fz || 1);
+  const zOf = (c, f) => f[6] === 0 ? c.sk : f[6] === 3 ? (c.wz || 1) : (c.fz || 1);
   function fxPos(c, f) { const k = c.K, fc = c.face, z = zOf(c, f);
     if (f[6] === 1) return [H.x + f[1] * k * fc * z, H.y + f[2] * k * z, H.y];
-    if (f[6] === 2) return [c.tx + f[1] * k * fc * z, c.ty + f[2] * k * z, c.ty];
+    if (f[6] === 2) return [c.tx + f[1] * k * fc * z, c.ty + f[2] * k * z * (f[2] < 0 && c.T && c.T.fall ? c.T.fall : 1), c.ty];   /* fall：落下物起點加高 */
     if (f[6] === 3) { if (c.t3 < 0) c.t3 = c.t; return [c.x0 + (180 + 0.75 * (c.t - c.t3)) * k * fc, c.y0 - 85 * k, c.y0]; }
-    if (c.aura && c.aura.has(f[0])) { const e = c.u.tl[Math.max(0, c.pi - 1)]; return [c.x0 + (c.bx || 0) + (e[2] + (f[1] - e[2] - AURA[c.code])) * k * fc, c.y0 + f[2] * k, c.y0]; }   /* r3.127.3：闇氣圈以身體為中心 */
-    return [c.x0 + (c.bx || 0) + f[1] * k * fc, c.y0 + f[2] * k, c.y0]; }   /* 模式 0：位置不放大；bx＝身體被擋住時的實際位置偏差 */
+    if (c.aura && c.aura.has(f[0])) return [H.x, H.y - (c.hop || 0) - 72 * k, H.y];   /* r3.128.0：闇氣圈直接以身體（含跳起）為中心 */
+    const T = c.T || {};
+    if (T.x2 && c.t >= T.x2[0] && c.t <= T.x2[1] && c.s1) { const q = (c.t - T.x2[0]) / (T.x2[1] - T.x2[0]); return [c.s1[0] + 28 * k * fc, c.s1[1] + (-25 + 95 * q) * k, c.y0]; }   /* 剎牙：第二刀從第一刀上方往下劈，在前方交叉 */
+    let x = c.x0 + (c.bx || 0) + (f[1] + (c.xs || 0)) * k * fc, y = c.y0 + f[2] * k - (c.lift || 0);   /* xs／lift：前進距離與跳躍加高的追加量（身體與特效一起） */
+    if (T.dy && f[2] > -35) { x += T.dxs * k * fc; y += T.dy * k; }   /* 義憐聖靈斬：低位特效移到身前 */
+    if (T.tgt) { if (c.tg0 === undefined) c.tg0 = f[1]; x += (c.tx - c.x0) - c.tg0 * k * fc; y += c.ty - c.y0; }   /* 第一個特效對準目標，其餘保持相對位置 */
+    return [x, y, T.tgt ? c.ty : c.y0]; }   /* 模式 0：位置不放大；bx＝身體被擋住時的實際位置偏差 */
   function hitAt(c, f, mul, last, once) { const u = c.u, fr = u.x[f[0]], [x0, , gy] = fxPos(c, f), z = zOf(c, f), fl = f[8] ? -1 : 1, wW = fr[2] * fr[8] * f[3] * z,
       x = x0 + (fr[2] / 2 - fr[4]) * fr[8] * f[3] * z * c.K * c.face * fl, rx = Math.max(55, wW * 0.42) * c.K * (c.big || 1), ry = Math.max(34, rx * 0.32); let n = 0;
     if (G.LEON.dbg) G.LEON.dbg.push([Math.round(c.t), Math.round((x - c.x0) * c.face), Math.round(rx), Math.round(gy - c.y0), G.E.filter(e => e.st !== 'dead').map(e => Math.round((e.x - c.x0) * c.face) + '/' + Math.round(e.y - gy)).join(' ')]);
@@ -183,10 +199,15 @@
   function stepCast(c) { const tl = c.u.tl; c.t += TK * (c.spd || 1);
     if (c.echo === 1 && c.HS.length && c.t >= c.HS[0] + 350) { c.echo = 2; echo(c); }
     if (c.tg && c.tg.st !== 'dead' && !c.rel) { c.tx = c.tg.x; c.ty = c.tg.y; }
-    while (c.pi < tl.length && tl[c.pi][0] <= c.t) { const e = tl[c.pi]; if (e[4].some(f => f[6] === 2)) c.rel = 1; for (const f of e[4]) if (f[6] === 3) hitAt(c, f, 1, false, c.pw || (c.pw = new Set())); c.pi++; }
+    while (c.pi < tl.length && tl[c.pi][0] <= c.t) { const e = tl[c.pi]; if (e[4].some(f => f[6] === 2)) c.rel = 1; if (e[4].length) { c.lastE = e; c.lastT = c.t; const T = c.T || {}; if (T.x2 && c.t < T.x2[0] && e[4][0][6] === 0) { c.s1 = fxPos(c, e[4][0]); (c.s1L || (c.s1L = [])).push(e); } } for (const f of e[4]) if (f[6] === 3) hitAt(c, f, 1, false, c.pw || (c.pw = new Set())); c.pi++; }
     while (c.hi < c.HS.length && c.HS[c.hi] <= c.t) { const f = fxAt(c.u, c.HS[c.hi]), lastH = c.hi === c.HS.length - 1; c.hi++; if (!f) continue;
       if (c.code === 'heal') { healTeam(0.15 + 0.02 * (c.lv - 1) + (c.gk ? 0.05 : 0)); continue; }
       let n = hitAt(c, f, 1, lastH, new Set());
+      const T = c.T || {}, hh = G.HERO_H * SC.depth(c.y0);
+      if (T.launch && c.got && G.KT && G.KT.lift) for (const e of c.got) if (e.st !== 'dead' && (c.hi === 1 || e.lz > 0)) G.KT.lift(e, c.hi === 1 ? T.launch : T.launch * 0.75);   /* 第一下擊飛，之後追打空中的敵人 */
+      if (T.burst && lastH) { const [bx2, by2] = fxPos(c, f); if (G.VX && G.VX.s2) G.VX.s2('fx_dust', { x: bx2, y: c.y0, k: 2.2, sy: 0.7, life: 34, a: 0.95 }); for (let i = 0; i < 10; i++) G.FX.push({ k: 'dust', x: bx2 + (Math.random() - 0.5) * hh * 1.6, y: c.y0 + (Math.random() - 0.5) * 30, t: 0, life: 26 + i * 2 });
+        SC.shake = Math.max(SC.shake || 0, 8); for (const e of G.E) { if (e.st === 'dead' || e.delay > 0 || Math.hypot(e.x - bx2, (e.y - c.y0) * 1.5) > hh * 1.7) continue; G.damageOni(e, c.per * 1.5, true); if (!e.boss && !e.bb) { const nx = e.x + c.face * hh * 0.5; if (SC.walkable(nx, e.y)) e.x = nx; } } }   /* 粉塵裂破衝：交叉點粉塵爆發＋範圍傷害＋擊退 */
+      if (T.screen && lastH) { const hw = SC.view().vw / 2 + 40; SC.shake = Math.max(SC.shake || 0, 14); G.flash = Math.max(G.flash || 0, 10); for (const e of G.E) if (e.st !== 'dead' && e.delay <= 0 && Math.abs(e.x - H.x) < hw) G.damageOni(e, c.per * 2, true); }   /* Surviving Hollin：全畫面衝擊 */
       if (!n) n = stick(c, lastH);   /* 這一段特效沒掃到人：補打已交戰的目標（角色位移後特效偏掉時，段數仍照原版） */
       if (n && c.code === 'jushourai' && !c.healed) { c.healed = 1; healOne(H, 0.08 + 0.01 * (c.lv - 1)); }   /* 柔招來：打中時回復自身 */
       if (lastH && c.gk && c.tk === '奧義') { c.big = 1.6; hitAt(c, f, 2 * DMGK / Math.max(0.01, c.per), true, new Set()); c.big = 1; } }   /* 奧義極意：最後一下追加爆發 200% */
@@ -194,11 +215,15 @@
     if (c.pull && c.t >= 200 && c.t <= c.dur) { const hh = G.HERO_H * SC.depth(c.ty), RX = hh * (c.gk ? 4 : 3.2), RY = hh * 1.1, v = hh * (c.gk ? 0.07 : 0.055);   /* r3.127.3 闇系（負向之門／邪惡領域／黑洞）：出現後到結束持續往中心吸（範圍約 3 個身高；頭目不吸） */
       for (const e of G.E) { if (e.st === 'dead' || e.delay > 0 || e.boss || e.bb) continue; const dx = c.tx - e.x, dy = c.ty - e.y; if (Math.abs(dx) > RX || Math.abs(dy) > RY) continue;
         const d = Math.hypot(dx, dy) || 1, st = Math.min(d, v), nx = e.x + dx / d * st, ny = e.y + dy / d * st * 0.6; if (!SC.walkable || SC.walkable(nx, ny)) { e.x = nx; e.y = ny; } e.stun = Math.max(e.stun || 0, 4); } }
-    if (c === CUR) { const e = tl[Math.max(0, c.pi - 1)], tx = c.x0 + e[2] * c.K * c.face, dx = tx - H.x;
+    if (c === CUR) { const e = tl[Math.max(0, c.pi - 1)], T = c.T || {}; c.xs = (e[2] || 0) * ((T.dx || 1) - 1); const tx = c.x0 + (e[2] + c.xs) * c.K * c.face, dx = tx - H.x;
       if (Math.abs(dx) > 0.5) { const nx = H.x + Math.sign(dx) * Math.min(Math.abs(dx), 14); if (SC.walkable(nx, H.y)) H.x = nx; }   /* 只沿 x 位移（不繞障礙、不改深度） */
-      c.bx = H.x - (c.x0 + e[2] * c.K * c.face);   /* 被敵人／障礙擋住沒走到原版位置：特效跟著實際身體 */
-      c.hop = H.hop = -(e[3] || 0) * c.K; if (c.t >= c.lock) end(); }   /* r3.127.4：照原版 y 位移（正＝往下、負＝往上），跳躍高度＝相對變化，與特效位置一致 */
-    return c.t < c.dur + 40; }
+      c.bx = H.x - tx;   /* 被敵人／障礙擋住沒走到原版位置：特效跟著實際身體 */
+      const up = Math.max(0, -(e[3] || 0)) * c.K; c.lift = up * ((T.j || JUMP) - 1);   /* r3.128.0：跳躍加高（特效同步加高） */
+      const hh = G.HERO_H * SC.depth(H.y), aT = c.lock * 0.7, arc = T.arc && c.t < aT ? Math.sin(Math.PI * c.t / aT) * T.arc * hh : 0;   /* 惡魔投槍／之槍：詠唱時跳起 */
+      const e3 = e[3] || 0; c.hop = H.hop = (T.up ? Math.max(0, e3) : T.flat || c.tk === '晶術' ? -Math.min(0, e3) : -e3) * c.K + c.lift + arc;   /* up：原始 y 為正＝往上（投槍類跳起）；晶術／flat：正值（施法姿勢偏移）不往下沉 */
+      if (T.carry && c.got && c.t < c.lock) for (const q of c.got) { if (q.st === 'dead' || q.boss || q.bb) continue; const px = H.x + c.face * hh * 0.75, nx = q.x + (px - q.x) * 0.35, ny = q.y + (H.y - q.y) * 0.2; if (SC.walkable(nx, ny)) { q.x = nx; q.y = ny; } q.stun = Math.max(q.stun || 0, 10); }   /* 頂著敵人往前打 */
+      if (c.t >= c.lock) end(); }   /* r3.127.4：照原版 y 位移（正＝往下、負＝往上），跳躍高度＝相對變化，與特效位置一致 */
+    return c.t < c.dur + 40 + ((c.T && c.T.hold) || 0); }
   const canLink = c => c && c.k >= 0 && c.t >= c.hitT && c.t < c.lock;
   let lastHp = -1;
   const hs0 = G.heroStep;
@@ -241,10 +266,12 @@
     if (CUR) { const e = CUR.u.tl[Math.max(0, CUR.pi - 1)]; return ad0.call(this, CUR.u, CUR.u.b[e[1]], x, y, k * (e[5] || 1), (CUR.face < 0) !== !!e[6], al); }
     return ad0.call(this, b, baseFrame(), x, y, k, flip, al); };
   function drawFx(c, back) { const u = c.u, tl = u.tl, e = tl[Math.max(0, c.pi - 1)]; if (!e || c.pi === 0) return;
+    if (c.T && c.T.x2 && c.s1L && c.t >= c.T.x2[0] && c.t <= c.T.x2[1]) { const q = (c.t - c.T.x2[0]) / (c.T.x2[1] - c.T.x2[0]); return drawE(c, c.s1L[Math.min(c.s1L.length - 1, Math.floor(q * c.s1L.length))], back, 1); }   /* 剎牙第二刀：重播第一刀的刀光（翻轉、往下劈） */
+    const hd = c.T && c.T.hold; if (hd && !e[4].length && c.lastE && c.t - c.lastT < hd) return drawE(c, c.lastE, back, 1 - (c.t - c.lastT) / hd);   /* 魔人闇：暗波停留後淡出 */
     drawE(c, e, back, 1); }
   function drawE(c, e, back, al) { const u = c.u;
     for (const f of e[4]) { if (f[5] !== back || (c.sub === 1 && f[6] !== 3)) continue; const fr = u.x[f[0]], im = u.imgs[fr[7]]; if (!im) continue; const [x, y] = fxPos(c, f), S = c.K * f[3] * fr[8] * zOf(c, f);
-      ctx.save(); if (al < 1) ctx.globalAlpha = al; ctx.translate(x, y); if (c.face < 0) ctx.scale(-1, 1); if (f[4]) ctx.rotate(f[4] * Math.PI / 180); if (f[8]) ctx.scale(-1, 1);
+      ctx.save(); if (al < 1) ctx.globalAlpha = al; ctx.translate(x, y); const X2 = c.T && c.T.x2 && c.t >= c.T.x2[0] && c.t <= c.T.x2[1]; if ((c.face < 0) !== (!!(c.T && c.T.ff) !== !!X2)) ctx.scale(-1, 1);   /* 剎牙第二刀左右翻轉，跟第一刀交叉成 X */ if (f[4]) ctx.rotate(f[4] * Math.PI / 180); if (f[8]) ctx.scale(-1, 1);
       ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], -fr[4] * S, -fr[5] * S, fr[2] * S, fr[3] * S); ctx.restore(); } }
   /* r3.127.2：分身殘影改畫里歐（閃身姿勢，半透明淡出） */
   const dn0 = G.drawNpc; G.drawNpc = function (n) { if (!n || !n.bunshin || !on()) return dn0.apply(this, arguments);
