@@ -1,0 +1,43 @@
+# music.yml  版本 v1.0（2026-11-27）
+# 說明：依 tools/music.csv 從 Google 雲端下載背景音樂 → 驗證 SHA256 → 存進 a/bgm/ 並推送。
+# 觸發：手動執行，或推送 tools/music.csv。已存在且 SHA 相符者略過。
+name: music
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['tools/music.csv', '.github/workflows/music.yml']
+permissions:
+  contents: write
+concurrency: { group: music, cancel-in-progress: false }
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download
+        run: |
+          set -uo pipefail
+          mkdir -p a/bgm; fail=0
+          tail -n +2 tools/music.csv | tr -d '\r' | while IFS=, read -r name id sha; do
+            f="a/bgm/$name"
+            if [ -f "$f" ] && [ "$(sha256sum "$f" | cut -d' ' -f1)" = "$sha" ]; then echo "SKIP $name"; continue; fi
+            ok=0
+            for t in 1 2 3 4; do
+              if [ $((t % 2)) -eq 1 ]; then url="https://drive.usercontent.google.com/download?id=$id&export=download&confirm=t"
+              else url="https://drive.google.com/uc?export=download&id=$id&confirm=t"; fi
+              curl -fsSL --retry 3 --max-time 300 -o "$f" "$url" || { sleep 10; continue; }
+              if [ "$(sha256sum "$f" | cut -d' ' -f1)" = "$sha" ]; then ok=1; echo "OK $name $(stat -c %s "$f")"; break; fi
+              echo "RETRY($t) sha $name"; sleep 10
+            done
+            [ $ok = 1 ] || { echo "FAIL $name"; rm -f "$f"; echo "$name" >> fail.txt; }
+          done
+          [ -f fail.txt ] && { echo "FAILED:"; cat fail.txt; } || echo "ALL OK"
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"; git config user.email "41898499+github-actions[bot]@users.noreply.github.com"
+          git add a/bgm
+          git diff --cached --quiet && { echo "no change"; exit 0; }
+          git commit -m "Add BGM from Drive (music.csv)"
+          git push
