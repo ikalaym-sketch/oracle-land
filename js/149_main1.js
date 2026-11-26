@@ -1,8 +1,9 @@
 /* =====================================================================
  * 149_main1.js
- * 版本    : r3.131.0  (2026-11-27)　（護送沿可走遮罩尋路；宗八 keep 避免對話收場被收掉）
+ * 版本    : r3.132.0  (2026-11-27)　夢裡巫女的遺物改成「後山封印石底下」（接第 11 章 c11_s_relic）
+ * 舊版    : r3.131.0  (2026-11-27)　（護送沿可走遮罩尋路；宗八 keep 避免對話收場被收掉）
  * 說明    : 劇情補完・主線第 1 批（第 4、6、7、8 章）。
- *           ‧ 第 4 章「夢中的後山」（c4_dream）：小雪的夢，白衣的巫女問 3 題，答案決定小雪醒來的話；伏筆第 11 章遺物。
+ *           ‧ 第 4 章「夢中的後山」（c4_dream）：小雪的夢，白衣的巫女問 3 題，答案決定小雪醒來的話；伏筆第 11 章遺物（後山封印石下的匣子，c11_s_relic）。
  *           ‧ 第 6 章「古約的幻影」：卸扣回身坡（W_R06_06）隨機 3 隻前章頭目幻影（60% 血），各留一句古約。
  *           ‧ 第 7 章「城裡的紙人」：兩岸城 5 處（米埠、雨廊、布街、倉道、渡口）燒掉紙人，才去紙閣。
  *           ‧ 第 7 章「護送渡船夫」：雙庫分存巷・高倉（W_R07_06B）護送宗八到東口，3 波敵人，宗八有血條，倒下重來。
@@ -20,7 +21,7 @@
   /* ================= 第 4 章：夢中的後山 ================= */
   const Qs = (key, q, opts, tail) => ({ choice: opts.map(([label, v, resp]) => ({ label, then: [pick(key, v), ...resp].concat(tail || []) })) });
   function dreamTalk() {
-    const end = [say('白衣的巫女', '我在黃泉的入口，留了一樣東西給她。'), say('白衣的巫女', '等她真的撐不下去的那一天，帶她去拿。'),
+    const end = [say('白衣的巫女', '我在後山封印石的底下，埋了一樣東西給她。'), say('白衣的巫女', '等她真的撐不下去的那一天，帶她去拿。'),
       say('小雪', '等一下！妳到底是誰？為什麼妳跟我長得——'), nar('（她終於微微側過頭。你只看見一縷頭髮，和小雪的一模一樣。）'),
       say('白衣的巫女', '……雪。我的名字，也叫雪。'), nar('（四周的顏色像被水沖淡一樣，一點一點褪去——）')];
     const q3 = [say('白衣的巫女', '最後一個問題。'), say('白衣的巫女', '你會一直陪著她嗎？'),
@@ -47,8 +48,8 @@
         : a2 === 'replace' ? say('小雪', '夢裡你說要代替我。……不可以喔。你要是不見了，我會很生氣，比生氣還要生氣。')
           : say('小雪', '夢裡你說「一定有別的方法」。我醒來的時候，第一次覺得，那句話好像是真的。'),
       a3 === 'now' ? say('小雪', '還有，你說「現在會」。……那我們就先把現在過好吧。') : a3 === 'ask' ? say('小雪', '你說要問我自己……我想。我想要有人陪。') : say('小雪', '還有……謝謝你說「會」。我會記住的。'),
-      say('小雪', '她說她也叫「雪」。還說在黃泉的入口，留了東西給我。'), say('小雪', '蒼真，黃泉的入口……是真的存在的地方嗎？'),
-      say('白丸', '（白丸趴在門邊，一隻耳朵動了動。）……那種地方，等到不得不去的時候再想。'),
+      say('小雪', '她說她也叫「雪」。還說在後山封印石的底下，埋了東西給我。'), say('小雪', '可是封印石……是不能隨便動的。'),
+      say('白丸', '（白丸趴在門邊，一隻耳朵動了動。）……她說了，等妳撐不下去的那天。在那之前，就讓它好好睡著吧。'),
       say('小雪', '……嗯。'), say('小雪', '那、那先吃早飯吧！我去煮粥。這次不會再煮焦了……大概。'),
       act(() => { G.SAVE.data.xueLove = (G.SAVE.data.xueLove || 0) + 1; G.SAVE.markDirty(); })]; }
   let dream = false;
@@ -156,7 +157,7 @@
       const D = B.DEF.ibaraki; Promise.all([B.load('ibaraki'), G.ASSET.enemies((D && D.foes) || [])]).then(() => { if (SC.id !== 'W_R08_01') return;
         const p = SC.snap(H.x + 220, H.y, 'open', 300) || [H.x + 200, H.y];
         const enc = B.start('ibaraki', { x: p[0], y: p[1], lv: (SC.def.lv || 1) + 2, sub: '鬼族前哨・試刀', onWin: () => later(10, () => sparEnd(done)) });
-        if (enc) { enc._spar = 1; const u = enc.units[0]; u.hp = Math.round(u.hpMax * 0.6); SP = { enc, thr: u.hpMax * 0.3 }; } }); }); }
+        if (enc) { enc._spar = 1; const u = enc.units[0]; u.hp = Math.round(u.hpMax * 0.6); SP = { enc, thr: u.hpMax * 0.3 }; enc._thr = SP.thr; } }); }); }
   function spStep() { const s = SP, enc = s.enc; if (!enc || enc.done || B.enc !== enc) { if (!enc || B.enc !== enc) SP = null; return; }
     const u = enc.units[0]; if (u && u.hp <= s.thr) { qc().c8_spar = H.hp >= H.hpMax * 0.5 ? 'win' : 'close'; G.SAVE.markDirty();
       for (const x of enc.units) x.hp = Math.max(x.hp, 1); enc.done = true; enc.winT = 0; B.tg.length = 0; B.zones.length = 0; B.proj.length = 0; G.UI.banner('茨木收手了', '點到為止'); SP = null; } }
