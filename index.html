@@ -2,7 +2,7 @@
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d0b10"><link rel="icon" href="icon-192.png">
 <script>
 /* 版本檢查：ver.json 不走快取；與本頁載入的版本不同就換網址重新載入（避免手機用到舊版快取）。每次開啟檢查一次，同一版本最多重載一次。 */
-(function () { var cur = 'r3.128.0';
+(function () { var cur = 'r3.128.1';
   fetch('ver.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
     if (!j || !j.v || j.v === cur) return; var k = 'reload_' + j.v; try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, 1); } catch (e) {}
     location.replace(location.pathname + '?v=' + j.v); }).catch(function () {}); })();
@@ -24,7 +24,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 </style>
 <canvas id="cv"></canvas>
 <div id="rot">請將裝置轉為橫向</div>
-<script src="js/00_core.js?v=r3.128.0"></script>
+<script src="js/00_core.js?v=r3.128.1"></script>
 <script src="js/12_anim.js?v=r3.28.0"></script>
 <script src="js/01_assets.js?v=r3.28.0"></script>
 <script src="js/02_scene.js?v=r3.28.0"></script>
@@ -148,7 +148,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/119_banter2.js?v=r3.84.0"></script>
 <script src="js/120_pfx2.js?v=r3.87.0"></script>
 <script src="js/121_pfx3.js?v=r3.86.0"></script>
-<script src="js/122_bal.js?v=r3.104.0"></script>
+<script src="js/122_bal.js?v=r3.128.1"></script>
 <script src="js/123_btempo.js?v=r3.96.0"></script>
 <script src="js/124_statui.js?v=r3.102.0"></script>
 <script src="js/125_scenefix.js?v=r3.100.0"></script>
