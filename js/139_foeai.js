@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 139_foeai.js
- * Version : r3.126.1  (2026-11-27)　r3.126.1：突擊衝刺降速＝主角跑步 1.2 倍（原本約 6.5 倍）、距離上限 2.5 身高、起手 0.73 秒、回身再衝 25%（精英照舊）、同圖最多 2 隻同時衝刺
+ * Version : r3.127.2  (2026-11-27)　r3.127.2：突進（踏步斬）、群撲、盾擊改約主角跑速 1.1 倍，巨體衝撞 1.3 倍（原本 3～5 倍）
+ * 舊版    : r3.126.1  (2026-11-27)　r3.126.1：突擊衝刺降速＝主角跑步 1.2 倍（原本約 6.5 倍）、距離上限 2.5 身高、起手 0.73 秒、回身再衝 25%（精英照舊）、同圖最多 2 隻同時衝刺
  * 舊版    : r3.126.0  (2026-11-27)　r3.126.0：一般攻擊預警在敵人被打斷（不在出手狀態）時立刻消失
  * 舊版    : r3.119.0  (2026-11-26)　r3.119.0：敵人等級加上轉生輪次加成（+20／+50／+75／+100），轉生後任何難度敵人都不低於主角
  * 舊版    : r3.112.0  (2026-11-26)　r3.112.0：等級改「取地圖與主角較高者＋5／15／30」；重甲（橫掃／盾擊＋擊退暈 0.5 秒，正面受傷 −30%、輕攻擊不硬直）、巨體（重踩震波／衝撞，撞牆自暈 1 秒，不硬直）
@@ -77,17 +78,19 @@
   function finish(e) { const m = e.mv; e.mv = null; for (const t of W) if (t.e === e) t.t = t.life; if (e.st === 'atk') { e.st = 'walk'; e.t = 0; } e.cd = 50 + Math.random() * 40; return m; }
   const walkTo = (e, x, y) => { if (SC.walkable(x, y)) { e.x = x; e.y = y; return true; } return false; };
   /* 招式表：pick(e,d) 回傳是否開始 */
+  const NF = (d, y, f) => Math.max(10, Math.round(d / (2.75 * f * S(y))));   /* r3.127.2：位移格數（主角跑速約 2.75×深度 px／格） */
   const MV = {
     /* 群聚：圍攻 */
+    /* r3.127.2：位移招式統一速度：距離 ÷（主角跑速 × 倍率）＝格數；突進／跳撲／盾擊 1.1 倍、巨體衝撞 1.3 倍 */
     pack: { ok: (e, d) => d > 1.2 && d < 3.5, start(e) { const k = HH() * S(e.y), mates = G.E.filter(o => o !== e && o._fc === 'swarm' && !o.mv && o.st === 'walk' && !(o.stun > 0) && o.hp > 0 && Math.hypot(o.x - e.x, o.y - e.y) < k * 3).slice(0, 2);
-        for (const o of [e].concat(mates)) { const tx = H.x + rnd(-0.3, 0.3) * k, ty = H.y + rnd(-10, 10), Wf = wk(o, 30); begin(o, 'leap', Wf, { tx, ty, sx: o.x, sy: o.y }); o.mv.w = circ(o, tx, ty, k * 0.45, Wf); o._m2 = G.t + cd2(o, 360); } } },
-    leap: { step(e, m) { if (m.t < m.W) return; const q = Math.min(1, (m.t - m.W) / 12), k = HH() * S(e.y); walkTo(e, m.sx + (m.tx - m.sx) * q, m.sy + (m.ty - m.sy) * q);
-        if (q >= 1 && !m.hit) { m.hit = 1; if (inCirc(m.tx, m.ty, k * 0.45)) hurt(e, 1.0); dust(m.tx, m.ty); } return m.t > m.W + 32; } },
+        for (const o of [e].concat(mates)) { const tx = H.x + rnd(-0.3, 0.3) * k, ty = H.y + rnd(-10, 10), Wf = wk(o, 30); begin(o, 'leap', Wf, { tx, ty, sx: o.x, sy: o.y, n: NF(Math.hypot(tx - o.x, ty - o.y), o.y, 1.1) }); o.mv.w = circ(o, tx, ty, k * 0.45, Wf); o._m2 = G.t + cd2(o, 360); } } },
+    leap: { step(e, m) { if (m.t < m.W) return; const n = m.n || 12, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); walkTo(e, m.sx + (m.tx - m.sx) * q, m.sy + (m.ty - m.sy) * q);
+        if (q >= 1 && !m.hit) { m.hit = 1; if (inCirc(m.tx, m.ty, k * 0.45)) hurt(e, 1.0); dust(m.tx, m.ty); } return m.t > m.W + n + 20; } },
     /* 雜兵：踏步斬 */
     stepcut: { ok: (e, d) => d > 1.0 && d < 2.3, start(e) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = k * 1.5, x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, 36);
-        begin(e, 'cut', Wf, { sx: e.x, sy: e.y, x1, y1, L }); lane(e, e.x, e.y, x1, y1, k * 0.55, Wf); e._m2 = G.t + cd2(e, 300); } },
-    cut: { step(e, m) { if (m.t < m.W) return; const q = Math.min(1, (m.t - m.W) / 10), k = HH() * S(e.y); walkTo(e, m.sx + (m.x1 - m.sx) * q * 0.85, m.sy + (m.y1 - m.sy) * q * 0.85);
-        if (!m.hit && q > 0.5 && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.55)) { m.hit = 1; hurt(e, 1.2); } if (q >= 1 && !m.d) { m.d = 1; dust(e.x + e.face * k * 0.4, e.y); } return m.t > m.W + 34; } },
+        begin(e, 'cut', Wf, { sx: e.x, sy: e.y, x1, y1, L, n: NF(L * 0.85, e.y, 1.1) }); lane(e, e.x, e.y, x1, y1, k * 0.55, Wf); e._m2 = G.t + cd2(e, 300); } },
+    cut: { step(e, m) { if (m.t < m.W) return; const n = m.n || 10, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); walkTo(e, m.sx + (m.x1 - m.sx) * q * 0.85, m.sy + (m.y1 - m.sy) * q * 0.85);
+        if (!m.hit && q > 0.5 && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.55)) { m.hit = 1; hurt(e, 1.2); } if (q >= 1 && !m.d) { m.d = 1; dust(e.x + e.face * k * 0.4, e.y); } return m.t > m.W + n + 24; } },
     /* 突擊：衝刺＋迴身斬 */
     dash: { ok: (e, d) => d > 1.8 && d < 4.8 && G.E.filter(o => o.mv && o.mv.k === 'run').length < 2, start(e, turn) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = Math.min(k * 2.5, dist(e) * k + k), x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, turn ? 30 : 44), n = Math.max(12, Math.round(Math.hypot(x1 - e.x, y1 - e.y) / (2.75 * 1.05 * S(e.y))));   /* 實測約主角跑步 ×1.2（含縱向位移） */
         begin(e, 'run', Wf, { sx: e.x, sy: e.y, x1, y1, turn, n }); lane(e, e.x, e.y, x1, y1, k * 0.6, Wf); if (!turn) e._m1 = G.t + 240; } },
@@ -114,21 +117,21 @@
     swing: { step(e, m) { if (m.t === m.W) { dust(m.x, m.y); G.SC.shake = Math.max(G.SC.shake || 0, 4); if (inCirc(m.x, m.y, m.r)) hurt(e, 1.3); } return m.t > m.W + 28; } },
     /* 重甲：盾擊（擊退＋暈 0.5 秒） */
     bash: { ok: (e, d) => d > 0.8 && d < 2.4, start(e) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = k * 1.6, x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, 36);
-        begin(e, 'shove', Wf, { sx: e.x, sy: e.y, x1, y1, a }); lane(e, e.x, e.y, x1, y1, k * 0.6, Wf); e._m2 = G.t + cd2(e, 420); } },
-    shove: { step(e, m) { if (m.t < m.W) return; const q = Math.min(1, (m.t - m.W) / 10), k = HH() * S(e.y); walkTo(e, m.sx + (m.x1 - m.sx) * q * 0.8, m.sy + (m.y1 - m.sy) * q * 0.8);
+        begin(e, 'shove', Wf, { sx: e.x, sy: e.y, x1, y1, a, n: NF(L * 0.8, e.y, 1.1) }); lane(e, e.x, e.y, x1, y1, k * 0.6, Wf); e._m2 = G.t + cd2(e, 420); } },
+    shove: { step(e, m) { if (m.t < m.W) return; const n = m.n || 10, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); walkTo(e, m.sx + (m.x1 - m.sx) * q * 0.8, m.sy + (m.y1 - m.sy) * q * 0.8);
         if (!m.hit && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.6) && Math.hypot(H.x - e.x, H.y - e.y) < k * 0.8) { m.hit = 1; const hp0 = H.hp; hurt(e, 1.0);
           if (H.hp < hp0) { for (let i = 0; i < 6; i++) { const nx = H.x + Math.cos(m.a) * k * 0.12; if (SC.walkable(nx, H.y)) H.x = nx; } H._stn = 30; G.NUMS.push({ x: H.x, y: H.y - HH() * S(H.y) - 20, v: '暈', t: 0, col: '#ffd08a' }); } }
-        return m.t > m.W + 30; } },
+        return m.t > m.W + n + 20; } },
     /* 巨體：重踩（自身大圈＋震波） */
     stomp: { ok: (e, d) => d < 2.2, start(e) { const k = HH() * S(e.y), Wf = wk(e, 60); begin(e, 'quake', Wf, { x: e.x, y: e.y, r: k * 1.5 }); circ(e, e.x, e.y, k * 1.5, Wf, HEV); e._m1 = G.t + 300; } },
     quake: { step(e, m) { if (m.t === m.W) { shock(m.x, m.y, m.r); if (inCirc(m.x, m.y, m.r)) hurt(e, 1.5); } return m.t > m.W + 30; } },
     /* 巨體：衝撞（撞牆暈 1 秒） */
     ram: { ok: (e, d) => d > 2 && d < 6, start(e) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = Math.min(k * 5, dist(e) * k + k), x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, 54);
-        begin(e, 'charge', Wf, { sx: e.x, sy: e.y, x1, y1 }); lane(e, e.x, e.y, x1, y1, k * 0.9, Wf, HEV); e._m2 = G.t + cd2(e, 480); } },
-    charge: { step(e, m) { if (m.t < m.W) return; const q = Math.min(1, (m.t - m.W) / 22), k = HH() * S(e.y);
+        begin(e, 'charge', Wf, { sx: e.x, sy: e.y, x1, y1, n: NF(Math.hypot(x1 - e.x, y1 - e.y), e.y, 1.3) }); lane(e, e.x, e.y, x1, y1, k * 0.9, Wf, HEV); e._m2 = G.t + cd2(e, 480); } },
+    charge: { step(e, m) { if (m.t < m.W) return; const n = m.n || 22, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y);
         if (!m.wall && !walkTo(e, m.sx + (m.x1 - m.sx) * q, m.sy + (m.y1 - m.sy) * q)) { m.wall = 1; shock(e.x, e.y, k * 0.8); e.stun = 60; G.NUMS.push({ x: e.x, y: e.y - HH() * S(e.y) * (e.ratio || 1) - 18, v: '撞牆・暈', t: 0, col: '#ffd08a' }); return true; }
         if (!m.hit && Math.hypot(H.x - e.x, (H.y - e.y) * 1.6) < k * 0.8) { m.hit = 1; hurt(e, 1.6); }
-        if (m.t === m.W + 22) dust(e.x, e.y); return m.t > m.W + 40; } } };
+        if (m.t === m.W + n) dust(e.x, e.y); return m.t > m.W + n + 18; } } };
   /* 每類：[招式 1, 招式 2]；null＝原本近戰 */
   const KIT = { swarm: [null, 'pack'], grunt: [null, 'stepcut'], assault: ['dash', null], ranged: [null, 'lob'], spirit: ['orb', 'burst'], armor: ['sweep', 'bash'], giant: ['stomp', 'ram'] };
   /* r3.112.0：重甲正面受傷 −30%、輕攻擊不硬直；巨體完全不硬直 */

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 67_cast.js
- * Version : r3.52.0  (2026-11-23)　r3.52.0：世界／隨機事件期間，任務要找的人不退場（原本整村的人藏起來，任務只剩地上的框）
+ * Version : r3.127.2  (2026-11-27)　r3.127.2：同名合併跳過 noMerge（救援事件的 4 名士兵）
+ * 舊版    : r3.52.0  (2026-11-23)　r3.52.0：世界／隨機事件期間，任務要找的人不退場（原本整村的人藏起來，任務只剩地上的框）
  * 舊版    : r3.51.1  (2026-11-18)　r3.51.1：清理借用 NPC 時跳過傳送役時雨（原本會把時雨的「渡船／任務地點／副本合戰」選單清掉）
  * 舊版    : r3.41.0  (2026-11-18)　r3.41.0：劇情角色指定圖改成完全同名；世界事件時店家、時雨不退場
  * 舊版    : r3.30.2  (2026-11-16)　r3.30.2：世界事件進行中，城鎮的人與動物暫時退場
@@ -45,7 +46,7 @@
   /* ---------- 3. 每 20 幀：合併同名、歸還借用 ---------- */
   function sync() { if (!SC.id || SC.trans) return;
     if (new Set(G.NPC).size !== G.NPC.length) G.NPC = [...new Set(G.NPC)];   // 同一物件放兩次
-    const H = G.NPC.filter(o => o.amb && human(o)), seen = [];
+    const H = G.NPC.filter(o => o.amb && human(o) && !o.noMerge), seen = [];   /* r3.127.2：noMerge＝事件裡的同名群眾（救援士兵）不合併 */
     for (const n of H) { const k = seen.find(o => same(o.name, n.name)); if (!k) { seen.push(n); continue; }
       const keep = k.qnew && !n.qnew ? n : k, dup = keep === k ? n : k; if (dup.qnew && !keep.qnew) { keep.x = dup.x; keep.y = dup.y; }   // 留下原本的路人，站到任務位置
       for (const m of Q.marks) if (m.n === dup) m.n = keep; if (G.STAGE) for (const o of G.STAGE.on) if (o.a === dup) o.a = keep;

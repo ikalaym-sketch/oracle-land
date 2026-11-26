@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 145_leon.js
- * Version : r3.126.1  (2026-11-27)　r3.126.1：刀光只放大圖不移位置、倍率 1.6→1.3；出招被擋住時特效跟著實際身體位置
+ * Version : r3.127.2  (2026-11-27)　r3.127.2：身法改用目前武器（不借打刀），各武器專屬身法照常；分身殘影畫成里歐
+ * 舊版    : r3.126.1  (2026-11-27)　r3.126.1：刀光只放大圖不移位置、倍率 1.6→1.3；出招被擋住時特效跟著實際身體位置
  * 舊版    : r3.126.0  (2026-11-27)　r3.126.0：武器 › 技能／按鍵 改成與武器相同的版面（按鍵頁：左邊戰鬥按鍵配置、右邊分段選招；技能頁：分類清單＋說明＋升級／設鍵）；職業頁面板拿掉底部按鍵列
  * 舊版    : r3.125.1  (2026-11-26)　r3.125.1：修正：招式清單不能捲動（被職業頁捲動區搶走）；修正：施放資料「目標高度／招式類型」同名互蓋（沒敵人時晶術特效不出現、有敵人時晶術極意失效）；
  *           晶術：特效與判定 ×1.6、動畫 ×1.25 倍速、放完第一段 0.35 秒後在目標附近再放一次（傷害加倍）；
@@ -209,6 +210,8 @@
     for (const [k, gt] of [['skA', () => d.sp[0]], ['skB', () => d.sp[1]], ['ult', () => d.ult]]) { if (!IN[k]) continue; IN[k] = false; if (CUR) continue; const a = H.act;
       if (a && !(a.kind === 'atk' && H.t >= a.T * 0.45)) { if (a.kind !== 'hurt') BUF = k; continue; }
       const c = gt(); if (!c) { G.UI.toast((k === 'ult' ? '奧義鍵尚未設定秘奧義' : '技鍵尚未設定晶術') + '（選單 › 角色 › 職業 › 里歐）'); continue; } fire(c, -1, 0); }
+    /* r3.127.2：身法（按下身法鍵或身法動作中）用目前武器跑，專屬身法與分身照常；其餘借打刀 */
+    if (IN.m1 || IN.m2 || (H.act && (H.act.kind === 'dodge' || H.act.kind === 'dash'))) return hs0.apply(this, arguments);
     return asKat(() => hs0.apply(this, arguments)); };
   const en0 = G.STORY.onEnter; G.STORY.onEnter = function () { CASTS = []; LGS = []; if (CUR) end(); return en0.apply(this, arguments); };
 
@@ -232,6 +235,11 @@
     for (const f of e[4]) { if (f[5] !== back || (c.sub === 1 && f[6] !== 3)) continue; const fr = u.x[f[0]], im = u.imgs[fr[7]]; if (!im) continue; const [x, y] = fxPos(c, f), S = c.K * f[3] * fr[8] * zOf(c, f);
       ctx.save(); if (al < 1) ctx.globalAlpha = al; ctx.translate(x, y); if (c.face < 0) ctx.scale(-1, 1); if (f[4]) ctx.rotate(f[4] * Math.PI / 180); if (f[8]) ctx.scale(-1, 1);
       ctx.drawImage(im, fr[0], fr[1], fr[2], fr[3], -fr[4] * S, -fr[5] * S, fr[2] * S, fr[3] * S); ctx.restore(); } }
+  /* r3.127.2：分身殘影改畫里歐（閃身姿勢，半透明淡出） */
+  const dn0 = G.drawNpc; G.drawNpc = function (n) { if (!n || !n.bunshin || !on()) return dn0.apply(this, arguments);
+    const b = A.get('lv_base'), r = b && b.act.dodge; if (!r) return dn0.apply(this, arguments);
+    const k = Math.min(1, n.t / 8) * (n.life - n.t < 30 ? (n.life - n.t) / 30 : 1);
+    ad0.call(A, b, r.f[r.f.length - 1], n.x, n.y, kOf(SC.depth(n.y)), n.face < 0, 0.55 * k); };
   const dh0 = G.drawHero;
   G.drawHero = function () { if (!on()) return dh0.apply(this, arguments);
     for (const L of LGS) drawLg(L, 1); for (const c of CASTS) drawFx(c, 1); SWAP = 1; KAT++; try { dh0.apply(this, arguments); } finally { SWAP = 0; KAT--; } for (const c of CASTS) drawFx(c, 0); for (const L of LGS) drawLg(L, 0); };

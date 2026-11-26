@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 20_npc.js
- * Version : r3.51.0  (2026-11-18)　r3.51.0：動物比例改成真實大小（牛、鹿、馬放大；狗、狸、狐、猴、雞縮小，a/p/npcs.json 的 r）；動物影子縮小
+ * Version : r3.127.2  (2026-11-27)　r3.127.2：事件控制中的 NPC（st＝ev，救援士兵）不會被拉去閒聊
+ * 舊版    : r3.51.0  (2026-11-18)　r3.51.0：動物比例改成真實大小（牛、鹿、馬放大；狗、狸、狐、猴、雞縮小，a/p/npcs.json 的 r）；動物影子縮小
  * 舊版    : r3.41.1  (2026-11-18)  r3.41.1：兩岸城時雨直接生成在渡口　r3.41.0：任務 NPC（hold＋pace）在定點附近小走動；沒有待機圖的 NPC 改成呼吸起伏，不再像靜止圖片
  * 舊版    : r3.30.0  (2026-11-16)　r3.30.0：路人生成時，先加進來的任務 NPC 不再重複放進畫面清單
  * 舊版    : r3.7.0  (2026-11-13)
@@ -137,7 +138,7 @@
       return; }
     if (--AM.chatT > 0) return; AM.chatT = 420 + Math.random() * 420;
     const P = AM.P(), pools = (D.CONV[AM.sid] || []).concat(D.CONV._).filter(v => P >= v.p[0] && P <= v.p[1]);
-    const free = AM.list.filter(n => !n.an && !n.shop && !busy(n) && Math.hypot(G.H.x - n.x, G.H.y - n.y) > 90);
+    const free = AM.list.filter(n => !n.an && !n.shop && !busy(n) && n.st !== 'ev' && Math.hypot(G.H.x - n.x, G.H.y - n.y) > 90);
     if (free.length < 2 || !pools.length) return;
     for (let k = 0; k < 8; k++) { const v = pools[Math.floor(Math.random() * pools.length)], r = v.r || [null, null];
       const A1 = free.filter(n => !r[0] || n.role === r[0]); if (!A1.length) continue; const a = A1[Math.floor(Math.random() * A1.length)];
