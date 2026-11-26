@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 72_testui.js
- * Version : r3.124.0  (2026-11-26)　r3.124.0：里歐：提示改到 職業 › 最下面；招式全 Lv5 時外觀 Lv 至少 95；加「TP／氣 全滿」
+ * Version : r3.129.0  (2026-11-27)　r3.129.0：地圖分頁加「兩岸城外觀」切換
+ * 舊版    : r3.124.0  (2026-11-26)　r3.124.0：里歐：提示改到 職業 › 最下面；招式全 Lv5 時外觀 Lv 至少 95；加「TP／氣 全滿」
  * 舊版    : r3.122.0  (2026-11-26)　r3.122.0：道具頁：錢改 +100 萬，新增妖玉、難度素材、藥品、巔峰、夥伴技能點、鎌鼬之羽、勾玉／玉屑／精煉材料、名物、妖怪村禮物；新「系統」頁：難度、轉生輪次、里歐、妖怪村（入住、好感、觸發四種事件）、世界事件類型、世界頭目；開關「奧義免 Lv40」改名「全部解鎖」
  * 舊版    : r3.83.0  (2026-11-25)　r3.83.0：跳章按鈕改走 T.jump（118 補跑任務完成處理）　r3.49.0  (2026-11-18)　r3.49.0：移除「招式試做」開關（新版招式正式開放）
  * 舊版    : r3.44.0  (2026-11-18)　r3.44.0：開關加「招式試做」（92_lab）
@@ -102,7 +103,8 @@
     { draw(u) { const S = G.D.scenes, WD = G.WORLD, grp = [['城鎮', Object.keys(S).filter(i => /^(hub_|T_)/.test(i))]];
         for (let c = 1; c <= 12; c++) grp.push(['第 ' + c + ' 章', HUB().ids(c).filter(i => S[i])]); grp.push(['副本', Object.keys(S).filter(i => /^D_/.test(i))], ['任務地圖', Object.keys(S).filter(i => S[i].quest && !/^(hub_|T_|D_)/.test(i))]);
         u.head('分組'); u.grid(grp.map((g, i) => [g[0], i]), u.cols === 3 ? 5 : 4, ([n, i], bx, by, bw) => btn(bx, by, bw, u.RH, n, () => { T.mg = i; }, T.mg === i ? 'on' : 'test'));
-        u.head('傳送：' + grp[T.mg][0]); u.grid(grp[T.mg][1], u.cols, (id, bx, by, bw) => btn(bx, by, bw, u.RH, S[id].name || id, () => { M.close(); G.DLG.list = null; G.SC.trans = { t: 0, to: id, at: null }; }, id === G.SC.id ? 'off' : 'test')); } },
+        u.head('傳送：' + grp[T.mg][0]); u.grid(grp[T.mg][1], u.cols, (id, bx, by, bw) => btn(bx, by, bw, u.RH, S[id].name || id, () => { M.close(); G.DLG.list = null; G.SC.trans = { t: 0, to: id, at: null }; }, id === G.SC.id ? 'off' : 'test'));
+        if (G.HUBV) { u.head('兩岸城外觀（目前：' + (G.HUBV.cur || '白天') + '）'); u.grid(G.HUBV.opts, u.cols === 3 ? 5 : 4, ([n, v], bx, by, bw) => btn(bx, by, bw, u.RH, n, () => { M.close(); G.HUBV.set(v); if (G.SC.id !== 'hub_city') G.SC.trans = { t: 0, to: 'hub_city', at: null }; }, G.HUBV.force === v ? 'on' : 'test')); } } },   // r3.129.0
     { draw(u) { const spawn = (n, el) => { const foes = (G.WORLD.meta[G.SC.id] || {}).foes || G.SC.def.foes || ['akaoni']; Promise.resolve(G.ASSET.enemies(foes)).then(() => { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, x = G.H.x + Math.cos(a) * 220, y = G.H.y + Math.sin(a) * 70; if (!G.SC.walkable(x, y)) continue; const e = G.spawnOni(x, y, i * 15, null, foes[i % foes.length]); if (e && el) { e.elite = '精英'; e.hp = e.hpMax = Math.round(e.hpMax * 3); e.atk = Math.round(e.atk * 1.3); e.ratio *= 1.15; } } G.UI.toast('生成 ' + n + (el ? ' 精英' : ' 隻')); }); M.close(); };
         u.head('生成'); u.grid([['一般怪 ×5', () => spawn(5)], ['精英 ×1', () => spawn(1, 1)], ['本圖頭目重生', () => { const id = G.SC.id; delete F()['boss_' + id]; if (G.SAVE.data.bossT) delete G.SAVE.data.bossT[id]; M.close(); G.SC.trans = { t: 0, to: id, at: null }; }, 'save'],
           ['世界事件（本圖）', () => { G.SAVE.data.wev = { k: 'invade', map: G.SC.id, until: Date.now() + 20 * 60000, done: 0 }; M.close(); G.SC.trans = { t: 0, to: G.SC.id, at: null }; }, 'save'], ['清除敵人', () => { for (const e of G.E) if (e.st !== 'dead') { e.st = 'dead'; e.t = 0; } G.UI.toast('已清除'); }]], u.cols,

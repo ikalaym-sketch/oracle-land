@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 52_hub.js
- * Version : r3.128.3  (2026-11-27)　r3.128.3：時雨（渡口）移到西邊往神社傳點下方
+ * Version : r3.129.0  (2026-11-27)　r3.129.0：新兩岸城圖：時雨渡口座標
+ * 舊版    : r3.128.3  (2026-11-27)　r3.128.3：時雨（渡口）移到西邊往神社傳點下方
  * 舊版    : r3.125.0  (2026-11-26)　r3.125.0：第 1 章插入新圖（停輪匠院、風折觀護台兩段、誓紙回舟灘），一本道 4→8 張
  * 舊版    : r3.104.2  (2026-11-26)　r3.104.2：互動點地上光暈改柔邊漸層
  * 舊版    : r3.100.0  (2026-11-26)　r3.100.0：妖怪村、訓練場等城鎮的目標改成回兩岸城（不再顯示「回到第七章的第一站」）
@@ -196,7 +197,7 @@
         { label: '回去', then: [act(() => travel(0, '你們沿著來時的路回去……', [], back))] }, { label: '留下', then: [] }] }]) }); }
     if (false && id === 'hub_mountain' && F().prologue) {   // r3.18.4：後山與封印禁林合併，不再需要「往封印禁林」
       const n = (d.nodes || {}).stone_stand || pt('center'); L.push({ id: 'seal', x: n[0] - 260, y: n[1] + 120, label: '往封印禁林', kind: 'look', run: () => travel(0, '小雪提著燈，帶你們走進後山深處……', [], 'Q_field_seal_forest') }); }
-    if (id === 'hub_city') { const g = pt('center'), FP = (SC.snap && SC.snap(130, 648, 'open', 60)) || [130, 648];   // r3.128.3：時雨移到西邊往神社傳點下方（河邊難走）   // r3.55.0：時雨移到河岸渡口（原本擠在中央路口）
+    if (id === 'hub_city') { const g = pt('center'), FP = (SC.snap && SC.snap(100, 652, 'open', 60)) || [100, 652];   // r3.128.3：時雨移到西邊往神社傳點下方（河邊難走）   // r3.55.0：時雨移到河岸渡口（原本擠在中央路口）
       L.push({ id: 'ferry', hide: 1, x: FP[0], y: FP[1], label: '渡口・時雨', kind: 'talk', main: false, run: ferry });
       if (G.D.scenes.T_yokai) { const ea = (d.nodes || {}).east_arrival || [1560, 640], w = (SC.snap && SC.snap(ea[0] + 50, ea[1] - 15, 'open', 120)) || [ea[0] + 40, ea[1] - 15]; L.push({ id: 'yokai_path', x: w[0], y: w[1], label: '往妖怪村・東邊出口',   /* r3.83.0：入口移到中間道路右側出口（立牌處），不放橋邊 */ kind: 'look', main: false, run: () => G.DLG.start([say('', '林間小路通往妖怪們聚居的木靈谷。'), { choice: [{ label: '前往妖怪村', then: [act(() => { G.SC.trans = { t: 0, to: 'T_yokai', at: null }; })] }, { label: '不了', then: [] }] }]) }); }   // r3.20.0
       const mvSg = k => { const sg = G.AMB && G.AMB.list.find(n => /時雨/.test(n.name || '') && !n.qk && n.shop);   /* r3.21.0：只認城裡的傳送役時雨，不抓任務生成的同名 NPC */ if (sg) { if (!sg.fer) { sg.fer = 1; sg.x = FP[0]; sg.y = FP[1]; sg.hold = true; sg.st = 'idle'; sg.face = 1; sg.onTalk = sg.ferTalk = n => G.DLG.start([say('時雨', '渡船、任務地點、副本合戰，都可以找我。'), { choice: [{ label: '渡船（章節地圖）', then: [act(ferry)] }, { label: '任務地點', then: [act(tripMenu)] }, { label: '前往副本／合戰', then: [act(() => G.WARP && G.WARP.open(n))] }, { label: '離開', then: [] }] }]); } } else if (k < 40 && G.SC.id === 'hub_city') G.STORY.later(60, () => mvSg(k + 1)); }; mvSg(0); }   // r3.18.0：時雨人物圖
