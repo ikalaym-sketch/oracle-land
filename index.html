@@ -1,4 +1,12 @@
-<!doctype html><html lang="zh-Hant"><head><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<!doctype html><html lang="zh-Hant"><head><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d0b10"><link rel="icon" href="icon-192.png">
+<script>
+/* 版本檢查：ver.json 不走快取；與本頁載入的版本不同就換網址重新載入（避免手機用到舊版快取）。每次開啟檢查一次，同一版本最多重載一次。 */
+(function () { var cur = 'r3.127.1';
+  fetch('ver.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
+    if (!j || !j.v || j.v === cur) return; var k = 'reload_' + j.v; try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, 1); } catch (e) {}
+    location.replace(location.pathname + '?v=' + j.v); }).catch(function () {}); })();
+</script></head><body>
 <meta charset="utf-8">
 <title>神諭之地 重製版</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -16,7 +24,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 </style>
 <canvas id="cv"></canvas>
 <div id="rot">請將裝置轉為橫向</div>
-<script src="js/00_core.js?v=r3.127.0"></script>
+<script src="js/00_core.js?v=r3.127.1"></script>
 <script src="js/12_anim.js?v=r3.28.0"></script>
 <script src="js/01_assets.js?v=r3.28.0"></script>
 <script src="js/02_scene.js?v=r3.28.0"></script>
