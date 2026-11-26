@@ -1,0 +1,169 @@
+<!doctype html><html lang="zh-Hant"><head><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<meta charset="utf-8">
+<title>神諭之地 重製版</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@500;700&display=swap">
+<style>
+:root { --bg: #0d0b10; --ink: #f3e8d2; color-scheme: dark;
+  --sat: env(safe-area-inset-top, 0px); --sar: env(safe-area-inset-right, 0px); --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px); }
+html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+:root { padding: 0 !important; }
+#cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: var(--bg); }
+#rot { position: fixed; inset: 0; display: none; place-items: center; text-align: center; background: var(--bg); color: var(--ink); font: 600 18px "Noto Sans TC", sans-serif; padding: 24px; z-index: 5; }
+@media (orientation: portrait) { #rot { display: grid; } }
+</style>
+<canvas id="cv"></canvas>
+<div id="rot">請將裝置轉為橫向</div>
+<script src="js/00_core.js?v=r3.126.1"></script>
+<script src="js/12_anim.js?v=r3.28.0"></script>
+<script src="js/01_assets.js?v=r3.28.0"></script>
+<script src="js/02_scene.js?v=r3.28.0"></script>
+<script src="js/03_actors.js?v=r3.126.0"></script>
+<script src="js/04_ui.js?v=r3.113.0"></script>
+<script src="js/05_dialog.js?v=r3.90.0"></script>
+<script src="js/06_story_ch1.js?v=r3.39.0"></script>
+<script src="js/07_rpg.js?v=r3.105.0"></script>
+<script src="js/13_weapons.js?v=r3.28.0"></script>
+<script src="js/15_skill.js?v=r3.99.0"></script>
+<script src="js/08_menu.js?v=r3.99.0"></script>
+<script src="js/16_growth.js?v=r3.125.0"></script>
+<script src="js/14_cheat.js?v=r3.28.0"></script>
+<script src="js/17_menu2.js?v=r3.34.0"></script>
+<script src="js/18_world.js?v=r3.52.0"></script>
+<script src="js/19_ui8.js?v=r3.28.0"></script>
+<script src="js/10_banter.js?v=r3.28.0"></script>
+<script src="js/11_npclife.js?v=r3.28.0"></script>
+<script src="js/20_npcdata.js?v=r3.88.0"></script>
+<script src="js/20_npc.js?v=r3.51.0"></script>
+<script src="js/21_shop.js?v=r3.108.1"></script>
+<script src="js/22_event.js?v=r3.113.0"></script>
+<script src="js/23_warp.js?v=r3.107.0"></script>
+<script src="js/24_nav.js?v=r3.108.0"></script>
+<script src="js/25_walk.js?v=r3.28.0"></script>
+<script src="js/26_boss.js?v=r3.117.0"></script>
+<script src="js/27_boss_kappa.js?v=r3.28.0"></script>
+<script src="js/28_trial.js?v=r3.109.0"></script>
+<script src="js/29_boss_kyubi.js?v=r3.28.0"></script>
+<script src="js/30_boss_raiju.js?v=r3.28.0"></script>
+<script src="js/31_boss_oni.js?v=r3.28.0"></script>
+<script src="js/32_boss_orochi.js?v=r3.94.0"></script>
+<script src="js/33_boss_osakabe.js?v=r3.28.0"></script>
+<script src="js/34_boss_shuten.js?v=r3.28.0"></script>
+<script src="js/35_boss_tsuchigumo.js?v=r3.28.0"></script>
+<script src="js/36_boss_watatsumi.js?v=r3.28.0"></script>
+<script src="js/37_boss_izanami.js?v=r3.28.0"></script>
+<script src="js/38_boss_omagatsuhi.js?v=r3.28.0"></script>
+<script src="js/39_boss_ibaraki.js?v=r3.28.0"></script>
+<script src="js/40_boss_doma.js?v=r3.28.0"></script>
+<script src="js/41_boss_yoshitsune.js?v=r3.28.0"></script>
+<script src="js/42_boss_susanoo.js?v=r3.28.0"></script>
+<script src="js/43_boss_seimei.js?v=r3.28.0"></script>
+<script src="js/44_boss_ezo.js?v=r3.28.0"></script>
+<script src="js/45_boss_mini.js?v=r3.36.1"></script>
+<script src="js/46_boss_hidden.js?v=r3.28.0"></script>
+<script src="js/47_partner.js?v=r3.28.0"></script>
+<script src="js/48_occlude.js?v=r3.43.0"></script>
+<script src="js/49_party.js?v=r3.59.0"></script>
+<script src="js/50_party_kit.js?v=r3.104.2"></script>
+<script src="js/51_party_grow.js?v=r3.97.0"></script>
+<script src="js/52_hub.js?v=r3.125.0"></script>
+<script src="js/53_quest.js?v=r3.91.0"></script>
+<script src="js/54_story_a.js?v=r3.28.0"></script>
+<script src="js/54_story_b.js?v=r3.28.0"></script>
+<script src="js/54_story_c.js?v=r3.28.0"></script>
+<script src="js/55_wpn_v2.js?v=r3.28.0"></script>
+<script src="js/56_camera.js?v=r3.56.0"></script>
+<script src="js/57_mem.js?v=r3.28.0"></script>
+<script src="js/58_forge.js?v=r3.106.0"></script>
+<script src="js/59_stage.js?v=r3.58.0"></script>
+<script src="js/60_pkit2.js?v=r3.28.0"></script>
+<script src="js/61_qwave.js?v=r3.52.1"></script>
+<script src="js/62_doma.js?v=r3.28.0"></script>
+<script src="js/63_text.js?v=r3.56.0"></script>
+<script src="js/64_fix.js?v=r3.28.0"></script>
+<script src="js/65_maps.js?v=r3.100.0"></script>
+<script src="js/66_lines.js?v=r3.111.0"></script>
+<script src="js/67_cast.js?v=r3.52.0"></script>
+<script src="js/68_xue.js?v=r3.60.0"></script>
+<script src="js/69_items.js?v=r3.83.0"></script>
+<script src="js/70_ending.js?v=r3.32.0"></script>
+<script src="js/71_dungeon.js?v=r3.33.0"></script>
+<script src="js/72_testui.js?v=r3.124.0"></script>
+<script src="js/73_diff.js?v=r3.103.0"></script>
+<script src="js/74_endui.js?v=r3.32.0"></script>
+<script src="js/75_partyup.js?v=r3.33.0"></script>
+<script src="js/76_vfx.js?v=r3.49.0"></script>
+<script src="js/77_moves.js?v=r3.53.0"></script>
+<script src="js/78_mv_ranged.js?v=r3.34.0"></script>
+<script src="js/79_mv_pole.js?v=r3.34.0"></script>
+<script src="js/80_mv_blade.js?v=r3.34.0"></script>
+<script src="js/81_hiden.js?v=r3.36.0"></script>
+<script src="js/82_ult.js?v=r3.88.0"></script>
+<script src="js/83_skills.js?v=r3.37.0"></script>
+<script src="js/84_fxkit.js?v=r3.36.0"></script>
+<script src="js/85_normal.js?v=r3.37.0"></script>
+<script src="js/86_fx2.js?v=r3.37.0"></script>
+<script src="js/87_story2.js?v=r3.41.0"></script>
+<script src="js/88_rune.js?v=r3.107.2"></script>
+<script src="js/89_obj.js?v=r3.109.0"></script>
+<script src="js/90_fix.js?v=r3.41.0"></script>
+<script src="js/91_pfx.js?v=r3.104.2"></script>
+<script src="js/92_lab.js?v=r3.49.0"></script>
+<script src="js/93_kassen.js?v=r3.98.0"></script>
+<script src="js/94_gojo.js?v=r3.86.0"></script>
+<script src="js/95_board.js?v=r3.104.2"></script>
+<script src="js/96_choice.js?v=r3.57.0"></script>
+<script src="js/97_partner5.js?v=r3.58.0"></script>
+<script src="js/98_explore.js?v=r3.126.0"></script>
+<script src="js/99_partner6.js?v=r3.59.0"></script>
+<script src="js/100_meibutsu.js?v=r3.96.0"></script>
+<script src="js/101_shop2.js?v=r3.61.0"></script>
+<script src="js/102_fstory.js?v=r3.125.0"></script>
+<script src="js/103_title.js?v=r3.94.0"></script>
+<script src="js/104_side.js?v=r3.62.0"></script>
+<script src="js/105_forge2.js?v=r3.101.0"></script>
+<script src="js/106_play.js?v=r3.105.0"></script>
+<script src="js/107_ux2.js?v=r3.65.0"></script>
+<script src="js/108_route.js?v=r3.66.0"></script>
+<script src="js/109_katana.js?v=r3.73.0"></script>
+<script src="js/110_katana_hiden.js?v=r3.73.0"></script>
+<script src="js/111_katana_fx.js?v=r3.79.0"></script>
+<script src="js/112_nodachi.js?v=r3.77.0"></script>
+<script src="js/113_naginata.js?v=r3.76.0"></script>
+<script src="js/114_yari.js?v=r3.80.0"></script>
+<script src="js/115_yumi.js?v=r3.81.0"></script>
+<script src="js/116_yari_fx.js?v=r3.80.0"></script>
+<script src="js/117_teppo.js?v=r3.82.0"></script>
+<script src="js/118_progress.js?v=r3.83.0"></script>
+<script src="js/119_banter2.js?v=r3.84.0"></script>
+<script src="js/120_pfx2.js?v=r3.87.0"></script>
+<script src="js/121_pfx3.js?v=r3.86.0"></script>
+<script src="js/122_bal.js?v=r3.104.0"></script>
+<script src="js/123_btempo.js?v=r3.96.0"></script>
+<script src="js/124_statui.js?v=r3.102.0"></script>
+<script src="js/125_scenefix.js?v=r3.100.0"></script>
+<script src="js/126_peak.js?v=r3.104.0"></script>
+<script src="js/127_forge3.js?v=r3.101.0"></script>
+<script src="js/128_bunshin.js?v=r3.101.0"></script>
+<script src="js/129_magatama.js?v=r3.106.0"></script>
+<script src="js/130_icons.js?v=r3.107.0"></script>
+<script src="js/131_foes.js?v=r3.108.0"></script>
+<script src="js/132_shieldfx.js?v=r3.104.2"></script>
+<script src="js/133_bal10.js?v=r3.105.0"></script>
+<script src="js/134_econ.js?v=r3.106.0"></script>
+<script src="js/135_bal12.js?v=r3.107.0"></script>
+<script src="js/136_fort.js?v=r3.108.0"></script>
+<script src="js/137_props.js?v=r3.109.0"></script>
+<script src="js/138_feather.js?v=r3.122.0"></script>
+<script src="js/139_foeai.js?v=r3.126.1"></script>
+<script src="js/140_events.js?v=r3.113.0"></script>
+<script src="js/141_wboss.js?v=r3.115.0"></script>
+<script src="js/142_yvent.js?v=r3.117.0"></script>
+<script src="js/143_yaff.js?v=r3.117.0"></script>
+<script src="js/144_rebirth.js?v=r3.121.0"></script>
+<script src="js/145_leon.js?v=r3.126.1"></script>
+<script src="js/09_main.js?v=r3.28.0"></script>
+
+</body></html>

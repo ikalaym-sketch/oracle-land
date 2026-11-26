@@ -1,0 +1,137 @@
+/* ==========================================================================
+ * 神諭之地 重製版 — 00_core.js
+ * Version : r3.126.1  (2026-11-27)　r3.126.1：版本號
+ * 舊版    : r3.126.0  (2026-11-27)　r3.126.0：版本號
+ * 舊版    : r3.125.1  (2026-11-26)　r3.125.1：版本號
+ * 舊版    : r3.125.0  (2026-11-26)　r3.125.0：版本號
+ * 舊版    : r3.124.0  (2026-11-26)　r3.124.0：版本號
+ * 舊版    : r3.123.0  (2026-11-26)　r3.123.0：版本號
+ * 舊版    : r3.122.0  (2026-11-26)　r3.122.0：版本號
+ * 舊版    : r3.121.1  (2026-11-26)　r3.121.1：版本號
+ * 舊版    : r3.121.0  (2026-11-26)　r3.121.0：版本號
+ * 舊版    : r3.119.1  (2026-11-26)　r3.119.1：版本號
+ * 舊版    : r3.119.0  (2026-11-26)　r3.119.0：版本號
+ * 舊版    : r3.118.0  (2026-11-26)　r3.118.0：版本號
+ * 舊版    : r3.117.0  (2026-11-26)　r3.117.0：版本號
+ * 舊版    : r3.116.0  (2026-11-26)　r3.116.0：版本號
+ * 舊版    : r3.115.0  (2026-11-26)　r3.115.0：版本號
+ * 舊版    : r3.114.0  (2026-11-26)　r3.114.0：版本號
+ * 舊版    : r3.113.0  (2026-11-26)　r3.113.0：版本號
+ * 舊版    : r3.112.0  (2026-11-26)　r3.112.0：版本號
+ * 舊版    : r3.111.0  (2026-11-26)　r3.111.0：版本號
+ * 舊版    : r3.110.0  (2026-11-26)　r3.110.0：版本號
+ * 舊版    : r3.109.0  (2026-11-26)　r3.109.0：版本號
+ * 舊版    : r3.108.1  (2026-11-26)　r3.108.1：版本號
+ * 舊版    : r3.108.0  (2026-11-26)　r3.108.0：版本號
+ * 舊版    : r3.107.2  (2026-11-26)　r3.107.2：版本號
+ * 舊版    : r3.107.1  (2026-11-26)　r3.107.1：版本號
+ * 舊版    : r3.107.0  (2026-11-26)　r3.107.0：版本號
+ * 舊版    : r3.106.0  (2026-11-26)　r3.106.0：版本號
+ * 舊版    : r3.105.0  (2026-11-26)　r3.105.0：版本號
+ * 舊版    : r3.104.2  (2026-11-26)　r3.104.2：版本號
+ * 舊版    : r3.104.1  (2026-11-26)　r3.104.1：版本號
+ * 舊版    : r3.104.0  (2026-11-26)　r3.104.0：版本號
+ * 舊版    : r3.103.0  (2026-11-26)　r3.103.0：版本號
+ * 舊版    : r3.102.0  (2026-11-26)　r3.102.0：版本號
+ * 舊版    : r3.101.0  (2026-11-26)　r3.101.0：版本號
+ * 舊版    : r3.100.0  （r3.100.0：版本號）
+ * 舊版    : r3.99.0  （r3.99.0：版本號）
+ * 舊版    : r3.98.0  （r3.98.0：版本號）
+ * 舊版    : r3.97.0  （r3.97.0：版本號）
+ * 舊版    : r3.96.0  （r3.96.0：版本號）
+ * 舊版    : r3.95.0  （r3.95.0：版本號）
+ * 舊版    : r3.94.0  （r3.94.0：版本號）
+ * 舊版    : r3.93.0  （r3.93.0：版本號）
+ * 舊版    : r3.92.0  （r3.92.0：版本號）
+ * 舊版    : r3.91.0  （r3.91.0：版本號）
+ * 舊版    : r3.90.0  （r3.90.0：版本號）
+ * 舊版    : r3.89.0  （r3.89.0：版本號）
+ * 舊版    : r3.88.0  （r3.88.0：版本號）
+ * 舊版    : r3.87.0  （r3.87.0：版本號）
+ * 舊版    : r3.86.0  （r3.86.0：版本號）
+ * 舊版    : r3.85.0  （r3.85.0：版本號）
+ * 舊版    : r3.71.1  (2026-11-24)　r3.71.1：秘傳／連段修正（跨鍵緩衝、架招成立、1 秒按鍵）　r3.71.0：r3.71.0：打刀招式／技重做（殘月主題）、身法分化、完美閃避　r3.70.0：r3.70.0：爬梯忍者、兵糧換錢　r3.69.0：r3.69.0：合戰敵人增量、攻城器具隔波、每波軍功　r3.68.0：r3.68.0：合戰回城／清地面／軍功／定位成長／本陣效果／建造點　r3.67.0：r3.67.0：合戰休息 60 秒、防禦物 10 級＋戰中強化、兵種里程碑　r3.66.0：r3.66.0：城南街道路程圖　r3.65.0：r3.65.0：出怪分散、任務頁分頁　r3.64.0：r3.64.0：劇情跳過、敵人互斥、傷害數字合併、受傷提示　r3.63.0：r3.63.0：強化倍率、批次賣出分解、商店補強　r3.62.0：寶珠碎片與魔化道摩、第 10 章潮汐、第 12 章天空、稱號　r3.61.0：r3.61.0：名物 15 件、茶屋 12 品、珍品屋重做　r3.60.0：r3.60.0：合戰大改（左下面板、兵力、戰中強化、無限守家、軍令、道具）　r3.59.0：r3.59.0：探索區＋廢村、試煉場、夥伴裝備靈紋、隱藏夥伴動作、補血顯示、招式說明、合戰建築動畫、燃燒特效　r3.58.0：r3.58.0：夥伴強化（滿級效果、能力隨主角、出招回饋）　r3.57.0：物品卡折疊／守家指揮與強化／章節抉擇助陣　r3.56.0：小修（合戰結算／夥伴與小雪大小／寶箱淡出／封印檢查／物件路邊）　r3.55.0：委託公告板／任務獎勵補正／城內 NPC 移位　r3.54.0：第二批（五條大橋／世界事件／巔峰等級）　r3.53.0：第一批（秘傳書／升級／難度／小雪動作／封印檢查／任務傳送點）　舊版  （r3.52.1：版本號）
+ * 舊版    : r3.51.1  （r3.51.1：版本號）
+ * 舊版    : r3.51.0  （r3.51.0：版本號）
+ * 舊版    : r3.50.0  （r3.50.0：版本號）
+ * 舊版    : r3.49.0  （r3.49.0：版本號）
+ * 舊版    : r3.48.0  （r3.48.0：版本號）
+ * 舊版    : r3.31.0
+ * 變更    : r3.17.1 版本號（記憶體回收，修正長時間遊玩後黑屏回首頁）。
+ * 變更    : r3.17.0 版本號（鏡頭：地圖預設距離、情境自動鏡頭、移動前導）。
+ * 變更    : r3.16.0 版本號（野太刀／薙刀／鎖鎌重做；千本櫻特效）。
+ * 變更    : r3.15.0 版本號（錫杖／金棒重做）。
+ * 變更    : r3.14.0 版本號（長槍／斧重做）。
+ * 變更    : r3.13.0 版本號（鐵砲／和弓重做）。
+ * 變更    : r3.12.0 版本號（打刀重做：招式／尺寸／刃線特效）。
+ * 變更    : r3.11.1 版本號（祈願石兼歸城、第一章劇情整理、走/跑改時間制）。
+ * 變更    : r3.11.0 版本號（兩岸城中心結構、章節開場、下一步導引）。
+ * 變更    : r3.10.1 版本號（夥伴跟隨／升階修正、世界頭目宣告制、頭目戰鎖圖）。
+ * 變更    : r3.10.0 版本號（夥伴出戰系統、素材包、神社遮擋、開場走位）。
+ * 變更    : r3.5.0 版本號（隨機／世界事件、傳送役）。
+ * 變更    : r3.4.0 選單開啟時字體 ×1.2（看得更清楚）。
+ * 變更    : r3.0.3 視角遠／中／近改為 520／400／300（原中→遠、原近→中、近再拉近）。
+ * 變更    : r3.0.2 版本號同時作為素材快取參數（?v=），更新後不會讀到舊圖。
+ * 變更    : r2.0.0 字體大小（小／中／大）由 G.FS() 統一縮放 G.txt；存檔加 font、rpg（成長裝備，見 07_rpg）。
+ *           r1.1.0 新遊戲起點改為環谷神社（hub_shrine）。
+ * 說明    : 核心——設定、畫面比例（高度固定 390、寬度隨螢幕延伸＝任何比例滿版）、固定 60Hz 主迴圈、
+ *           繪圖小工具、存檔（開機讀 1 次，之後只在換場景／對話結束時合併寫入，避免頻繁讀寫）。
+ * ========================================================================== */
+'use strict';
+window.G = {
+  VER: 'r3.126.1',
+  LH: 390, LW: 844, DPR: 1, SAFE: { t: 0, r: 0, b: 0, l: 0 },
+  HERO_H: 64,                                      // 主角身高＝64 背景像素（約古社門高）＝比例尺基準
+  ZOOMS: [{ n: '遠', vis: 442 }, { n: '中', vis: 340 }, { n: '近', vis: 255 }],   // r3.19.2：三段再拉近 15%
+  FONT: '"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif',
+  FONT_S: '"Noto Serif TC","Songti TC",serif',
+  C: { ink: '#f3e8d2', sub: '#cdbfa6', gold: '#e3c27a', red: '#d8503c', panel: 'rgba(16,10,14,.86)', dim: 'rgba(243,232,210,.45)' },
+  mode: 'load', t: 0, cv: null, ctx: null, IMG: {}, D: null
+};
+(function () {
+  const cv = G.cv = document.getElementById('cv'), ctx = G.ctx = cv.getContext('2d');
+  G.resize = function () {
+    G.DPR = Math.min(2, window.devicePixelRatio || 1);
+    const w = window.innerWidth, h = window.innerHeight;
+    G.LW = Math.max(520, Math.round(G.LH * w / h));
+    cv.width = Math.round(w * G.DPR); cv.height = Math.round(h * G.DPR);
+    const cs = getComputedStyle(document.documentElement), k = G.LH / h, v = n => (parseFloat(cs.getPropertyValue(n)) || 0) * k;
+    G.SAFE = { t: v('--sat'), r: v('--sar'), b: v('--sab'), l: v('--sal') };
+    G.UI && G.UI.layout();
+  };
+  window.addEventListener('resize', G.resize);
+
+  /* ---------- 繪圖工具 ---------- */
+  G.rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); };
+  G.FS = () => [0.9, 1, 1.18][(G.SAVE.data && G.SAVE.data.font !== undefined) ? G.SAVE.data.font : 1] * (G.MENU && G.MENU.open ? 1.2 : 1);   // 選單內字體 ×1.2
+  G.txt = (t, x, y, s, col, al, font, w) => { ctx.font = `${w || 700} ${s * G.FS()}px ${font || G.FONT}`; ctx.textAlign = al || 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = col; ctx.fillText(t, x, y); };
+  G.veil = a => { ctx.fillStyle = `rgba(8,5,8,${Math.max(0, Math.min(1, a))})`; ctx.fillRect(0, 0, G.LW, G.LH); };
+  G.wrap = (t, maxW) => { const out = []; let line = ''; for (const ch of t) { if (ch === '\n') { out.push(line); line = ''; continue; } if (ctx.measureText(line + ch).width > maxW) { out.push(line); line = ch; } else line += ch; } if (line) out.push(line); return out; };
+  G.inPoly = (x, y, P) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+  G.backdrop = (img, dark) => { const s = Math.max(G.LW / img.width, G.LH / img.height), w = img.width * s, h = img.height * s; ctx.drawImage(img, (G.LW - w) / 2, (G.LH - h) / 2, w, h); if (dark) G.veil(dark); };
+
+  /* ---------- 存檔：開機讀 1 次；markDirty 後於安全時機合併寫入 ---------- */
+  const KEY = 'shinyu_remake_save', SV = 1;
+  G.SAVE = {
+    data: null, dirty: false,
+    fresh() { return { v: SV, scene: 'hub_shrine', x: 0, y: 0, hp: 120, flags: {}, cleared: {}, zoom: 1, textSpeed: 1, font: 1, log: [], rpg: null }; },
+    has() { try { return !!localStorage.getItem(KEY); } catch (e) { return false; } },
+    load() { let d = null; try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { d = null; }
+      this.data = Object.assign(this.fresh(), d && d.v === SV ? d : {}); return !!d; },
+    newGame() { const o = this.data || {}; this.data = this.fresh(); for (const k of ['zoom', 'textSpeed', 'font', 'bgm', 'sfx']) if (o[k] !== undefined) this.data[k] = o[k]; this.dirty = true; this.flush(); },
+    markDirty() { this.dirty = true; },
+    flush() { if (!this.dirty || !this.data) return true; try { localStorage.setItem(KEY, JSON.stringify(this.data)); this.dirty = false; return true; } catch (e) { return false; } }
+  };
+  window.addEventListener('pagehide', () => G.SAVE.flush());
+  document.addEventListener('visibilitychange', () => { if (document.hidden) G.SAVE.flush(); });
+
+  /* ---------- 主迴圈：固定 60Hz 邏輯、每個畫面幀繪製 1 次 ---------- */
+  let last = 0, acc = 0;
+  G.start = function () {
+    const frame = ts => { if (!last) last = ts; acc += Math.min(100, ts - last); last = ts;
+      while (acc >= 1000 / 60) { G.t++; G.step(); acc -= 1000 / 60; }
+      ctx.setTransform(cv.width / G.LW, 0, 0, cv.height / G.LH, 0, 0); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      G.render(); requestAnimationFrame(frame); };
+    requestAnimationFrame(frame);
+  };
+})();
