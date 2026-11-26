@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 53_quest.js
- * Version : r3.130.0  (2026-11-27)　r3.130.0：任務步驟支援 skip()（跨章抉擇可省略步驟）
+ * Version : r3.131.0  (2026-11-27)　r3.131.0：新增 fn 自訂步驟（進圖執行一次）
+ * 舊版    : r3.130.0  (2026-11-27)　r3.130.0：任務步驟支援 skip()（跨章抉擇可省略步驟）
  * 舊版    : r3.91.0  （r3.91.0：「受傷的鼬」委託人「草叢」原本被補成村民，改成站一隻小鼬）
  * 舊版    : r3.56.0  （r3.56.0：夥伴委託人大小校正）　r3.55.0：任務獎勵依主角等級補正）　r3.52.0  (2026-11-23)  r3.52.0：每秒檢查新成立的任務並重建標記（不用換圖才出現）；小鼬用鎌鼬圖（縮小）站在任務點
  * 舊版    : r3.41.0  (2026-11-18)  r3.41.0：任務 NPC 在定點附近小走動（pace）
@@ -113,6 +114,7 @@
       if (s.done) { const a = q.after2; if (a && a.map === id) addNpc(q, a, q.id + ':after', a.u, a.name, () => run(a.lines)).qmark = ''; continue; }
       const step = q.steps[s.s]; if (!step || step.map !== id) continue;
       if (step.t === 'goto') { if (step.lines) G.STORY.later(30, () => run(step.lines, () => next(q))); else next(q); continue; }
+      if (step.t === 'fn') { const k = q.id + ':' + s.s; if (Q.spawned[k] !== id) { Q.spawned[k] = id; G.STORY.later(30, () => { if (SC.id === step.map && cur(q) === step) step.run(q, () => { if (cur(q) === step) next(q); }); }); } continue; }   // r3.131.0：自訂步驟（進圖執行一次，完成呼叫 done）
       if (step.t === 'cut' && Q.nearCut && Q.nearCut(q, step, s)) continue;   // r3.39.0：走近觸發
       if (step.t === 'cut') { const who = step.lines && step.lines[0] && step.lines[0].who; if (RUNIN[who] && !G.SAVE.data.flags['join_' + RUNIN[who]]) { runIn(RUNIN[who], () => run(step.lines, () => { runOut(); next(q); })); continue; } G.STORY.later(30, () => run(step.lines, () => next(q))); continue; }
       if (step.t === 'talk' || step.t === 'choice') addNpc(q, step, q.id + ':s', step.u, step.name, () => talk(q, step), step.name);
