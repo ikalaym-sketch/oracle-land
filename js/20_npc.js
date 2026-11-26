@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 20_npc.js
- * Version : r3.127.2  (2026-11-27)　r3.127.2：事件控制中的 NPC（st＝ev，救援士兵）不會被拉去閒聊
+ * Version : r3.128.3  (2026-11-27)　r3.128.3：時雨初始位置改到西邊神社傳點下方
+ * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：事件控制中的 NPC（st＝ev，救援士兵）不會被拉去閒聊
  * 舊版    : r3.51.0  (2026-11-18)　r3.51.0：動物比例改成真實大小（牛、鹿、馬放大；狗、狸、狐、猴、雞縮小，a/p/npcs.json 的 r）；動物影子縮小
  * 舊版    : r3.41.1  (2026-11-18)  r3.41.1：兩岸城時雨直接生成在渡口　r3.41.0：任務 NPC（hold＋pace）在定點附近小走動；沒有待機圖的 NPC 改成呼吸起伏，不再像靜止圖片
  * 舊版    : r3.30.0  (2026-11-16)　r3.30.0：路人生成時，先加進來的任務 NPC 不再重複放進畫面清單
@@ -62,7 +63,7 @@
       let p = null, zone = null;
       if (PL && shop && PL.shops && PL.shops[shop]) p = SC.snap(PL.shops[shop][0], PL.shops[shop][1], 'open', 90);
       else if (PL && !shop) { const ak = u.replace('n_a_', ''), Z = I.an ? (PL.azones && (PL.azones[ak] || PL.azones.default)) || PL.zones : PL.zones; if (Z && Z.length) { zone = Z[(zi++) % Z.length]; p = inZone(zone, taken); } }
-      if (u === 'n_t_human_clerk' && id === 'hub_city') { const c = (SC.def.nodes || {}).center; if (c) p = [c[0] + 150, c[1] - 4]; }   // r3.41.1：時雨直接站在渡口（原本先出現在店位、再被搬到渡口，看起來像閃一下就不見）
+      if (u === 'n_t_human_clerk' && id === 'hub_city') { const c = (SC.def.nodes || {}).center; if (c) p = [130, 648]; }   // r3.128.3：時雨站在西邊神社傳點下方   // r3.41.1：時雨直接站在渡口（原本先出現在店位、再被搬到渡口，看起來像閃一下就不見）
       if (!p) p = spot(shop ? rs : rr, taken, shop ? 170 : 60); if (!p) continue; taken.push(p);
       const n = mk(u, p, shop); if (zone) n.R = Math.min(n.R, zone[2]); AM.list.push(n); }
     for (const n of AM.list) if (!G.NPC.includes(n)) G.NPC.push(n);   /* r3.30.0：先加進來的任務 NPC 不再重複放進 G.NPC（同一人畫兩次） */
