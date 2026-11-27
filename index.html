@@ -2,7 +2,7 @@
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d0b10"><link rel="icon" href="icon-192.png">
 <script>
 /* 版本檢查：ver.json 不走快取；與本頁載入的版本不同就換網址重新載入（避免手機用到舊版快取）。每次開啟檢查一次，同一版本最多重載一次。 */
-(function () { var cur = 'r3.168.0';
+(function () { var cur = 'r3.169.0';
   fetch('ver.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
     if (!j || !j.v || j.v === cur) return; var k = 'reload_' + j.v; try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, 1); } catch (e) {}
     location.replace(location.pathname + '?v=' + j.v); }).catch(function () {}); })();
@@ -24,7 +24,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 </style>
 <canvas id="cv"></canvas>
 <div id="rot">請將裝置轉為橫向</div>
-<script src="js/00_core.js?v=r3.168.0"></script>
+<script src="js/00_core.js?v=r3.169.0"></script>
 <script src="js/12_anim.js?v=r3.28.0"></script>
 <script src="js/01_assets.js?v=r3.138.0"></script>
 <script src="js/02_scene.js?v=r3.168.0"></script>
@@ -48,7 +48,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/21_shop.js?v=r3.145.0"></script>
 <script src="js/22_event.js?v=r3.168.0"></script>
 <script src="js/23_warp.js?v=r3.107.0"></script>
-<script src="js/24_nav.js?v=r3.168.0"></script>
+<script src="js/24_nav.js?v=r3.169.0"></script>
 <script src="js/25_walk.js?v=r3.28.0"></script>
 <script src="js/26_boss.js?v=r3.146.0"></script>
 <script src="js/27_boss_kappa.js?v=r3.28.0"></script>
@@ -91,7 +91,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/62_doma.js?v=r3.28.0"></script>
 <script src="js/63_text.js?v=r3.164.0"></script>
 <script src="js/64_fix.js?v=r3.28.0"></script>
-<script src="js/65_maps.js?v=r3.129.0"></script>
+<script src="js/65_maps.js?v=r3.169.0"></script>
 <script src="js/66_lines.js?v=r3.111.0"></script>
 <script src="js/67_cast.js?v=r3.166.0"></script>
 <script src="js/68_xue.js?v=r3.127.4"></script>
@@ -121,10 +121,10 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/92_lab.js?v=r3.49.0"></script>
 <script src="js/93_kassen.js?v=r3.98.0"></script>
 <script src="js/94_gojo.js?v=r3.86.0"></script>
-<script src="js/95_board.js?v=r3.168.0"></script>
+<script src="js/95_board.js?v=r3.169.0"></script>
 <script src="js/96_choice.js?v=r3.57.0"></script>
 <script src="js/97_partner5.js?v=r3.58.0"></script>
-<script src="js/98_explore.js?v=r3.126.0"></script>
+<script src="js/98_explore.js?v=r3.169.0"></script>
 <script src="js/99_partner6.js?v=r3.59.0"></script>
 <script src="js/100_meibutsu.js?v=r3.96.0"></script>
 <script src="js/101_shop2.js?v=r3.61.0"></script>
@@ -170,7 +170,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/141_wboss.js?v=r3.115.0"></script>
 <script src="js/142_yvent.js?v=r3.161.0"></script>
 <script src="js/143_yaff.js?v=r3.117.0"></script>
-<script src="js/144_rebirth.js?v=r3.121.0"></script>
+<script src="js/144_rebirth.js?v=r3.169.0"></script>
 <script src="js/145_leon.js?v=r3.150.0"></script>
 <script src="js/146_bgm.js?v=r3.152.0"></script>
 <script src="js/147_hubview.js?v=r3.158.0"></script>

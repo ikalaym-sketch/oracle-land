@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 95_board.js
- * Version : r3.168.0  (2026-11-27)　r3.168.0：G.BOARD.act 給右上任務面板
+ * Version : r3.169.0  (2026-11-27)　r3.169.0：告示牌換新圖（去背手繪）；兩岸城的委託合併到城南告示牌
+ * 舊版    : r3.168.0  (2026-11-27)　r3.168.0：G.BOARD.act 給右上任務面板
  * 舊版    : r3.167.0  (2026-11-27)　r3.167.0：公告板改成全畫面木板＋和紙委託籤（種類朱印、地點、目標、預估報酬、接下）；進行中列在下方（進度條、放棄要按兩次）；指名委託要走進過該章地圖才貼
  * 舊版    : r3.133.0  (2026-11-27)　r3.133.0：各章「探索區討伐」支線改成公告板的指名委託（完成前常駐，最多 2 張）
  * 舊版    : r3.104.2  (2026-11-26)　r3.104.2：公告板貼地（補回圖下緣透明邊）、影子改柔邊、不畫互動光暈；發光標記改柔邊
@@ -74,6 +75,11 @@
         HUB.marks.push({ id: key, bq: o.id, n, x: c[0], y: c[1], label: (o.to || '居民') + '・送' + o.item, kind: 'talk', main: false, run: () => G.DLG.start([say(o.to || '居民', '這是給我的' + o.item + '？謝謝你特地跑一趟！')], () => prog(o)) }); } } }
   /* ---------- 公告板 ---------- */
   let BU = null; G.ANIM.load('pr_village').then(u => { BU = u; }, () => 0);
+  /* r3.169.0：新告示牌圖（ChatGPT 手繪，去背）；兩岸城跟城南告示牌合併（65_maps 共用 G.SIGN） */
+  const SIGN = new Image(); SIGN.src = 'a/board_notice.webp?v=' + G.VER;
+  G.SIGN = function (x, y, hk) { if (!SIGN.complete || !SIGN.naturalWidth) return false; const c = G.ctx, h = G.HERO_H * (hk || 1.6) * SC.depth(y), w = h * SIGN.naturalWidth / SIGN.naturalHeight;
+    c.save(); c.translate(x + w * 0.1, y); c.scale(1, 0.22); const g = c.createRadialGradient(0, 0, 0, 0, 0, w * 0.6); g.addColorStop(0, 'rgba(25,16,8,.5)'); g.addColorStop(0.6, 'rgba(25,16,8,.25)'); g.addColorStop(1, 'rgba(25,16,8,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, w * 0.6, 0, 6.283); c.fill(); c.restore();
+    c.drawImage(SIGN, x - w / 2, y - h * 0.985, w, h); return true; };
   function spot() { const o = POS[SC.id]; if (!o) return null; return (SC.snap && SC.snap(o[0], o[1], 'open', 160)) || o; }
   /* r3.167.0：公告板改成全畫面木板＋和紙委託籤（行旅繪圖同款），取代原本一長串對話選項 */
   const M = G.MENU, ctx = G.ctx, C = G.C, PAPER = '#efe4cb', PAPER2 = '#dccdab', INK = '#2a1d16', INK2 = '#5b4636', SHU = '#b8322a', GOLD = C.gold;
@@ -121,13 +127,14 @@
         const pw = cw - 100, py = y + 38; ctx.fillStyle = 'rgba(255,255,255,.1)'; G.rr(x + 10, py, pw, 6, 3); ctx.fill(); ctx.fillStyle = GOLD; G.rr(x + 10, py, Math.max(6, pw * o.k / o.n), 6, 3); ctx.fill();
         G.txt(o.k + '／' + o.n + '　' + nm(o.map), x + 10, py + 14, 9, C.sub, 'left', G.FONT, 700);
         const conf = BV.pick === o.id; button(x + cw - 82, y + 12, 74, ah - 24, conf ? '確定放棄' : '放棄', () => { if (conf) drop(o); else BV.pick = o.id; }); }); } };
-  function place() { const id = SC.id; if (!POS[id]) return; if (!G.SAVE.data.flags.prologue) return; const p = spot(); if (!p || !HUB.marks) return;
+  function place() { const id = SC.id; if (!POS[id] || id === 'hub_city') return; /* r3.169.0：兩岸城改用城南告示牌（65_maps） */ if (!G.SAVE.data.flags.prologue) return; const p = spot(); if (!p || !HUB.marks) return;
     HUB.marks = HUB.marks.filter(m => m.id !== 'board'); HUB.marks.push({ id: 'board', x: p[0], y: p[1] + 6, label: '委託公告板', kind: 'look', main: false, _obj: 1, run: openBoard }); }   // r3.104.2：_obj＝不畫地上光暈（公告板本身就是物件）
   /* r3.104.2：圖格下緣到最低不透明像素的距離（只算一次，存在格資料上） */
   function padOf(U, f) { if (f._pad !== undefined) return f._pad; f._pad = 0; try { const im = U.imgs[f[7] || 0], c = document.createElement('canvas'); c.width = f[2]; c.height = f[3]; const g = c.getContext('2d'); g.drawImage(im, f[0], f[1], f[2], f[3], 0, 0, f[2], f[3]);
       const d = g.getImageData(0, 0, f[2], f[3]).data; let bot = f[3] - 1; outer: for (; bot > 0; bot--) for (let x = 0; x < f[2]; x++) if (d[(bot * f[2] + x) * 4 + 3] > 40) break outer; f._pad = Math.max(0, f[5] - bot - 1); } catch (x) { f._pad = 0; } return f._pad; }
   const dm0 = G.STORY.drawMarks.bind(G.STORY); G.STORY.drawMarks = function () { const m = HUB.marks && HUB.marks.find(k => k.id === 'board'), ctx = G.ctx;
-    if (m && BU && BU.act.sign_village_idle) { const f = BU.act.sign_village_idle.f[0], sc = 70 * SC.depth(m.y) / f[3], pad = padOf(BU, f) * sc;   // r3.104.2：圖下緣的透明邊補回來（不再懸空）；影子改柔邊、貼住柱腳
+    if (m && G.SIGN(m.x, m.y, 1.6)) { if (BD().offer.length) { const a = 0.6 + 0.4 * Math.sin(G.t * 0.12); G.txt('！', m.x, m.y - G.HERO_H * 1.75 * SC.depth(m.y), 18, `rgba(255,214,110,${a})`, 'center', G.FONT_S, 900); } }
+    else if (m && BU && BU.act.sign_village_idle) { const f = BU.act.sign_village_idle.f[0], sc = 70 * SC.depth(m.y) / f[3], pad = padOf(BU, f) * sc;   // r3.104.2：圖下緣的透明邊補回來（不再懸空）；影子改柔邊、貼住柱腳
       ctx.save(); ctx.translate(m.x, m.y); ctx.scale(1, 0.26); const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, f[2] * sc * 0.42); sg.addColorStop(0, 'rgba(25,16,8,.55)'); sg.addColorStop(0.6, 'rgba(25,16,8,.3)'); sg.addColorStop(1, 'rgba(25,16,8,0)'); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, f[2] * sc * 0.42, 0, 6.283); ctx.fill(); ctx.restore();
       G.ANIM.draw(BU, f, m.x, m.y + pad, sc, false, 1);
       if (BD().offer.length) { const a = 0.6 + 0.4 * Math.sin(G.t * 0.12); G.txt('！', m.x, m.y - 80 * SC.depth(m.y), 18, `rgba(255,214,110,${a})`, 'center', G.FONT_S, 900); } }
@@ -135,7 +142,7 @@
       const gg = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); gg.addColorStop(0, `rgba(150,255,170,${a * 0.4})`); gg.addColorStop(1, 'rgba(150,255,170,0)'); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, rx, 0, 6.283); ctx.fill(); ctx.restore(); }
     return dm0.apply(this, arguments); };
   const en0 = G.STORY.onEnter.bind(G.STORY); G.STORY.onEnter = function (id) { en0(id); for (const o of BD().act) o._sp = 0; G.STORY.later(45, () => { if (SC.id !== id) return; place(); setup(); }); };
-  let tk = 0; const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0(); if (++tk % 60) return; if (POS[SC.id] && HUB.marks && !HUB.marks.some(m => m.id === 'board')) place(); setup();   // 52_hub 重建標記時會清掉：每秒補回
+  let tk = 0; const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0(); if (++tk % 60) return; if (POS[SC.id] && SC.id !== 'hub_city' && HUB.marks && !HUB.marks.some(m => m.id === 'board')) place(); setup();   // 52_hub 重建標記時會清掉：每秒補回
     for (const m of HUB.marks || []) if (m.bq && m.n && m.n.x > -999) { m.x = m.n.x; m.y = m.n.y; } };
   /* 指引：沒有主線指引時，指向進行中的委託 */
   const gd0 = Q.guide.bind(Q); Q.guide = function () { const g = gd0(); if (g && g.text) return g; const o = BD().act[0]; if (!o) return g;

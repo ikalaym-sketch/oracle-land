@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 144_rebirth.js
- * Version : r3.121.0  (2026-11-26)　r3.121.0：轉生保留里歐外觀（等級、招式、按鍵）
+ * Version : r3.169.0  (2026-11-27)　r3.169.0：內殿換 ChatGPT 新圖，可走範圍／伊邪那美／出口位置重定，人物比例同野外
+ * 舊版    : r3.121.0  (2026-11-26)　r3.121.0：轉生保留里歐外觀（等級、招式、按鍵）
  * 舊版    : r3.119.1  (2026-11-26)　r3.119.1：內殿鏡頭往上偏（祭壇入鏡）
  * 舊版    : r3.119.0  (2026-11-26)
  * 變更    : r3.119.0 新增。平衡第 11 步：轉生（神社內殿・伊邪那美）。
@@ -24,14 +25,14 @@
   /* ---------- 夥伴額外技能點 ---------- */
   (function hkP() { const PY = G.PARTY; if (!PY || !PY.earned) return setTimeout(hkP, 80); const e0 = PY.earned; PY.earned = id => e0(id) + (((S().rb || {}).pb || {})[id] || 0); })();
   /* ---------- 內殿場景 ---------- */
-  const OUT = [[0, 602], [180, 621], [1612, 630], [1612, 809], [0, 809]];
-  function reg() { if (!G.D || !G.D.scenes || G.D.scenes[ID]) return; G.D.scenes[ID] = { name: '神社・內殿', w: 1672, h: 941, outer: OUT, obstacles: [], start: [120, 700], nodes: { west_arrival: [120, 700], center: [836, 690], altar: [836, 660] }, portals: [], safe: true, region: 'wind', lv: 1, foes: [], depth: [1.6, 1.85] };   /* 室內：人物比例放大 */
+  const OUT = [[0, 499], [1672, 499], [1672, 743], [0, 743]];   // r3.169.0：ChatGPT 新內殿圖（地板 50% 起；只取上半段）
+  function reg() { if (!G.D || !G.D.scenes || G.D.scenes[ID]) return; G.D.scenes[ID] = { name: '神社・內殿', w: 1672, h: 941, outer: OUT, obstacles: [], start: [120, 580], nodes: { west_arrival: [120, 580], center: [836, 600], altar: [836, 520] }, portals: [], safe: true, region: 'wind', lv: 1, foes: [], depth: [0.95, 1.12] };   /* r3.169.0：新圖比例同野外圖 */
     if (G.WORLD && G.WORLD.meta) G.WORLD.meta[ID] = { safe: true, town: true, lv: 1, spawn: [0, 0], foes: [], mats: [] }; }
   const img0 = G.ASSET.img.bind(G.ASSET); G.ASSET.img = (k, src) => img0(k, k === ID ? 'a/m/N_EXSH.webp' : src);
   const boot0 = G.ASSET.boot.bind(G.ASSET); G.ASSET.boot = () => boot0().then(r => { try { reg(); } catch (e) { console.warn('rebirth reg', e); } return r; });
   /* ---------- 伊邪那美（祭壇前，頭目圖待機） ---------- */
   let IZ = null;
-  function placeIz() { G.NPC = G.NPC.filter(n => !n._iz); IZ = null; if (SC.id !== ID) return; const n = { _iz: 1, name: '', x: 836, y: 668, t: 0 }; IZ = n; G.NPC.push(n);
+  function placeIz() { G.NPC = G.NPC.filter(n => !n._iz); IZ = null; if (SC.id !== ID) return; const n = { _iz: 1, name: '', x: 836, y: 530, t: 0 }; IZ = n; G.NPC.push(n);
     Promise.resolve(G.BOSS && G.BOSS.load && G.BOSS.load('izanami')).catch(() => 0); }
   (function hkD() { if (!G.drawNpc) return setTimeout(hkD, 60); const d0 = G.drawNpc; G.drawNpc = function (n) { if (!n || !n._iz) return d0.apply(this, arguments);
       const u = G.ANIM.get('b_izanami'), r = u && u.act.izanami_idle_right3q; if (!r) return; n.t++; const f = r.f[Math.floor(n.t / 6) % r.f.length], L = r.f.map(q => q[5]).sort((a, b) => a - b), vh = L[L.length >> 1] || 200, s = SC.depth(n.y), sc = G.HERO_H * 1.3 * s / vh, c = G.ctx;
@@ -41,8 +42,8 @@
   function marks() { if (!G.HUB || !G.HUB.marks) return; const M = G.HUB.marks;
     if (SC.id === 'hub_shrine' && cleared() && !M.some(m => m.id === 'rb_in')) { const d = SC.def, c = (d.nodes || {}).center || d.start || [800, 575], p = (SC.snap && SC.snap(c[0] + 140, c[1] - 30, 'open', 200)) || c;
       M.push({ id: 'rb_in', q: 1, x: p[0], y: p[1], label: '內殿', kind: 'look', main: false, run: () => G.HUB.travel(0, '你們推開內殿的門，空氣忽然冷了下來……', [], ID) }); }
-    if (SC.id === ID) { if (!M.some(m => m.id === 'rb_out')) M.push({ id: 'rb_out', q: 1, x: 150, y: 700, label: '離開內殿', kind: 'look', main: false, run: () => G.HUB.travel(0, '', [], 'hub_shrine') });
-      if (!M.some(m => m.id === 'rb_iz')) M.push({ id: 'rb_iz', q: 1, x: 836, y: 700, label: '伊邪那美', kind: 'talk', main: false, run: ritual }); } }
+    if (SC.id === ID) { if (!M.some(m => m.id === 'rb_out')) M.push({ id: 'rb_out', q: 1, x: 150, y: 580, label: '離開內殿', kind: 'look', main: false, run: () => G.HUB.travel(0, '', [], 'hub_shrine') });
+      if (!M.some(m => m.id === 'rb_iz')) M.push({ id: 'rb_iz', q: 1, x: 836, y: 560, label: '伊邪那美', kind: 'talk', main: false, run: ritual }); } }
   (function hkE() { if (!G.STORY || !G.STORY.onEnter) return setTimeout(hkE, 60); const en0 = G.STORY.onEnter.bind(G.STORY); G.STORY.onEnter = function (id) { const r = en0(id); try { reg(); placeIz(); } catch (e) {} G.STORY.later(10, marks); return r; };
     const st0 = G.STORY.step.bind(G.STORY); let tk = 0; G.STORY.step = function () { st0(); if (++tk % 30 === 0) try { marks(); } catch (e) {} }; })();
   /* ======================= 轉生儀式 ======================= */

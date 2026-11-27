@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 65_maps.js
- * Version : r3.129.0  (2026-11-27)　r3.129.0：兩岸城換新圖：城南出口、告示牌、妖怪村回城點改新座標
+ * Version : r3.169.0  (2026-11-27)　r3.169.0：城南告示牌換新圖、兼委託公告板（點了選委託／街道路程）
+ * 舊版    : r3.129.0  (2026-11-27)　r3.129.0：兩岸城換新圖：城南出口、告示牌、妖怪村回城點改新座標
  * 舊版    : r3.100.0  (2026-11-26)　r3.100.0：妖怪村／訓練場的主線指引改成先回兩岸城（修正第一章在妖怪村被叫回第七章）
  * 舊版    : r3.88.0  （r3.88.0：城南告示牌縮小（高 74→52）、往下移 30）
  * 舊版    : r3.53.0  （r3.53.0：任務地圖只顯示同一任務鏈的傳送點）　舊版 r3.43.1  (2026-11-18)　r3.43.1：主線提示只留目標（不再寫「往左回城」等路線）；小雪同行時改「和小雪一起回神社」；城南改成看「告示牌」開啟各章街道選單（不再走進去自動跳出）；從妖怪村回城出現在東邊路口
@@ -21,7 +22,7 @@
 (function () {
   const Q = G.QST, SC = G.SC, WD = G.WORLD, HUB = G.HUB, H = G.H, F = () => G.SAVE.data.flags; if (!Q || !HUB || !WD) return;
   const say = (who, text) => ({ who, text }), act = fn => ({ do: fn });
-  const SOUTH = { rect: [748, 900, 880, 941], arr: [812, 860], mark: [892, 892], yk: [1600, 624] };   // r3.129.0：新圖城南出口＝中央大路底
+  const SOUTH = { rect: [748, 900, 880, 941], arr: [812, 860], mark: [892, 892], sign: [862, 872], yk: [1600, 624] };   // r3.169.0：sign＝新告示牌放在中央大路右側   // r3.129.0：新圖城南出口＝中央大路底
   const BM = { W_R03_07: 'W_R03_05', W_R07_07: 'R07_OSAKABE_TRIAL', W_R09_07: 'BG_R09_TS01', W_R11_05: 'BG_R11_IZ01' };   // 舊頭目圖 → 新頭目場
   const QMAP = { T_kayamori: 'W_R05_05' };
   const QSTEP = [['c7_m4', 0, 'R07_OSAKABE_TRIAL'], ['c11_m4', 0, 'BG_R11_IZ01'], ['c11_after', 0, 'BG_R11_IZ01']];
@@ -68,7 +69,7 @@
     else L.slice(0, 4).forEach((t, i) => { let p = id === 'hub_city' ? [SOUTH.mark[0] - 200 - i * 130, SOUTH.mark[1] - 50] : (d.nodes && d.nodes.west_arrival) ? [d.nodes.west_arrival[0] + 190, d.nodes.west_arrival[1] - 40 + i * 50] : [d.w / 2, d.h * 0.7];
       if (SC.snap) p = SC.snap(p[0], p[1], 'open', 200) || p;
       HUB.marks.push({ id: 'qtp:' + t.to, trip: () => tripRun(t.to), x: p[0], y: p[1], label: '任務傳送・' + nm(t.to), kind: 'look', main: !!t.q.main, run: () => tripRun(t.to) }); });
-    if (id === 'hub_city') HUB.marks.push({ id: 'south', x: SOUTH.mark[0], y: SOUTH.mark[1] - 20, label: '告示牌・各地街道', kind: 'look', main: false, run: chooser, _obj: 1 });   // r3.100.0：有立牌，不畫地面黃圈
+    if (id === 'hub_city') HUB.marks.push({ id: 'south', x: SOUTH.sign[0], y: SOUTH.sign[1] - 10, label: '告示牌', kind: 'look', main: false, run: board, _obj: 1 });   // r3.100.0：有立牌，不畫地面黃圈
     if (isQ(id)) { const qr = G.SAVE.data.qret; for (const m of HUB.marks) if (m.id === 'back') m.label = '返回・' + nm(qr && G.D.scenes[qr] ? qr : 'hub_city'); } }   // r3.54.0：顯示實際返回地點（試煉場回後山）
   /* ---------- 6. 指引：不再叫你找時雨／祈願石 ---------- */
   const gd0 = Q.guide.bind(Q);
@@ -90,9 +91,13 @@
   const en0 = G.STORY.onEnter; G.STORY.onEnter = function (id) { bossMove(); flagSync(); linkFirst(id); en0.call(G.STORY, id); try { placeTrips(); } catch (e) { console.warn('maps', e); } };
   let tk = 0; const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0(); tk++; /* r3.43.0：不再走進城南自動跳選單，改看告示牌 */ if (tk % 90 === 0) { flagSync(); placeTrips(); } };
   const boot0 = G.ASSET.boot.bind(G.ASSET); G.ASSET.boot = () => boot0().then(r => { bossMove(); for (let c = 1; c <= 12; c++) linkFirst(HUB.firstOf(c)); return r; });
+  /* r3.169.0：城南告示牌兼委託公告板（點了先選） */
+  function board() { if (!G.BOARD || !G.BOARD.openBoard) return chooser(); const L = f => [{ do: () => G.STORY.later(2, f) }];
+    G.DLG.start([{ who: '', text: '（城南的告示牌。貼著往各地的街道路程，還有城裡大家的委託。）' }, { choice: [{ label: '委託公告板', then: L(() => G.BOARD.openBoard()) }, { label: '街道路程', then: L(chooser) }, { label: '離開', then: [] }] }]); }
   /* r3.43.0：城南告示牌（pr_village 立牌），畫在地面層 */
   let BU = null; G.ANIM.load('pr_village').then(u => { BU = u; }, () => 0);
-  const dmB = G.STORY.drawMarks.bind(G.STORY); G.STORY.drawMarks = function () { if (SC.id === 'hub_city' && BU && BU.act.sign_village_idle) { const [x, y] = SOUTH.mark, f = BU.act.sign_village_idle.f[0], sc = 52 * SC.depth(y) / f[3], ctx = G.ctx;
+  const dmB = G.STORY.drawMarks.bind(G.STORY); G.STORY.drawMarks = function () { if (SC.id === 'hub_city' && G.SIGN && G.SIGN(SOUTH.sign[0], SOUTH.sign[1], 1.3)) { const B = G.BOARD && G.BOARD.BD && G.BOARD.BD(); if (B && B.offer && B.offer.length) { const a = 0.6 + 0.4 * Math.sin(G.t * 0.12); G.txt('！', SOUTH.sign[0], SOUTH.sign[1] - G.HERO_H * 1.45 * SC.depth(SOUTH.sign[1]), 18, `rgba(255,214,110,${a})`, 'center', G.FONT_S, 900); } }
+    else if (SC.id === 'hub_city' && BU && BU.act.sign_village_idle) { const [x, y] = SOUTH.mark, f = BU.act.sign_village_idle.f[0], sc = 52 * SC.depth(y) / f[3], ctx = G.ctx;
       ctx.fillStyle = 'rgba(30,20,10,.32)'; ctx.beginPath(); ctx.ellipse(x, y - 2 * sc, 30 * sc * 0.9, 5 * sc, 0, 0, 6.283); ctx.fill(); G.ANIM.draw(BU, f, x, y + 1, sc, false, 1); }   // r3.100.0：陰影貼在立牌腳下
     return dmB.apply(this, arguments); };
   G.MAPS = { SOUTH, BM, chooser, linkFirst };

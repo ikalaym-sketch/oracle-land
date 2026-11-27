@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 24_nav.js
- * Version : r3.168.0  (2026-11-27)　r3.168.0：畫面邊緣出口箭頭改由右上面板的出口列顯示
+ * Version : r3.169.0  (2026-11-27)　r3.169.0：兩岸城不畫舊像素立牌
+ * 舊版    : r3.168.0  (2026-11-27)　r3.168.0：畫面邊緣出口箭頭改由右上面板的出口列顯示
  * 舊版    : r3.108.0  (2026-11-26)　r3.108.0：雜物打破時呼叫 G.BRKFX（特殊效果）；探索區最多 3 個
  * 舊版    : r3.107.1  (2026-11-26)　r3.107.1：城鎮不放可打破雜物；野外每張圖最多 2 個、分開擺放
  * 舊版    : r3.100.0  (2026-11-26)　r3.100.0：雜物打破後 1 秒消失，本次遊玩中同一地點不再出現
@@ -143,7 +144,7 @@
       const avoid = [[G.H.x, G.H.y]].concat(d.portals.map(p => { const q = exitPt(p); return [q.x, q.y]; })); const q = stoneSpot(d, id, avoid); if (q) saveStone(u, 'save_shrine_' + rg + '_idle', q[0], q[1]); }); };
   const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0(); if (N.list.length && !G.NPC.includes(N.list[0])) G.NPC.push(...N.list.filter(o => !G.NPC.includes(o))); };
   const dn0 = G.drawNpc;
-  G.drawNpc = function (n) { if (!n.nav) return dn0(n); const hh = drawProp(n.u, n.k, n.x, n.y, n.h);
+  G.drawNpc = function (n) { if (!n.nav) return dn0(n); if (n.k === 'sign_village_idle' && SC.id === 'hub_city') return;   /* r3.169.0：兩岸城新圖不畫舊像素立牌（城南告示牌換新圖） */ const hh = drawProp(n.u, n.k, n.x, n.y, n.h);
     if (n.save && hh) { const a = 0.35 + 0.3 * Math.sin(G.t * 0.07), y = n.y - hh * 0.92; ctx.fillStyle = `rgba(255,230,160,${a})`; ctx.beginPath(); ctx.arc(n.x, y, 3 + a * 2, 0, 6.283); ctx.fill(); } };
   const st0 = G.STORY.step.bind(G.STORY);
   G.STORY.step = function () { st0(); if (G.UI.near && !G.UI.near.amb) return; let best = 56, pick = null;
