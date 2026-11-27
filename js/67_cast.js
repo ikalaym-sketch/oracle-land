@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 67_cast.js
- * Version : r3.151.3  (2026-11-27)　r3.151.3：借用同名路人當任務 NPC 時也開啟原地小走動（阿德這類後續對話 NPC 原本聊完就站著）
+ * Version : r3.159.0  (2026-11-27)　r3.159.0：兩岸城攻防篇講話者圖（冬馬、孫六、甚藏、真穗、鬼女、被綁住的小妖、玄符）
+ * 舊版    : r3.151.3  (2026-11-27)　r3.151.3：借用同名路人當任務 NPC 時也開啟原地小走動（阿德這類後續對話 NPC 原本聊完就站著）
  * 舊版    : r3.141.0  (2026-11-27)　r3.141.0：補劇情角色指定圖（新劇情 14 人＋小河童／人魚）；任務加人時同圖已有劇情專用人物（鐵心、小雪…）→ 不另生，任務記號移到他身上（原 156_castfix 併入）
  * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：戰鬥類事件（入侵、據點、伏擊…）在章節地圖的村莊也讓村民退場
  * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：同名合併跳過 noMerge（救援事件的 4 名士兵）
@@ -70,9 +71,10 @@
     /* r3.141.0：新劇情（r3.130～r3.137）沒有專屬圖的角色 */
     '半兵衛': 'n_t_human_carrier', '村長': 'n_t_human_elder', '老爺爺': 'n_p_gohei', '阿菊': 'n_p_kinu', '阿吉': 'n_jinzo', '鈴緒': 'n_suzuo', '宿場的老闆': 'n_sakubei',
     '放牛的孩子': 'n_renta', '鬼族的孩子': 'n_yuzukichi', '鬼族的攤販': 'n_t_oni_veteran', '鬼族的大叔': 'n_t_oni_veteran', '鬼灘': 'n_t_oni_veteran', '人類的攤販': 'n_stall_vendor',
-    '劍士的亡魂': 'n_toma', '時雨': 'n_t_human_clerk' };
+    '劍士的亡魂': 'n_toma', '時雨': 'n_t_human_clerk',
+    '冬馬': 'n_toma', '孫六': 'n_t_human_guard', '甚藏': 'n_jinzo', '真穗': 'n_maho' };   /* r3.159.0：兩岸城攻防篇 */
   const UX = { '小河童': { k: 'an', key: () => 'n_t_kappa_mentor', hk: 0.6 }, '受傷的人魚': { k: 'an', key: () => 'e_kijo', hk: 0.9, en: 'kijo' } };   // r3.141.0：縮小的長者圖（原本被比對成河童頭目）／人魚借鬼女圖
-  const UE = { '黑符陰陽師': 'doma_ritualist', '道摩的使者': 'doma_ritualist', '無名武士': 'kengo', '傘妖': 'karakasa' };   // 敵人圖（站著不打）
+  const UE = { '鬼女': 'kijo', '被綁住的小妖': 'amanojaku', '玄符': 'kuroonmyo', '黑符陰陽師': 'doma_ritualist', '道摩的使者': 'doma_ritualist', '無名武士': 'kengo', '傘妖': 'karakasa' };   // 敵人圖（站著不打）
   // r3.41.0：完全同名才套（原本「道摩」會被別名比對成「道摩的使者」→ 用了黑衣兵的圖）
   function unit(n) { for (const k in UA) if (k === n) return { k: 'amb', u: UA[k] }; if (UX[n]) { pre(UX[n].en); return UX[n]; } for (const k in UE) if (k === n) { const t = UE[k]; if (G.ANIM.get && G.ANIM.get('e_' + t)) return { k: 'an', key: () => 'e_' + t, hk: 1 }; pre(t); return null; } return null; }
   const pre = t => { if (G.ENEMY_IDX && G.ENEMY_IDX[t] && G.ASSET.enemies) G.ASSET.enemies([t]); };
