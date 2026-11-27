@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 05_dialog.js
- * Version : r3.166.0  (2026-11-27)　r3.166.0：選項上方已有台詞時不再顯示「你要怎麼做？」
+ * Version : r3.207.0  (2026-11-28)　r3.207.0：選項改排在對話框內下方（對話框、半身像、上一句台詞都留著；不再另開一個畫面、不畫長外框）
+ * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：選項上方已有台詞時不再顯示「你要怎麼做？」
  * 舊版    : r3.160.0  (2026-11-27)　r3.160.0：玄符（黑符的雙胞胎哥哥）共用黑符半身像
  * 舊版    : r3.157.2  (2026-11-27)　r3.157.2：對話開始前先等半身像載好（最多 0.6 秒），連選項分支一起預載——修正第一次出場（如五條大橋弁慶）沒有頭像
  * 舊版    : r3.157.0  (2026-11-27)　r3.157.0：接入 68 張對話半身像（a/bust，講話時才載入；茨木／景綱／晴明等簡稱也對得到）
@@ -63,7 +64,7 @@
       if (B.log && hit(p, B.log)) { this.log = true; return; }
       if (B.skip && hit(p, B.skip)) { this.skip = !this.skip; return; }
       if (this.choice) { const ch = this.choice;
-        for (let k = 0; k < ch.length; k++) { const c = ch[k]; if (!hit(p, choiceRect(k, ch.length))) continue;
+        for (let k = 0; k < ch.length; k++) { const c = ch[k]; if (!hit(p, (this.CR && this.CR.n === ch.length && this.CR.r[k]) || choiceRect(k, ch.length))) continue;
           if (c.set) G.SAVE.data.flags[c.set] = true;
           G.SAVE.data.log.push(['▶', c.label]); this.list.splice(this.i, 1, ...(c.then || [])); if (this.i >= this.list.length) this.finish(); else this.prep(); return; }
         return; }
@@ -81,14 +82,22 @@
   D.draw = function () { const hd = this.hold; if (hd) { if (G.t - hd.t > 36 || hd.names.every(n => G.IMG['bust_' + BN[n]] || BREQ['bust_' + BN[n]] === 2)) this.hold = null; else return; }
     const L = this.list && this.list[this.i]; if (!L) return;
     if (this.log) return drawLog();
-    if (this.choice) { G.veil(0.35);
-      const cy0 = choiceRect(0, this.choice.length).y; let pv = null; for (let j = this.i - 1; j >= 0; j--) { const q = this.list[j]; if (q && q.text) { pv = q; break; } }   /* r3.154.0：選項上方保留上一句台詞，看得出是誰在問 */
-      if (pv && cy0 - 30 > 70 + G.SAFE.t) { const pw = Math.min(600, G.LW - 60), px = (G.LW - pw) / 2, Ls = (ctx.font = `600 ${13 * G.FS()}px ${G.FONT}`, G.wrap(pv.text, pw - 32)).slice(0, 2), ph = 20 + Ls.length * 18 + (pv.who ? 14 : 0), py = cy0 - 34 - ph;
-        ctx.fillStyle = 'rgba(12,8,10,.88)'; G.rr(px, py, pw, ph, 8); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.4)'; ctx.lineWidth = 1; G.rr(px + .5, py + .5, pw - 1, ph - 1, 8); ctx.stroke();
-        let ly = py + 14; if (pv.who) { G.txt(pv.who, px + 16, ly, 12, G.C.gold, 'left', G.FONT_S, 900); ly += 16; } Ls.forEach(l => { G.txt(l, px + 16, ly + 2, 13, G.C.ink, 'left', G.FONT, 600); ly += 18; }); }
-      if (!pv) G.txt('你要怎麼做？', G.LW / 2, choiceRect(0, this.choice.length).y - 22, 13, G.C.sub, 'center', G.FONT, 500);
-      this.choice.forEach((c, k) => { const b = choiceRect(k, this.choice.length); ctx.fillStyle = 'rgba(16,10,14,.9)'; G.rr(b.x, b.y, b.w, b.h, 8); ctx.fill();
-        ctx.strokeStyle = G.C.gold; ctx.lineWidth = 1.2; G.rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 8); ctx.stroke(); choiceLabel(c.label, b); });
+    /* r3.207.0：選項不再另開畫面——對話框維持原樣（半身像、名字牌、上一句台詞都留著），選項排在框內下方；
+     * 每個選項只有一小塊淡底＋◆，沒有長外框。選項短＝排成一橫排；放不下＝兩欄；再長＝一欄多列（框往上長高，不縮小）。 */
+    if (this.choice) { const ch = this.choice, n = ch.length, fs = G.FS(), b0 = box(); let pv = null; for (let q = this.i - 1; q >= 0; q--) { const qq = this.list[q]; if (qq && qq.text) { pv = qq; break; } }
+      const x = b0.x, w = b0.w, tx = x + 22, inW = w - 44, narr = !pv || !pv.who || pv.text[0] === '（'; ctx.font = `${narr ? 500 : 700} ${16 * fs}px ${G.FONT}`; const lines = (pv ? G.wrap(pv.text, x + w - tx - 26) : ['你要怎麼做？']).slice(0, 2);
+      ctx.font = `900 ${15 * fs}px ${G.FONT_S}`; const ws = ch.map(c => ctx.measureText(c.label).width + 40 * fs), mx = Math.max(...ws), gap = 10;
+      const cols = mx <= (inW - gap * (n - 1)) / n ? n : mx <= (inW - gap) / 2 ? 2 : 1, rows = Math.ceil(n / cols), RH = Math.round((cols === 1 ? 32 : 30) * fs), optH = rows * RH + (rows - 1) * 6;
+      const h = Math.max(b0.h, Math.round(26 + lines.length * 25 * fs + 10 + optH + 14)), y = b0.y + b0.h - h, pl = pv || { who: null, text: '' };
+      busts(this, pl, x, y, w);
+      const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, 'rgba(20,14,18,.93)'); g.addColorStop(1, 'rgba(10,7,10,.97)'); ctx.fillStyle = g; G.rr(x, y, w, h, 10); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.55)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, w - 1, h - 1, 10); ctx.stroke();
+      const side = stage(this, pl), P = bustP(); if (pl.who) { ctx.font = `900 15px ${G.FONT_S}`; const nw = ctx.measureText(pl.who).width + 22, nx = side === 'R' ? x + w - P * 1.05 : side === 'L' ? x + P * 0.5 : tx - 4; ctx.fillStyle = G.C.gold; G.rr(nx, y - 13, nw, 26, 13); ctx.fill(); G.txt(pl.who, nx + nw / 2, y, 15, '#1a1014', 'center', G.FONT_S, 900); }
+      lines.forEach((ln, q) => G.txt(ln, tx, y + 34 + q * 25 * fs, 16, narr ? '#d6c9b2' : '#f6eddb', 'left', G.FONT, narr ? 500 : 700));
+      const oy = y + h - 14 - optH, cw = (inW - gap * (cols - 1)) / cols, R = []; ctx.fillStyle = 'rgba(227,194,122,.22)'; ctx.fillRect(tx, oy - 8, inW, 1);
+      ch.forEach((c, k) => { const col = k % cols, row = Math.floor(k / cols), bx = tx + col * (cw + gap), by = oy + row * (RH + 6), pulse = 0.5 + 0.5 * Math.sin(G.t * 0.12 + k * 0.9); R.push({ x: bx, y: by - 3, w: cw, h: RH + 6 });
+        ctx.fillStyle = 'rgba(255,255,255,.06)'; G.rr(bx, by, cw, RH, 6); ctx.fill(); G.txt('◆', bx + 14 * fs, by + RH / 2 + 1, 10, `rgba(243,217,138,${(0.55 + 0.45 * pulse).toFixed(2)})`, 'center', G.FONT, 700);
+        if (ws[k] > cw) choiceLabel(c.label, { x: bx + 22 * fs, y: by, w: cw - 26 * fs, h: RH }); else G.txt(c.label, bx + 28 * fs, by + RH / 2 + 1, 15, G.C.ink, 'left', G.FONT_S, 900); });
+      this.CR = { n, r: R }; const B = this.B; B.log = { x: x + w - 64, y: y - 30, w: 56, h: 24 }; B.skip = null; G.UI.pill(B.log, '記錄');
       return; }
     const { x, y, w, h } = box();
     busts(this, L, x, y, w);   // r3.145.0：半身頭像（框外上方）
