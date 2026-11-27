@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 04_ui.js
- * Version : r3.146.0  (2026-11-27)　r3.146.0：提示可帶「前往設定」按鈕；對話中與結束後 2 秒內的橫幅延後；左上改「區域 Lv／難度」
+ * Version : r3.153.0  (2026-11-27)　r3.153.0：小地圖點擊→行旅繪圖；方向提示不壓小地圖
+ * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：提示可帶「前往設定」按鈕；對話中與結束後 2 秒內的橫幅延後；左上改「區域 Lv／難度」
  * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：訊息排隊（橫幅、提示各一次一個，其餘排隊）
  * 舊版    : r3.110.0  (2026-11-26)　r3.110.0：藥鍵左邊加「鎌鼬之羽」召喚鍵（擁有後才出現）；r3.111.0：左上「敵 Lv」顯示實際等級（困難以上含主角等級）；r3.113.0：點世界事件提醒＝直接傳送到該地圖開始
  * 舊版    : r3.100.0  (2026-11-26)　r3.100.0：右上「談／調查」鈕取消：附近有互動對象且沒有敵人時，「斬」鍵變成「談／查」，上方顯示對象名稱
@@ -77,6 +78,7 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
     if (G.MENU.open) { G.MENU.down(p); return; }
     if (B.toast && UI.tst && UI.tst.act && hit(p, B.toast)) { const a = UI.tst.act; UI.tst = null; IN.stick = null; a(); return; }   // r3.146.0
     if (hit(p, B.menu)) { G.MENU.show(); IN.stick = null; return; }
+    if (G.MMAP && G.MMAP.box && hit(p, G.MMAP.box)) { IN.stick = null; G.ROUTE.atlas(); return; }   // r3.153.0：小地圖→行旅繪圖
     if (B.wev && hit(p, B.wev)) { IN.stick = null; if (G.EV && G.EV.goWorld) G.EV.goWorld(); else { G.MENU.show(); G.MENU.goto && G.MENU.goto('地圖'); } return; }   // r3.19.2：世界事件提醒
     if (G.SHOP && hit(p, B.potion)) { G.SHOP.quick(); return; }
     if (G.FEATHER && G.FEATHER.has() && hit(p, B.feather)) { G.FEATHER.use(); return; }
@@ -126,7 +128,7 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
     if (inside) return;
     const cx = G.LW / 2, cy = G.LH / 2, dx = p.x - cx, dy = p.y - cy;
     const k = Math.min((G.LW / 2 - m) / Math.abs(dx || 1e-3), ((dy < 0 ? cy - top : bot - cy)) / Math.abs(dy || 1e-3));
-    const ax = cx + dx * k, ay = dx > 0 ? Math.min(cy + dy * k, G.LH * 0.28) : cy + dy * k, an = Math.atan2(dy, dx), pulse = 0.75 + 0.25 * Math.sin(G.t * 0.15);
+    const MB = G.MMAP && G.MMAP.box, ax = cx + dx * k, ay0 = dx > 0 ? Math.min(cy + dy * k, G.LH * 0.28) : cy + dy * k, ay = MB && ax > MB.x - 40 && ay0 < MB.y + MB.h + 14 ? MB.y + MB.h + 14 : ay0 /* r3.153.0：不壓小地圖 */, an = Math.atan2(dy, dx), pulse = 0.75 + 0.25 * Math.sin(G.t * 0.15);
     ctx.save(); ctx.translate(ax, ay); ctx.rotate(an); ctx.globalAlpha = pulse;
     ctx.fillStyle = C.gold; ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-6, -11); ctx.lineTo(-1, 0); ctx.lineTo(-6, 11); ctx.closePath(); ctx.fill(); ctx.restore();
     const dist = Math.round(Math.hypot(tg.x - G.H.x, tg.y - G.H.y) / 10), lab = tg.label + '・' + dist + 'm';

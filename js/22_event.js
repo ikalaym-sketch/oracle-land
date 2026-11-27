@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 22_event.js
- * Version : r3.146.0  (2026-11-27)　r3.146.0：菁英／章節頭目血條移到上方中央，菁英在畫面外不顯示
+ * Version : r3.153.0  (2026-11-27)　r3.153.0：世界事件提醒移到小地圖下方
+ * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：菁英／章節頭目血條移到上方中央，菁英在畫面外不顯示
  * 舊版    : r3.113.0  (2026-11-26)　r3.113.0：匯出事件工具 EV.H（140_events 新世界事件用）
  * 舊版    : r3.107.0  (2026-11-26)　r3.107.0：副本、合戰難度改只疊等級（不乘血量／攻擊）
  * 舊版    : r3.56.0  （r3.56.0：寶箱打開後淡出移除；道摩軍人數加倍＋援軍　r3.54.0：世界事件——人已在該圖也會開始、任務波次結束後補發、被任務打斷可重來；山賊營／入侵／道摩軍加合戰防禦物與更多守軍；道摩大筒會砲擊　r3.28.0：炭里改為第五章「炭里長屋」　r3.19.3：世界事件提醒移到選單鍵下方）
@@ -251,7 +252,7 @@
   /* 地圖頁：最下方顯示目前的世界事件 */
   /* r3.19.2：世界事件提醒改畫在遊戲畫面右上（藥鍵下方），點一下開地圖頁 */
   const udW = G.UI.draw; G.UI.draw = function () { udW(); const w = EV.world(); const B = G.UI.B; B.wev = null; if (!w.k || w.done) return;
-    const t = '世界事件：' + EV.worldText(); ctx.font = `700 ${11 * G.FS()}px ${G.FONT}`; const tw = Math.min(G.LW * 0.42, ctx.measureText(t).width + 22), x = B.menu.x + B.menu.w - tw, y = B.menu.y + B.menu.h + 8, h = 24;   // r3.19.3：藥鍵移走，提醒上移到選單下方
+    const t = '世界事件：' + EV.worldText(); ctx.font = `700 ${11 * G.FS()}px ${G.FONT}`; const tw = Math.min(G.LW * 0.42, ctx.measureText(t).width + 22), x = B.menu.x + B.menu.w - tw, y = (G.MMAP && G.MMAP.box ? G.MMAP.box.y + G.MMAP.box.h : B.menu.y + B.menu.h) + 8, h = 24;   // r3.19.3：藥鍵移走，提醒上移到選單下方
     ctx.fillStyle = 'rgba(120,70,20,.78)'; G.rr(x, y, tw, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(243,217,138,.7)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, tw - 1, h - 1, 12); ctx.stroke();
     G.txt(t, x + tw / 2, y + h / 2 + 1, 11, '#f3d98a', 'center', G.FONT, 700); B.wev = { x, y, w: tw, h }; };
   /* 迷霧＋頭目血條 */
