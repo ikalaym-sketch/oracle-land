@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 124_statui.js
- * Version : r3.102.0  (2026-11-26)　r3.102.0：角色頁可由其他模組加分頁（M.CTABX：共鳴、玉銘）；詞條頁勾玉改顯示新勾玉合計
+ * Version : r3.203.0  (2026-11-28)　r3.203.0：夥伴屬性頁改成有欄名的表格
+ * 舊版    : r3.102.0  (2026-11-26)　r3.102.0：角色頁可由其他模組加分頁（M.CTABX：共鳴、玉銘）；詞條頁勾玉改顯示新勾玉合計
  * 舊版    : r3.97.0  (2026-11-26)
  * 變更    : r3.97.0 新增。屬性介面（平衡第 5 步，分頁版）。
  *           ・角色 › 狀態：上方分頁「總覽／屬性／輸出與防護／詞條／套裝」。
@@ -107,8 +108,11 @@
   if (PY) PY.attrTab = function (id, x, y, w, h) { const s = PY.stats(id), c = PY.data(id) || {}, g = {};
     for (const k in c.eq || {}) { const it = c.eq[k]; if (!it) continue; const st = R.itemStats(it); for (const a of ['hp', 'atk', 'def', 'crit', 'critD']) g[a] = (g[a] || 0) + (st[a] || 0); }
     const half = (w - 44) / 2, L = 24 * fs(), ks = ['hp', 'atk', 'def', 'crit', 'critD'];
-    T('基礎＝夥伴等級、定位＋隨主角成長；綠字＝夥伴裝備', x + 14, y + 10, 10, C.dim, 'left', G.FONT, 500);
-    ks.forEach((k, i) => { const cc = i % 2, r = i >> 1, xx = x + 14 + cc * (half + 16), yy = y + 36 + r * L, t = s[k] || 0, gg = Math.min(g[k] || 0, t); row3(xx, yy, half, k, t - gg, gg, t); });
-    const yy = y + 36 + 3 * L + 4;
-    const red = (s.def || 0) / ((s.def || 0) + 60) * 100; T('防禦減傷 ' + red.toFixed(1) + '%', x + 14, yy, 11, C.sub, 'left', G.FONT, 500); };
+    /* r3.203.0：屬性頁改成表格——每列一項：本身／裝備加成／合計，上面有欄位名稱（原本只有一行說明文字，數字沒有欄名） */
+    const RHh = Math.min(30 * fs(), (h - 70) / 6), x0 = x + 14, wAll = w - 28, cA = x0 + wAll * 0.46, cB = x0 + wAll * 0.70, cC = x0 + wAll - 10;
+    T('項目', x0 + 10, y + 12, 10, C.sub, 'left', G.FONT, 600); T('本身', cA, y + 12, 10, C.sub, 'right', G.FONT, 600); T('裝備加成', cB, y + 12, 10, C.sub, 'right', G.FONT, 600); T('合計', cC, y + 12, 10, C.sub, 'right', G.FONT, 600);
+    ks.forEach((k, i) => { const yy = y + 24 + i * RHh, t = s[k] || 0, gg = Math.min(g[k] || 0, t); G.ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.06)'; G.rr(x0, yy, wAll, RHh - 3, 5); G.ctx.fill(); const my = yy + (RHh - 3) / 2 + 1;
+      T(R.STATN[k] || k, x0 + 10, my, 12, C.ink, 'left', G.FONT, 600); T(num(k, t - gg), cA, my, 13, C.ink, 'right', G.FONT, 700); T(Math.abs(gg) >= 0.05 ? '+' + num(k, gg) : '—', cB, my, 13, Math.abs(gg) >= 0.05 ? GREEN : C.dim, 'right', G.FONT, 800); T(num(k, t), cC, my, 14, C.gold, 'right', G.FONT_S, 900); });
+    const yy = y + 24 + ks.length * RHh + 12; const red = (s.def || 0) / ((s.def || 0) + 60) * 100; T('受到的傷害減少 ' + red.toFixed(1) + '%（來自防禦）', x0 + 10, yy, 11, C.sub, 'left', G.FONT, 500);
+    T('本身的數值會隨夥伴等級與主角成長提高', x0 + 10, yy + 18, 10, C.dim, 'left', G.FONT, 500); };
 })();

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 16_growth.js
- * Version : r3.201.0  (2026-11-28)　r3.201.0：設定新增「按鍵位置」
+ * Version : r3.203.0  (2026-11-28)　r3.203.0：設定頁改版（分區、選項攤開）；職業頁右側改版（固定名牌＋能力／外掛能力兩頁、等級牌與類型色標）
+ * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：設定新增「按鍵位置」
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：拿掉選單「地圖」分頁（統一用小地圖→行旅繪圖）
  * 舊版    : r3.150.0  (2026-11-27)　r3.150.0：轉職為里歐時，原職業的特性／特殊／外掛不生效
  * 舊版    : r3.149.0  (2026-11-27)　r3.149.0：里歐普攻加快 ×1.15（約 15 幀），每下傷害同打刀
@@ -326,27 +327,54 @@
     const selId = M.sel.job || j.cur;
     const offL = scrollArea('jobL', x, y + 28, lw, h - 32, JOBS.length * RH + 8); clip(x, y + 28, lw, h - 32);   // r3.19.1：職業清單可捲動
     JOBS.forEach((job, i) => { const yy = y + 30 + i * RH + offL; if (yy > y + h || yy + RH < y + 28) return; const ok = reqOk(job), on = job.id === selId; ctx.fillStyle = on ? 'rgba(120,80,30,.45)' : 'rgba(255,255,255,.03)'; ctx.fillRect(x + 6, yy + 2, lw - 12, RH - 4);
-      G.txt(job.n + (job.id === j.cur ? '　◆' : ''), x + 14, yy + RH * 0.36, 13, ok ? C.ink : C.dim, 'left', G.FONT_S, 900);
-      G.txt(ok ? job.fac + '系・Lv ' + (jlv(job.id) || 0) + '／' + job.max : '解鎖：' + GR.reqText(job), x + 14, yy + RH * 0.72, 10, ok ? C.sub : C.dim, 'left', G.FONT, 500);
+      /* r3.203.0：未解鎖的字改亮一點（原本太暗看不清），右邊加狀態：目前／可轉職／未解鎖 */
+      G.txt(job.n, x + 14, yy + RH * 0.36, 13, ok ? C.ink : '#a89c88', 'left', G.FONT_S, 900);
+      G.txt(ok ? job.fac + '系・Lv ' + (jlv(job.id) || 0) + '／' + job.max : '解鎖：' + GR.reqText(job), x + 14, yy + RH * 0.72, 10, ok ? C.sub : '#8f8576', 'left', G.FONT, 500);
+      G.txt(job.id === j.cur ? '目前' : ok ? ((jlv(job.id) || 0) >= job.max ? '已滿級' : '可轉職') : '未解鎖', x + lw - 14, yy + RH * 0.36, 10, job.id === j.cur ? '#f3d98a' : ok ? '#86cf8f' : '#8f8576', 'right', G.FONT, 700);
       hit(x + 6, Math.max(yy + 2, y + 28), lw - 12, RH - 4, () => { M.sel.job = job.id; }); }); ctx.restore();
+    /* r3.203.0：右側改版——上方固定：職業名、等級條、轉職／外觀按鈕、特性卡；下方分兩頁「能力」「外掛能力」（目前職業才有），不用捲到最底才找得到外掛。
+     * 能力＝一列一項：等級牌（達成＝金底）＋類型色標＋名稱＋效果（太長自動換行）；外掛＝上排格子、下排可掛的能力清單，點格子再點能力就換好。 */
     const job = JB[selId], cx = x + lw + 10, cw = w - lw - 10; box(cx, y, cw, h);
-    const ok = reqOk(job), L = jlv(job.id) || 0, isCur = job.id === j.cur;
-    const ext = isCur ? GR.extSlots() : 0, rows = job.ab.length + 4 + (isCur ? ext + 2 : 0);
-    const off = scrollArea('job', cx, y, cw, h, 120 + rows * 26 * fs()); clip(cx, y, cw, h); let yy = y + 18 + off;
-    G.txt(job.n + '（' + job.fac + '系）', cx + 14, yy, 16, C.gold, 'left', G.FONT_S, 900);
-    const xp = j.xp[job.id] || 0; G.txt('Lv ' + L + '／' + job.max + (L && L < job.max ? '　職業點 ' + Math.floor(xp) + '／' + need(L) : '') + '　招式 Lv ' + (isCur ? GR.mvLv() : '—'), cx + 14, yy + 22, 11, C.sub, 'left', G.FONT, 500);
-    const bw = 92; if (!isCur) button(cx + cw - bw - 12, yy - 8, bw, 30, ok ? (GR.canChange() ? '轉職' : '需在神社') : '未解鎖', ok && GR.canChange() ? () => GR.change(job.id) : null, ok && GR.canChange() ? 'main' : 'off');
-    const skinOn = (j.skin || 'samurai') === job.id; button(cx + cw - bw - 12, yy + 26, bw, 26, skinOn ? '外觀使用中' : '換此外觀', ok && L ? () => GR.setSkin(job.id) : null, skinOn ? 'main' : ok && L ? '' : 'off');
-    yy += 66; ctx.font = `700 ${11 * fs()}px ${G.FONT}`; G.wrap('特性【' + job.trait[0] + '】' + job.trait[1] + '（只在此職業生效）', cw - 28).forEach(l => { G.txt(l, cx + 14, yy, 11, C.ink, 'left', G.FONT, 700); yy += 20 * fs(); }); yy += 4;
-    for (const a of job.ab) { const lr = L >= a[0], na = a[4].na; G.txt('Lv' + a[0] + '　' + a[1], cx + 14, yy, 11, lr ? C.gold : C.dim, 'left', G.FONT, 700);
-      G.txt('【' + a[2] + '】' + a[3], cx + 90, yy, 11, lr ? (na ? C.dim : C.ink) : C.dim, 'left', G.FONT, 500); yy += 24 * fs(); }
-    G.txt('基本＝永久生效（換職保留）；特殊＝本職全開＋外掛格；極意／覺醒＝本職限定', cx + 14, yy, 10, C.dim, 'left', G.FONT, 500); yy += 26 * fs();
-    if (isCur) { G.txt('外掛特殊能力（' + ext + ' 格，3 格同系觸發共鳴：光 受傷 −8%／闇 傷害 +8%）' + (GR.F.reso ? '　共鳴中：' + GR.F.reso : ''), cx + 14, yy, 11, C.gold, 'left', G.FONT, 700); yy += 24 * fs();
-      const list = GR.extList();
-      for (let i = 0; i < ext; i++) { const k = j.ext[i] && list.includes(j.ext[i]) ? j.ext[i] : null; const lab = k ? (() => { const [jb, a] = GR.abOf(k); return jb.n + '・' + a[2]; })() : '（空）';
-        button(cx + 14, yy - 11, Math.min(320, cw - 28), 24, '格 ' + (i + 1) + '：' + lab + (list.length ? '　›' : ''), list.length ? () => { const cands = [null].concat(list.filter(c => !j.ext.includes(c) || c === k)); const n = cands[(cands.indexOf(k) + 1) % cands.length]; j.ext[i] = n; R().recalc(); G.SAVE.markDirty(); } : null, list.length ? '' : 'off'); yy += 28 * fs(); }
-      if (!list.length) { G.txt('其他職業學會「特殊」能力後可掛在這裡', cx + 14, yy, 10, C.dim, 'left', G.FONT, 500); yy += 22; } }
-    ctx.restore();
+    const ok = reqOk(job), L = jlv(job.id) || 0, isCur = job.id === j.cur, ext = isCur ? GR.extSlots() : 0, xp = j.xp[job.id] || 0, TYC = { 基本: '#86cf8f', 特殊: '#6fb0f0', 極意: '#f0ad52', 覺醒: '#c095f0' };
+    const chip = (t, bx, my, col, fill) => { ctx.font = `800 ${10 * fs()}px ${G.FONT}`; const tw = ctx.measureText(t).width + 12, bh = 16 * fs(); ctx.fillStyle = fill ? col : 'rgba(0,0,0,.35)'; G.rr(bx, my - bh / 2, tw, bh, 4); ctx.fill(); if (!fill) { ctx.strokeStyle = col; ctx.lineWidth = 1; G.rr(bx + .5, my - bh / 2 + .5, tw - 1, bh - 1, 4); ctx.stroke(); } G.txt(t, bx + tw / 2, my + 1, 10, fill ? '#1c1410' : col, 'center', G.FONT, 800); return tw; };
+    const bw = Math.round(92 * Math.max(1, fs())), bxR = cx + cw - bw - 12; let yy = y + 20;
+    G.txt(job.n, cx + 14, yy, 17, C.gold, 'left', G.FONT_S, 900); ctx.font = `900 ${17 * fs()}px ${G.FONT_S}`; const nw = ctx.measureText(job.n).width; let hx = cx + 22 + nw; hx += chip(job.fac + '系', hx, yy, '#e3c27a') + 6; if (isCur) { hx += chip('目前職業', hx, yy, '#f3d98a', 1) + 6; if (hx + 70 * fs() < bxR) chip('招式 Lv ' + GR.mvLv(), hx, yy, '#b9ad98'); }
+    yy += 24; G.txt('Lv ' + L + '／' + job.max, cx + 14, yy, 12, C.ink, 'left', G.FONT, 700);
+    if (L && L < job.max) { const bx = cx + 14 + 74 * fs(), bwid = Math.max(60, Math.min(170, bxR - bx - 110 * fs())); ctx.fillStyle = 'rgba(255,255,255,.1)'; G.rr(bx, yy - 3, bwid, 6, 3); ctx.fill(); ctx.fillStyle = C.gold; G.rr(bx, yy - 3, Math.max(4, bwid * Math.min(1, xp / need(L))), 6, 3); ctx.fill(); G.txt(Math.floor(xp) + '／' + need(L), bx + bwid + 8, yy, 10, C.sub, 'left', G.FONT, 600); }
+    if (!isCur) button(bxR, y + 8, bw, 28, ok ? (GR.canChange() ? '轉職' : '需在神社') : '未解鎖', ok && GR.canChange() ? () => GR.change(job.id) : null, ok && GR.canChange() ? 'main' : 'off');
+    const skinOn = (j.skin || 'samurai') === job.id; button(bxR, y + (isCur ? 8 : 40), bw, 26, skinOn ? '外觀使用中' : '換此外觀', ok && L ? () => GR.setSkin(job.id) : null, skinOn ? 'main' : ok && L ? '' : 'off');
+    yy = y + (isCur ? 62 : 74); ctx.font = `600 ${11 * fs()}px ${G.FONT}`; { const tl = G.wrap(job.trait[1] + '（只在此職業生效）', cw - 44), th = 24 * fs() + tl.length * 16 * fs();
+      ctx.fillStyle = 'rgba(150,92,36,.2)'; G.rr(cx + 10, yy, cw - 20, th, 6); ctx.fill(); ctx.fillStyle = '#e3c27a'; ctx.fillRect(cx + 10, yy + 4, 3, th - 8);
+      const tw = chip('特性', cx + 22, yy + 13 * fs(), '#f3d98a', 1); G.txt(job.trait[0], cx + 28 + tw, yy + 13 * fs() + 1, 12, '#fff3d6', 'left', G.FONT_S, 900); tl.forEach((l, k) => G.txt(l, cx + 22, yy + 24 * fs() + 8 * fs() + k * 16 * fs(), 11, C.ink, 'left', G.FONT, 600)); yy += th + 8; }
+    let jt = isCur ? (M.sel.jtab || 0) : 0; if (isCur) { const used = (j.ext || []).slice(0, ext).filter(k => k && GR.extList().includes(k)).length;
+      [['能力', 0], ['外掛能力 ' + used + '／' + ext, 1]].forEach(([t, k], q) => button(cx + 10 + q * (Math.round(118 * Math.max(1, fs())) + 4), yy, Math.round(118 * Math.max(1, fs())), 26, t, () => { M.sel.jtab = k; M.scroll.job = 0; }, jt === k ? 'main' : '')); yy += 34; }
+    const top = yy, vh = y + h - top - 4;
+    if (jt === 0) { ctx.font = `500 ${11 * fs()}px ${G.FONT}`; const tx = cx + 104 * fs() + 14, tw2 = cx + cw - 16 - tx, nmW = a => { ctx.font = `900 ${12 * fs()}px ${G.FONT_S}`; return ctx.measureText(a[2] + (L >= a[0] ? '' : '　未習得')).width + 12; }, rowsH = job.ab.map(a => { const nw2 = nmW(a); ctx.font = `500 ${11 * fs()}px ${G.FONT}`; return ctx.measureText(a[3]).width <= tw2 - nw2 ? 0 : Math.max(1, G.wrap(a[3], tw2).length); }), RH2 = n => (n ? 22 * fs() + n * 15 * fs() : 24 * fs()) + 6;   /* 效果放得下就跟名稱同一行（一頁看得到更多列） */
+      const total2 = rowsH.reduce((q, n) => q + RH2(n), 0) + 30 * fs(), off = scrollArea('job', cx, top, cw, vh, total2); clip(cx, top, cw, vh); let ry = top + off;
+      job.ab.forEach((a, k) => { const rh = RH2(rowsH[k]), lr = L >= a[0], na = a[4].na, col = TYC[a[1]] || '#e3c27a'; if (ry + rh > top - 4 && ry < y + h) { ctx.fillStyle = lr ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.02)'; G.rr(cx + 10, ry, cw - 20, rh - 4, 6); ctx.fill();
+          const pw = 42 * fs(), ph = 18 * fs(), my = ry + (rowsH[k] ? 13 * fs() : (rh - 4) / 2); ctx.fillStyle = lr ? '#e3c27a' : 'rgba(0,0,0,.4)'; G.rr(cx + 16, my - ph / 2, pw, ph, 4); ctx.fill(); if (!lr) { ctx.strokeStyle = 'rgba(227,194,122,.35)'; ctx.lineWidth = 1; G.rr(cx + 16.5, my - ph / 2 + .5, pw - 1, ph - 1, 4); ctx.stroke(); } G.txt('Lv ' + a[0], cx + 16 + pw / 2, my + 1, 11, lr ? '#1c1410' : C.sub, 'center', G.FONT, 800);
+          ctx.globalAlpha = lr ? 1 : 0.6; chip(a[1], cx + 22 + pw, my, col, lr); ctx.globalAlpha = 1;
+          G.txt(a[2] + (lr ? '' : '　未習得'), tx, my + 1, 12, lr && !na ? '#fff3d6' : C.sub, 'left', G.FONT_S, 900);
+          if (!rowsH[k]) G.txt(a[3], tx + nmW(a), my + 1, 11, lr && !na ? C.ink : C.dim, 'left', G.FONT, 500); else { ctx.font = `500 ${11 * fs()}px ${G.FONT}`; G.wrap(a[3], tw2).forEach((l, q) => G.txt(l, tx, ry + 22 * fs() + 8 * fs() + q * 15 * fs(), 11, lr && !na ? C.ink : C.dim, 'left', G.FONT, 500)); } } ry += rh; });
+      let lx = cx + 14; const ly = ry + 12 * fs(); [['基本', '永久生效，換職也保留'], ['特殊', '本職全開，也能外掛'], ['極意', '本職限定']].forEach(([t, d2]) => { lx += chip(t, lx, ly, TYC[t], 1) + 4; G.txt(d2, lx, ly + 1, 10, C.sub, 'left', G.FONT, 500); ctx.font = `500 ${10 * fs()}px ${G.FONT}`; lx += ctx.measureText(d2).width + 12; });
+      ctx.restore(); }
+    else { const list = GR.extList(), gapS = 6, sw = (cw - 20 - gapS * (ext - 1)) / ext, sh = 46 * fs(); let si = Math.min(ext - 1, M.sel.jslot || 0); yy = top;
+      G.txt('3 格同系觸發共鳴：光＝受傷 −8%／闇＝傷害 +8%' + (GR.F.reso ? '　　共鳴中：' + GR.F.reso : ''), cx + 14, yy + 6, 10, GR.F.reso ? '#f3d98a' : C.sub, 'left', G.FONT, 600); yy += 18;
+      for (let q = 0; q < ext; q++) { const k = j.ext[q] && list.includes(j.ext[q]) ? j.ext[q] : null, on = q === si, sx = cx + 10 + q * (sw + gapS), ab = k ? GR.abOf(k) : null;
+        ctx.fillStyle = on ? 'rgba(150,92,36,.55)' : 'rgba(255,255,255,.05)'; G.rr(sx, yy, sw, sh, 7); ctx.fill(); ctx.strokeStyle = on ? '#fff3cf' : 'rgba(227,194,122,.35)'; ctx.lineWidth = 1; G.rr(sx + .5, yy + .5, sw - 1, sh - 1, 7); ctx.stroke();
+        G.txt('格 ' + (q + 1), sx + 8, yy + sh * 0.26, 10, on ? '#fff3d6' : C.gold, 'left', G.FONT, 700); G.txt(ab ? ab[1][2] : '（空）', sx + 8, yy + sh * 0.68, 13, ab ? '#fff3d6' : C.dim, 'left', G.FONT_S, 900); if (ab) G.txt(ab[0].n + '・' + ab[0].fac, sx + sw - 8, yy + sh * 0.26, 10, C.sub, 'right', G.FONT, 600);
+        hit(sx, yy, sw, sh, () => { M.sel.jslot = q; }); }
+      yy += sh + 8; const curK = j.ext[si] && list.includes(j.ext[si]) ? j.ext[si] : null; G.txt('選一個能力掛到「格 ' + (si + 1) + '」', cx + 14, yy + 8, 11, C.gold, 'left', G.FONT, 700);
+      button(cx + cw - 92, yy - 4, 80, 24, '卸下', curK ? () => { j.ext[si] = null; R().recalc(); G.SAVE.markDirty(); } : null, curK ? '' : 'off'); yy += 26;
+      const vh2 = y + h - yy - 4, RH3 = 40 * fs(), off = scrollArea('job', cx, yy, cw, vh2, Math.max(1, list.length) * RH3 + 8); clip(cx, yy, cw, vh2);
+      if (!list.length) G.txt('其他職業學會「特殊」能力後，就可以掛在這裡。', cx + 14, yy + 20, 11, C.dim, 'left', G.FONT, 500);
+      list.forEach((k, q) => { const ry = yy + q * RH3 + off; if (ry + RH3 < yy || ry > y + h) return; const [jb, a] = GR.abOf(k), at = j.ext.indexOf(k), mine = k === curK, used = at >= 0 && at < ext && !mine;
+        ctx.fillStyle = mine ? 'rgba(150,92,36,.45)' : 'rgba(255,255,255,.04)'; G.rr(cx + 10, ry, cw - 20, RH3 - 4, 6); ctx.fill();
+        G.txt(a[2], cx + 20, ry + RH3 * 0.3, 12, used ? C.sub : '#fff3d6', 'left', G.FONT_S, 900); ctx.font = `900 ${12 * fs()}px ${G.FONT_S}`; chip(jb.n + '・' + jb.fac + '系', cx + 28 + ctx.measureText(a[2]).width, ry + RH3 * 0.3, '#e3c27a');
+        ctx.font = `500 ${10 * fs()}px ${G.FONT}`; G.txt(cut(a[3], cw - 130, 10), cx + 20, ry + RH3 * 0.68, 10, used ? C.dim : C.ink, 'left', G.FONT, 500);
+        G.txt(mine ? '已掛在此格' : used ? '已掛在格 ' + (at + 1) : '點一下掛上', cx + cw - 20, ry + RH3 * 0.3, 10, mine ? '#f3d98a' : used ? C.dim : '#86cf8f', 'right', G.FONT, 700);
+        if (!used && !mine && ry + RH3 > yy) hit(cx + 10, Math.max(ry, yy), cw - 20, RH3 - 4, () => { j.ext[si] = k; R().recalc(); G.SAVE.markDirty(); }); });
+      ctx.restore(); }
   };
   M.OPTS = M.OPTS || {};
   const TCAT = [['基礎', '#e3c27a'], ['進階', '#e0866a'], ['輔助', '#86cf8f'], ['身法', '#6fb0f0']];
@@ -421,23 +449,33 @@
   };
   /* 設定頁加 BGM／音效 */
   /* r3.19.2：設定頁重排——兩欄同高的設定格，存檔／回標題在最下方；觸控裝置不顯示鍵盤說明 */
-  M.PAGE['設定'] = function (x, y, w, h) { const s = S(), D = G.SAVE.data, { box, hit } = ui();
-    const rows = [['視角', G.ZOOMS[D.zoom].n, () => { D.zoom = (D.zoom + 1) % 3; G.SAVE.markDirty(); }],
-      ['對話速度', ['慢', '普通', '快'][D.textSpeed], () => { D.textSpeed = (D.textSpeed + 1) % 3; G.SAVE.markDirty(); }],
-      ['字體大小', ['小', '中', '大'][D.font], () => { D.font = (D.font + 1) % 3; G.SAVE.markDirty(); G.UI.layout(); }],
-      ['按鍵位置', ['標準', '靠角 1', '靠角 2', '靠角 3', '貼齊角落'][D.pad || 0], () => { D.pad = ((D.pad || 0) + 1) % 5; G.SAVE.markDirty(); G.UI.layout(); }],   /* r3.201.0：右下角按鍵整組往角落靠、變密 */
-      ['全螢幕', document.fullscreenElement ? '開' : '關', () => G.UI.fullscreen()],
-      ['背景音樂', ['關', '小', '中', '大'][s.bgm === undefined ? 2 : s.bgm], () => { s.bgm = ((s.bgm === undefined ? 2 : s.bgm) + 1) % 4; G.SAVE.markDirty(); AU.setVol(); }],
-      ['音效', (s.sfx === undefined || s.sfx) ? '開' : '關', () => { s.sfx = !(s.sfx === undefined || s.sfx); G.SAVE.markDirty(); AU.sfx('ui'); }]];
-    for (const f of G.SET_EXTRA || []) rows.push(f());   /* r3.32.0：其他模組加的設定（難度） */
-    const cols = w >= 560 ? 2 : 1, gap = 10, cw = (w - gap * (cols - 1)) / cols, nr = Math.ceil(rows.length / cols), RH = Math.min(50 * fs(), (h - 70 * fs()) / nr - gap);
-    rows.forEach(([n, v, f, ic], i) => { const cx = x + (i % cols) * (cw + gap), ry = y + Math.floor(i / cols) * (RH + gap); box(cx, ry, cw, RH);
-      const iw = ic && G.ICO && G.ICO.drawC(ic, cx + 14 + (RH - 12) / 2, ry + RH / 2, RH - 12) ? RH - 6 : 0;   /* r3.103.0：第 4 欄＝圖示名 */
-      G.txt(n, cx + 18 + iw, ry + RH / 2 + 1, 14, C.ink, 'left', G.FONT, 700); G.txt(v + '　›', cx + cw - 18, ry + RH / 2 + 1, 14, C.gold, 'right', G.FONT, 700); hit(cx, ry, cw, RH, f); });
-    const by = y + nr * (RH + gap) + 6, bh = Math.min(46 * fs(), y + h - by - (('ontouchstart' in window) ? 4 : 22)), bw2 = (w - gap) / 2;
+  /* r3.203.0：設定頁改版——分「畫面／聲音／遊戲」三區、兩欄；選項少的直接把全部選項攤開（目前的亮起），點哪個就是哪個，不用一直點著輪；
+   * 其他模組加進來的設定（難度、夥伴指令…）維持「點一下換下一個」，但樣式統一；存檔／回標題縮成底部一排。 */
+  M.PAGE['設定'] = function (x, y, w, h) { const s = S(), D = G.SAVE.data, { box, hit } = ui(), dirty = () => G.SAVE.markDirty();
+    const seg = (n, opts, cur, set) => ({ n, opts, cur, set }), cyc = (n, v, f, ic) => ({ n, v, f, ic });
+    const SCR = [seg('視角', G.ZOOMS.map(z => z.n), D.zoom, i => { D.zoom = i; dirty(); }), seg('字體大小', ['小', '中', '大'], D.font, i => { D.font = i; dirty(); G.UI.layout(); }),
+      seg('按鍵位置', ['標準', '1', '2', '3', '貼角'], D.pad || 0, i => { D.pad = i; dirty(); G.UI.layout(); }), seg('全螢幕', ['關', '開'], document.fullscreenElement ? 1 : 0, i => { if (!!document.fullscreenElement !== !!i) G.UI.fullscreen(); })];
+    const SND = [seg('背景音樂', ['關', '小', '中', '大'], s.bgm === undefined ? 2 : s.bgm, i => { s.bgm = i; dirty(); AU.setVol(); }), seg('音效', ['關', '開'], (s.sfx === undefined || s.sfx) ? 1 : 0, i => { s.sfx = !!i; dirty(); if (i) AU.sfx('ui'); })];
+    const GAME = [seg('對話速度', ['慢', '普通', '快'], D.textSpeed, i => { D.textSpeed = i; dirty(); })];
+    for (const f of G.SET_EXTRA || []) { const r = f(); (/音樂/.test(r[0]) ? SND : GAME).push(cyc(r[0], r[1], r[2], r[3])); }
+    const touch = 'ontouchstart' in window, gap = 12, cols = w >= 560 ? 2 : 1, cw = (w - gap * (cols - 1)) / cols, FH = Math.min(38 * fs(), 40), foot = FH + (touch ? 6 : 24);
+    const COL = cols === 2 ? [[['畫面', SCR], ['聲音', SND]], [['遊戲', GAME]]] : [[['畫面', SCR], ['聲音', SND], ['遊戲', GAME]]];
+    const need = c => c.reduce((a, g) => a + 24 + g[1].length, 0), most = Math.max(...COL.map(c => c.reduce((a, g) => a + g[1].length, 0))), heads = Math.max(...COL.map(c => c.length));
+    const RH = Math.max(24, Math.min(34 * fs(), (h - foot - heads * 26 - 8) / most)), HH2 = 26;
+    COL.forEach((col, ci) => { const cx = x + ci * (cw + gap); let yy = y; box(cx, y, cw, h - foot - 6);
+      for (const [title, rows] of col) { G.txt(title, cx + 14, yy + HH2 / 2 + 2, 12, C.gold, 'left', G.FONT_S, 900); ctx.fillStyle = 'rgba(227,194,122,.28)'; ctx.fillRect(cx + 14 + 34 * fs(), yy + HH2 / 2 + 2, cw - 28 - 34 * fs(), 1); yy += HH2;
+        for (const r of rows) { const my = yy + RH / 2, bh = Math.min(RH - 6, 26 * fs());
+          const iw = r.ic && G.ICO && G.ICO.drawC(r.ic, cx + 14 + bh / 2, my, bh) ? bh + 4 : 0; G.txt(r.n, cx + 14 + iw, my + 1, 13, C.ink, 'left', G.FONT, 700);
+          if (r.opts) { const n = r.opts.length, bw = Math.min(54 * fs(), (cw - 28 - 104 * fs()) / n - 4), x0 = cx + cw - 12 - n * (bw + 4) + 4;
+            r.opts.forEach((o, k) => { const on = k === r.cur, bx = x0 + k * (bw + 4); ctx.fillStyle = on ? 'rgba(150,92,36,.95)' : 'rgba(255,255,255,.05)'; G.rr(bx, my - bh / 2, bw, bh, 6); ctx.fill(); if (on) { ctx.strokeStyle = 'rgba(255,238,200,.7)'; ctx.lineWidth = 1; G.rr(bx + .5, my - bh / 2 + .5, bw - 1, bh - 1, 6); ctx.stroke(); }
+              G.txt(o, bx + bw / 2, my + 1, 12, on ? '#fff3d6' : C.sub, 'center', G.FONT, on ? 800 : 600); hit(bx, my - RH / 2, bw, RH, () => r.set(k)); }); }
+          else { ctx.font = `700 ${12 * fs()}px ${G.FONT}`; const tw = Math.min(cw - 40 - iw - 90 * fs(), ctx.measureText(r.v + '　›').width + 22), bx = cx + cw - 12 - tw; ctx.fillStyle = 'rgba(255,255,255,.05)'; G.rr(bx, my - bh / 2, tw, bh, 6); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.35)'; ctx.lineWidth = 1; G.rr(bx + .5, my - bh / 2 + .5, tw - 1, bh - 1, 6); ctx.stroke();
+            G.txt(r.v + '　›', bx + tw / 2, my + 1, 12, C.gold, 'center', G.FONT, 700); hit(cx + 8, my - RH / 2, cw - 16, RH, r.f); }
+          yy += RH; } yy += 2; } });
+    const by = y + h - foot, bw2 = (w - gap) / 2;
     [['立即存檔', () => { D.x = G.H.x; D.y = G.H.y; D.hp = G.H.hp; G.SAVE.markDirty(); G.UI.toast(G.SAVE.flush() ? '已存檔' : '存檔失敗（瀏覽器不允許儲存）'); }], ['回到標題', () => { M.close(); G.toTitle(); }]]
-      .forEach(([n, f], i) => { const bx = x + i * (bw2 + gap); box(bx, by, bw2, bh); G.txt(n, bx + bw2 / 2, by + bh / 2 + 1, 14, C.gold, 'center', G.FONT_S, 900); hit(bx, by, bw2, bh, f); });
-    if (!('ontouchstart' in window)) G.txt('鍵盤：WASD 移動・J 斬・1 2 3 招式・U I 技・K L 身法・O 奧義・E 互動・Esc 選單', x, y + h - 8, 10, C.dim, 'left', G.FONT, 500); };
+      .forEach(([n, f], i) => { const bx = x + i * (bw2 + gap); box(bx, by, bw2, FH); G.txt(n, bx + bw2 / 2, by + FH / 2 + 1, 13, C.gold, 'center', G.FONT_S, 900); hit(bx, by, bw2, FH, f); });
+    if (!touch) G.txt('鍵盤：WASD 移動・J 斬・1 2 3 招式・U I 技・K L 身法・O 奧義・E 互動・Esc 選單', x, y + h - 8, 10, C.dim, 'left', G.FONT, 500); };
   const init0 = G.RPG.init; G.RPG.init = function () { init0(); GR.init(); R().recalc(); };
   setInterval(() => { if (G.mode === 'title') AU.play('title'); }, 1000);
   GR.init = function () { jd(); if ((jd().skin || 'samurai') !== 'samurai') GR.setSkin(jd().skin); else GR.portrait(); };

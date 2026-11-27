@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 51_party_grow.js
- * Version : r3.97.0  (2026-11-26)　r3.97.0：夥伴頁加「屬性」分頁（124_statui）
+ * Version : r3.203.0  (2026-11-28)　r3.203.0：夥伴資料／技能樹／裝備三頁改版
+ * 舊版    : r3.97.0  (2026-11-26)　r3.97.0：夥伴頁加「屬性」分頁（124_statui）
  * 舊版    : r3.59.0  （r3.59.0：技能樹說明改由招式資料算出（目前＋滿級兩行））　r3.33.0：（r3.33.0：夥伴頁招式不顯示節點代號，點招式顯示觸發方式與效果　r3.19.2：夥伴資料列避開頭像、大字級不重疊）
  * 舊版    : r3.10.0  (2026-11-13)
  * 變更    : r3.10.0 新增。夥伴成長：
@@ -141,49 +142,58 @@
     tabs.forEach((t, i) => U.button(cx + 10 + i * (tw + 6), y + 8, tw, 28, t, () => { M.sel.ptab = i; }, i === tab ? 'main' : ''));
     [0, 1].forEach(i => { const on = slots[i] === id; U.button(cx + cw - 10 - (2 - i) * 74, y + 8, 68, 28, on ? '出戰' + (i + 1) + '✓' : '設出戰' + (i + 1), () => { PY.setSlot(i, on ? null : id); }, on ? 'main' : ''); });
     const y0 = y + 46;
+    /* r3.203.0：夥伴各分頁改版——資料＝名牌＋數值小卡＋招式卡（點招式，下方直接顯示說明，不再跳提示）；技能樹＝被動／招式色標＋等級圓點；裝備＝部位卡＋「全部裝最強」；說明用語改成玩家看得懂的話。 */
+    const chip = (t, bx, my, col, fill) => { ctx.font = `800 ${10 * fs()}px ${G.FONT}`; const tw = ctx.measureText(t).width + 12, bh = 16 * fs(); ctx.fillStyle = fill ? col : 'rgba(0,0,0,.35)'; G.rr(bx, my - bh / 2, tw, bh, 4); ctx.fill(); if (!fill) { ctx.strokeStyle = col; ctx.lineWidth = 1; G.rr(bx + .5, my - bh / 2 + .5, tw - 1, bh - 1, 4); ctx.stroke(); } G.txt(t, bx + tw / 2, my + 1, 10, fill ? '#1c1410' : col, 'center', G.FONT, 800); return tw; };
+    const CHN = { ordinary: '普攻', autonomous: '自主', command: '指令', smallCombo: '小連攜', grandCombo: '大連攜' }, CHC = { ordinary: '#cfc8bb', autonomous: '#86cf8f', command: '#6fb0f0', smallCombo: '#e0c068', grandCombo: '#f0ad52' };
     if (tab === 0) {
       const fim = G.IMG[def.face]; if (!fim && !G.IMG['_req_' + def.face]) { G.IMG['_req_' + def.face] = 1; G.ASSET.img(def.face, 'a/' + def.face + '.webp').catch(() => {}); }
-      if (fim) { ctx.save(); G.rr(cx + cw - 84, y0 + 4, 70, 70, 8); ctx.clip(); ctx.drawImage(fim, cx + cw - 84, y0 + 4, 70, 70); ctx.restore(); }
-      G.txt(def.name + '　Lv ' + c.lv + '　第 ' + PY.stage(id) + ' 階', cx + 14, y0 + 12, 16, C.ink, 'left', G.FONT_S, 900);
-      ctx.fillStyle = 'rgba(255,255,255,.08)'; G.rr(cx + 14, y0 + 24, cw - 112, 5, 3); ctx.fill(); ctx.fillStyle = C.gold; G.rr(cx + 14, y0 + 24, (cw - 112) * Math.min(1, c.exp / G.RPG.need(c.lv)), 5, 3); ctx.fill();
-      const rows = [['生命', Math.round(s.hp)], ['攻擊', Math.round(s.atk)], ['防禦', Math.round(s.def)], ['暴擊', s.crit.toFixed(0) + '%'], ['技能點', PY.free(id) + '／' + PY.earned(id)], ['定位', def.role]];
-      rows.forEach(([k, v], i) => { const xx = cx + 14 + (i % 3) * ((cw - 120) / 3), yy = y0 + 50 + Math.floor(i / 3) * 26 * fs(); G.txt(k, xx, yy, 12, C.sub, 'left'); G.txt(String(v), xx + (k.length * 13 + 12) * fs(), yy, 13, C.ink, 'left', G.FONT_S, 900); });   // r3.19.2：避開右側頭像、依字數留白
-      const yy0 = y0 + 50 + 2 * 26 * fs(), lh = Math.min(20 * fs(), (y + h - 48 - yy0) / 3.2), half = (cw - 28) / 2;
-      G.txt('目前招式', cx + 14, yy0, 12, C.gold, 'left', G.FONT_S, 900);
-      ['ordinary', 'autonomous', 'command', 'smallCombo', 'grandCombo'].forEach((ch, i) => { const k = PY.variant(id, ch), sk = G.PKIT[id][k], xx = cx + 14 + (i % 2) * half, yy = yy0 + lh * (1 + Math.floor(i / 2));
-        G.txt({ ordinary: '普攻', autonomous: '自主', command: '指令', smallCombo: '小連攜', grandCombo: '大連攜' }[ch], xx, yy, 11, C.sub, 'left');
-        G.txt(sk.name + (k !== ch ? '・Lv' + PY.nodeLv(id, k) : '') + '　ⓘ', xx + 50, yy, 12, k !== ch ? '#ffd65a' : C.ink, 'left', G.FONT_S, 700);
-        U.hit(xx, yy - lh / 2, half - 6, lh, () => { if (PY.moveText) G.UI.toast(PY.moveText(id, ch)); }); });   // r3.33.0：點招式看觸發方式與效果
+      const PW = 64; if (fim) { ctx.save(); G.rr(cx + cw - PW - 14, y0 + 2, PW, PW, 8); ctx.clip(); ctx.drawImage(fim, cx + cw - PW - 14, y0 + 2, PW, PW); ctx.restore(); ctx.strokeStyle = 'rgba(227,194,122,.5)'; ctx.lineWidth = 1; G.rr(cx + cw - PW - 13.5, y0 + 2.5, PW - 1, PW - 1, 8); ctx.stroke(); }
+      const lw2 = cw - PW - 40; G.txt(def.name, cx + 14, y0 + 12, 17, '#fff3d6', 'left', G.FONT_S, 900); ctx.font = `900 ${17 * fs()}px ${G.FONT_S}`; let hx = cx + 24 + ctx.measureText(def.name).width;
+      hx += chip('Lv ' + c.lv, hx, y0 + 12, '#f3d98a', 1) + 5; hx += chip('第 ' + PY.stage(id) + ' 階', hx, y0 + 12, '#e3c27a') + 5; chip(def.role, hx, y0 + 12, ROLE[def.role] || '#e3c27a', 1);
+      { const need = G.RPG.need(c.lv); ctx.fillStyle = 'rgba(255,255,255,.1)'; G.rr(cx + 14, y0 + 27, lw2 - 90 * fs(), 5, 3); ctx.fill(); ctx.fillStyle = C.gold; G.rr(cx + 14, y0 + 27, Math.max(3, (lw2 - 90 * fs()) * Math.min(1, c.exp / need)), 5, 3); ctx.fill(); G.txt('經驗 ' + Math.floor(c.exp) + '／' + need, cx + 14 + lw2 - 82 * fs(), y0 + 30, 10, C.sub, 'left', G.FONT, 600); }
+      const fr = PY.free(id), tiles = [['生命', Math.round(s.hp)], ['攻擊', Math.round(s.atk)], ['防禦', Math.round(s.def)], ['暴擊', s.crit.toFixed(0) + '%'], ['技能點', fr + '／' + PY.earned(id)]], ty = y0 + 40, th = 34 * fs(), tw3 = (lw2 - 4 * 5) / 5;
+      tiles.forEach(([k, v], q) => { const tx = cx + 14 + q * (tw3 + 5), hot = q === 4 && fr > 0; ctx.fillStyle = hot ? 'rgba(150,92,36,.4)' : 'rgba(255,255,255,.05)'; G.rr(tx, ty, tw3, th, 6); ctx.fill(); G.txt(k, tx + 8, ty + th * 0.28, 10, C.sub, 'left', G.FONT, 600); G.txt(String(v), tx + 8, ty + th * 0.7, 14, hot ? '#ffd65a' : '#fff3d6', 'left', G.FONT_S, 900); });
+      const my0 = Math.max(ty + th + 8, y0 + PW + 10); G.txt('招式（點一下看說明）', cx + 14, my0 + 6, 11, C.gold, 'left', G.FONT_S, 900);
+      const chs = ['ordinary', 'autonomous', 'command', 'smallCombo', 'grandCombo'], selM = chs.includes(M.sel.pmove) ? M.sel.pmove : 'ordinary', half = (cw - 28 - 6) / 2, botY = y + h - 40, dH = Math.min(38 * fs(), 42), mh = Math.max(20, Math.min(30 * fs(), (botY - dH - 8 - (my0 + 16)) / 3 - 4));
+      chs.forEach((ch, q) => { const k = PY.variant(id, ch), sk = G.PKIT[id][k], xx = cx + 14 + (q % 2) * (half + 6), yy = my0 + 16 + Math.floor(q / 2) * (mh + 4), on = ch === selM;
+        ctx.fillStyle = on ? 'rgba(150,92,36,.5)' : 'rgba(255,255,255,.05)'; G.rr(xx, yy, half, mh, 6); ctx.fill(); if (on) { ctx.strokeStyle = 'rgba(255,238,200,.7)'; ctx.lineWidth = 1; G.rr(xx + .5, yy + .5, half - 1, mh - 1, 6); ctx.stroke(); }
+        const cwid = chip(CHN[ch], xx + 6, yy + mh / 2, CHC[ch], 1); G.txt(sk.name, xx + 12 + cwid, yy + mh / 2 + 1, 12, '#fff3d6', 'left', G.FONT_S, 800); if (k !== ch) G.txt('已強化 Lv' + PY.nodeLv(id, k), xx + half - 8, yy + mh / 2 + 1, 10, '#ffd65a', 'right', G.FONT, 700);
+        U.hit(xx, yy, half, mh, () => { M.sel.pmove = ch; }); });
+      { const dy = botY - dH - 2, txt = (PY.moveText && PY.moveText(id, selM)) || ''; ctx.fillStyle = 'rgba(0,0,0,.35)'; G.rr(cx + 14, dy, cw - 28, dH, 6); ctx.fill(); ctx.font = `500 ${10.5 * fs()}px ${G.FONT}`; const ls = G.wrap(String(txt).replace(/\n/g, '　'), cw - 48).slice(0, Math.max(1, Math.floor((dH - 8) / (14 * fs())))); ls.forEach((l, q) => G.txt(l, cx + 24, dy + 6 + 7 * fs() + q * 14 * fs(), 10.5, C.ink, 'left', G.FONT, 500)); }
       const safe = G.SC.def && (G.SC.def.safe || /^hub_|^T_/.test(G.SC.id));
-      U.button(cx + 14, y + h - 36, 130, 28, c.prac ? '切磋（素材×10）' : '首次切磋 +1 點', () => { if (!safe) { G.UI.toast('在神社或城鎮才能切磋'); return; }
+      U.button(cx + 14, y + h - 36, 176, 28, c.prac ? '切磋（任一素材 ×10）' : '首次切磋（技能點 +1）', () => { if (!safe) { G.UI.toast('在神社或城鎮才能切磋'); return; }
         if (!c.prac) { c.prac = 1; G.SAVE.markDirty(); G.UI.toast(def.name + '：切磋完成，技能點 +1'); return; }
         const m = D().mats, k = Object.keys(m).find(q => m[q] >= 10); if (!k) { G.UI.toast('需要任一素材 ×10'); return; } m[k] -= 10; c.exp += G.RPG.need(c.lv) * 0.5; G.SAVE.markDirty(); G.UI.toast('切磋：獲得經驗'); });
-      U.button(cx + 152, y + h - 36, 100, 28, '重置技能樹', () => PY.reset(id));
+      U.button(cx + 198, y + h - 36, 104, 28, '重置技能樹', () => PY.reset(id));
     } else if (tab === 1) {
       const tr = T[id], colW = (cw - 30) / 2, seln = M.sel.pnode, nh = Math.max(22, Math.min(40, (y + h - 58 - (y0 + 16)) / 6 - 3));
-      G.txt('剩餘點數 ' + PY.free(id), cx + cw - 14, y0 + 6, 12, '#ffd65a', 'right', G.FONT_S, 900);
-      ['A', 'B'].forEach((p, pi) => { const bx = cx + 10 + pi * (colW + 10); G.txt(p + '路・' + tr[p], bx + 4, y0 + 6, 12, C.gold, 'left', G.FONT_S, 900);
+      G.txt('可用技能點 ' + PY.free(id), cx + cw - 14, y0 + 6, 12, PY.free(id) > 0 ? '#ffd65a' : C.sub, 'right', G.FONT_S, 900);
+      ['A', 'B'].forEach((p, pi) => { const bx = cx + 10 + pi * (colW + 10); G.txt(String(tr[p]).replace(/・/g, '　'), bx + 4, y0 + 6, 12, C.gold, 'left', G.FONT_S, 900);
         for (let i = 1; i <= 6; i++) { const k = p + i, nd = tr.n[k], L = PY.nodeLv(id, k), mx = maxOf(id, k), by = y0 + 14 + (i - 1) * (nh + 3), ok = !PY.canLearn(id, k) || L > 0, eq = nd.ch !== 'p' && c.sel[nd.ch] === k;
           U.box(bx, by, colW, nh, k === seln ? 'rgba(120,80,30,.55)' : L ? 'rgba(40,60,40,.8)' : 'rgba(22,15,19,.9)', eq ? '#ffd65a' : ok ? 'rgba(227,194,122,.5)' : 'rgba(120,120,120,.3)');
-          G.txt((nd.ch === 'p' ? '◇' : '◆') + nd.n, bx + 8, by + nh / 2 + 1, 12, L ? C.ink : ok ? C.sub : C.dim, 'left', G.FONT_S, 900);
-          G.txt((eq ? '裝配 ' : '') + L + '／' + mx, bx + colW - 8, by + nh / 2 + 1, 11, eq ? '#ffd65a' : L ? '#7fd36b' : C.sub, 'right', G.FONT_S, 700);
+          { const cwid = chip(nd.ch === 'p' ? '被動' : CHN[nd.ch] || '招式', bx + 6, by + nh / 2, nd.ch === 'p' ? '#b9ad98' : CHC[nd.ch] || '#6fb0f0', L > 0); G.txt(nd.n, bx + 12 + cwid, by + nh / 2 + 1, 12, L ? '#fff3d6' : ok ? C.sub : C.dim, 'left', G.FONT_S, 900);
+            const pr = 3 * fs(), px0 = bx + colW - 8 - mx * (pr * 2 + 3); for (let q = 0; q < mx; q++) { ctx.beginPath(); ctx.arc(px0 + q * (pr * 2 + 3) + pr, by + nh / 2, pr, 0, 6.283); ctx.fillStyle = q < L ? '#7fd36b' : 'rgba(255,255,255,.16)'; ctx.fill(); }
+            if (eq) G.txt('使用中', px0 - 6, by + nh / 2 + 1, 10, '#ffd65a', 'right', G.FONT, 800); }
           U.hit(bx, by, colW, nh, () => { M.sel.pnode = k; }); } });
       if (seln && tr.n[seln]) { const nd = tr.n[seln], L = PY.nodeLv(id, seln), why = PY.canLearn(id, seln), by = y + h - 54;
         U.box(cx + 8, by - 4, cw - 16, 54, 'rgba(10,8,10,.96)'); G.txt(nd.n + '（' + (nd.ch === 'p' ? '被動' : { autonomous: '自主', command: '指令', smallCombo: '小連攜', grandCombo: '大連攜' }[nd.ch]) + '）', cx + 16, by + 10, 12, C.gold, 'left', G.FONT_S, 900);
-        const tw = cw - 210, dt = PY.nodeText ? PY.nodeText(id, seln) : [nd.d, nd.d5 || ''], fit = t => { ctx.font = `500 ${10 * G.FS()}px ${G.FONT}`; if (ctx.measureText(t).width <= tw) return t; while (t.length > 4 && ctx.measureText(t + '…').width > tw) t = t.slice(0, -1); return t + '…'; };   // r3.59.0：說明由招式資料算出（目前／滿級兩行）
+        const tw = cw - 216, dt = PY.nodeText ? PY.nodeText(id, seln) : [nd.d, nd.d5 || ''], fit = t => { ctx.font = `500 ${10 * G.FS()}px ${G.FONT}`; if (ctx.measureText(t).width <= tw) return t; while (t.length > 4 && ctx.measureText(t + '…').width > tw) t = t.slice(0, -1); return t + '…'; };   // r3.59.0：說明由招式資料算出（目前／滿級兩行）
         G.txt(fit(dt[0]), cx + 16, by + 26, 10, C.ink, 'left', G.FONT, 500); if (dt[1]) G.txt(fit(dt[1]), cx + 16, by + 40, 10, L >= 5 ? '#f3d98a' : C.sub, 'left', G.FONT, 500);
         if (why && why !== '已滿級') { const nw = ctx.measureText(nd.n).width; G.txt(why, cx + 120 + nw, by + 10, 10, '#e88', 'left'); }
         U.button(cx + cw - 186, by + 6, 80, 36, why ? (why === '已滿級' ? '已滿級' : '無法學習') : '學習 +1', () => PY.learn(id, seln), why ? '' : 'main');
         if (nd.ch !== 'p' && L > 0) U.button(cx + cw - 100, by + 6, 86, 36, c.sel[nd.ch] === seln ? '改回基礎' : '裝配', () => { c.sel[nd.ch] = c.sel[nd.ch] === seln ? null : seln; G.SAVE.markDirty(); }); }
     } else if (tab === 3) { if (PY.attrTab) PY.attrTab(id, cx, y0, cw, y + h - y0);   // r3.97.0：屬性分頁（124_statui）
     } else {
-      const rh = Math.min(38, (y + h - 26 - y0) / 6 - 4);
-      G.RPG.SLOT.forEach((sl, i) => { const by = y0 + 2 + i * (rh + 4), it = c.eq[sl], open = PY.slotOpen(id, sl);
-        U.box(cx + 10, by, cw - 20, rh, open ? 'rgba(22,15,19,.9)' : 'rgba(30,30,30,.6)');
-        G.txt(G.RPG.SLOTN[sl], cx + 20, by + rh / 2 + 1, 12, open ? C.gold : C.dim, 'left', G.FONT_S, 900);
-        G.txt(open ? (it ? G.RPG.name(it) + '　戰力 ' + G.RPG.power(it) : '（空）點擊裝上背包中最強的' + G.RPG.SLOTN[sl]) : 'Lv' + SLOTLV[sl] + ' 開放', cx + 70, by + rh / 2 + 1, 12, it ? C.ink : C.dim, 'left');
+      const Rg = G.RPG, bestBtn = 112, rh = Math.min(40, (y + h - 12 - (y0 + 34)) / 6 - 4), openEmpty = Rg.SLOT.filter(sl => PY.slotOpen(id, sl) && !c.eq[sl] && D().bag.some(it => Rg.TPL[it.t] && Rg.TPL[it.t].slot === sl));
+      G.txt('點部位＝換上背包裡最強的那件；只加數值，外觀不變', cx + 14, y0 + 14, 10, C.sub, 'left', G.FONT, 500);
+      U.button(cx + cw - bestBtn - 10, y0, bestBtn, 28, '空位全部裝上', openEmpty.length ? () => { for (const sl of openEmpty) PY.equip(id, sl); } : null, openEmpty.length ? 'main' : 'off');
+      Rg.SLOT.forEach((sl, i) => { const by = y0 + 34 + i * (rh + 4), it = c.eq[sl], open = PY.slotOpen(id, sl), qc = it && Rg.QUAL && Rg.QUAL[it.q] ? Rg.QUAL[it.q].c : '#fff3d6';
+        ctx.fillStyle = open ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.3)'; G.rr(cx + 10, by, cw - 20, rh, 6); ctx.fill(); if (it) { ctx.fillStyle = qc; ctx.fillRect(cx + 10, by + 5, 3, rh - 10); }
+        ctx.globalAlpha = open ? 1 : 0.5; chip(Rg.SLOTN[sl], cx + 20, by + rh / 2, '#e3c27a', open && !!it); ctx.globalAlpha = 1;
+        if (!open) G.txt('夥伴 Lv' + SLOTLV[sl] + ' 開放', cx + 74, by + rh / 2 + 1, 12, '#8f8576', 'left', G.FONT, 600);
+        else if (it) { G.txt(Rg.name(it), cx + 74, by + rh / 2 + 1, 13, qc, 'left', G.FONT_S, 800); G.txt('戰力 ' + Rg.power(it), cx + cw - 22, by + rh / 2 + 1, 12, C.gold, 'right', G.FONT, 700); }
+        else { G.txt('未裝備', cx + 74, by + rh / 2 + 1, 12, C.dim, 'left', G.FONT, 600); G.txt('裝上最強　›', cx + cw - 22, by + rh / 2 + 1, 11, '#86cf8f', 'right', G.FONT, 700); }
         U.hit(cx + 10, by, cw - 20, rh, () => PY.equip(id, sl)); });
-      G.txt('夥伴裝備只加數值，外觀不變；背包沒有同部位裝備時，點擊會卸下。', cx + 14, y + h - 12, 10, C.dim, 'left');
     }
   };
 })();
