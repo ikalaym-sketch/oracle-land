@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 138_feather.js
- * Version : r3.127.2  (2026-11-27)　r3.127.2：修正圖集被釋放後叫不出三兄弟（每次都顯示「風還在聚集」）
+ * Version : r3.142.0  (2026-11-27)　r3.142.0：看得到出手：三兄弟改進角色層（G.NPC，依前後排序），旋風／風刃特效畫在角色上方；出手站在敵人側前方（不與敵人重疊）；等冷卻時待機不原地跑
+ * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：修正圖集被釋放後叫不出三兄弟（每次都顯示「風還在聚集」）
  * 舊版    : r3.122.0  (2026-11-26)　r3.122.0：三兄弟留場 12 秒（餵過小鼬 15 秒）：長兄每 3 秒旋風斬、次兄每 2.5 秒風刃三連、三弟先補 15% 之後每 4 秒補 5%；沒敵人時跟在主角身邊；換地圖消失
  * 舊版    : r3.110.0  (2026-11-26)
  * 變更    : r3.110.0 新增。鎌鼬之羽：召喚鎌鼬三兄弟助戰（重要道具，不消耗）。
@@ -37,8 +38,8 @@
     const u = U(); if (!u) { G.UI.toast('風還在聚集……'); return; }
     const tg = target(); if (!tg && !hurt()) { G.UI.toast('附近沒有敵人，大家也都沒受傷'); return; }
     cd = CDF(); const side = H.face || 1, tx = tg ? tg.x : H.x + side * 90, ty = tg ? tg.y : H.y;
-    const mkA = (id, sz, dl, sx, sy) => ({ id, sz, dl, x: sx, y: sy, clip: 'run', ft: 0, face: -side, a: 0 });
-    run = { t: 0, tg, tx, ty, sc: SC.id, dur: DUR(), A: [mkA('kama1', 1.0, 0, H.x - side * 60, H.y - 10), mkA('kama2', 0.95, 14, H.x - side * 80, H.y + 12), mkA('kama3', 0.85, 28, H.x - side * 50, H.y + 24)] };
+    const mkA = (id, sz, dl, sx, sy) => ({ kamaF: 1, id, sz, dl, x: sx, y: sy, clip: 'run', ft: 0, face: -side, a: 0 });
+    run = { t: 0, tg, tx, ty, sc: SC.id, dur: DUR(), A: [mkA('kama1', 1.0, 0, H.x - side * 60, H.y - 10), mkA('kama2', 0.95, 14, H.x - side * 80, H.y + 12), mkA('kama3', 0.85, 28, H.x - side * 50, H.y + 24)] }; G.NPC.push(...run.A);   // r3.142.0：進角色層
     if (G.ICO && G.ICO.burst) G.ICO.burst({ x: H.x, y: H.y }, 'fxp_feather_jade', 5, { z: 0.8 });
     G.AU && G.AU.sfx && G.AU.sfx('magic'); G.UI.toast('鎌鼬三兄弟，借風而來！（' + DUR() / 60 + ' 秒）'); }
   const fxL = [];
@@ -48,32 +49,32 @@
   const DUR = () => (fed() ? 15 : 12) * 60;
   function heal(p) { for (const q of team()) { if (q.hp >= q.hpMax) continue; const v = Math.round(q.hpMax * p); q.hp = Math.min(q.hpMax, q.hp + v); G.NUMS && G.NUMS.push({ x: q.x, y: q.y - HH() * S(q.y), v: '+' + v, t: 0, col: '#8fe0a0' }); } }
   function step() { if (cd > 0) cd--; if (++tk % 60 === 0) { grant(); if (has()) U(); }   /* 擁有後預先載入圖集 */ if (!run) return; const R = run, t = ++R.t, k = HH() * S(H.y), sp = k * 0.09;
-    if (R.sc !== SC.id) { run = null; return; }
+    if (R.sc !== SC.id) { end(); return; }
     if (!R.tg || !alive(R.tg)) { R.tg = target(); } if (R.tg) { R.tx = R.tg.x; R.ty = R.tg.y; }
     const [a1, a2, a3] = R.A, live = t < R.dur;
     for (const a of R.A) { if (t > a.dl) a.a = live ? Math.min(1, a.a + 0.12) : Math.max(0, a.a - 0.08); a.ft++; if (a.busy > 0 && --a.busy === 0) { a.clip = 'run'; a.ft = 0; } if (a.cd > 0) a.cd--; }
     const follow = (a, ox, oy) => { if (a.busy > 0) return; if (moveTo(a, H.x - (H.face || 1) * k * ox, H.y + oy, sp)) { if (a.clip !== 'idle') { a.clip = 'idle'; a.ft = 0; } a.face = H.face || 1; } else a.clip = 'run'; };
     if (live && R.tg) {
       /* 長兄：追上目標 → 旋風斬（擊暈），每 3 秒 */
-      if (t > a1.dl && !(a1.busy > 0)) { if (moveTo(a1, R.tx - a1.face * k * 0.25, R.ty, sp) && !(a1.cd > 0)) { a1.cd = 180; a1.busy = 30; a1.clip = 'spin'; a1.ft = 0; fx('kama_spin_wake', R.tx, R.ty, 1, 30); hitAll(R.tx, R.ty, k * 1.1, 0.8, 1); SC.shake = Math.max(SC.shake || 0, 4); } else if (!(a1.busy > 0)) a1.clip = 'run'; }
+      if (t > a1.dl && !(a1.busy > 0)) { const s1 = a1.x < R.tx ? -1 : 1; if (moveTo(a1, R.tx + s1 * k * 0.6, R.ty + 8, sp) && (a1.face = -s1, !(a1.cd > 0))) { a1.cd = 180; a1.busy = 30; a1.clip = 'spin'; a1.ft = 0; fx('kama_spin_wake', R.tx, R.ty, 1, 30); hitAll(R.tx, R.ty, k * 1.1, 0.8, 1); SC.shake = Math.max(SC.shake || 0, 4); } else if (!(a1.busy > 0)) { const w = Math.hypot(a1.x - R.tx - s1 * k * 0.6, a1.y - R.ty - 8) < sp + 1 ? 'idle' : 'run'; if (a1.clip !== w) { a1.clip = w; a1.ft = 0; } } }
       /* 次兄：繞到另一側 → 風刃三連，每 2.5 秒 */
-      if (t > a2.dl && !(a2.busy > 0)) { if (moveTo(a2, R.tx + a1.face * k * 0.4, R.ty + 10, sp) && !(a2.cd > 0)) { a2.cd = 150; a2.busy = 34; a2.go = t; a2.gx = R.tx; a2.gy = R.ty; a2.clip = 'storm'; a2.ft = 0; fx('kama_storm_cuts', R.tx, R.ty, 1.1, 34); } else if (!(a2.busy > 0)) a2.clip = 'run'; }
+      if (t > a2.dl && !(a2.busy > 0)) { const s2 = a1.x < R.tx ? 1 : -1; if (moveTo(a2, R.tx + s2 * k * 0.65, R.ty + 14, sp) && (a2.face = -s2, !(a2.cd > 0))) { a2.cd = 150; a2.busy = 34; a2.go = t; a2.gx = R.tx; a2.gy = R.ty; a2.clip = 'storm'; a2.ft = 0; fx('kama_storm_cuts', R.tx, R.ty, 1.1, 34); } else if (!(a2.busy > 0)) { const w = Math.hypot(a2.x - R.tx - s2 * k * 0.65, a2.y - R.ty - 14) < sp + 1 ? 'idle' : 'run'; if (a2.clip !== w) { a2.clip = w; a2.ft = 0; } } }
     } else if (live) { if (t > a1.dl) follow(a1, 0.6, -10); if (t > a2.dl) follow(a2, 0.85, 12); }
     if (a2.go && [4, 13, 22].includes(t - a2.go)) { hitAll(a2.gx, a2.gy, k * 1.2, 1.0, 0); G.AU && G.AU.sfx && G.AU.sfx('hit'); }
     /* 三弟：跟在主角身邊；第一次 15%，之後每 4 秒 5%（有人受傷才塗） */
     if (live && t > a3.dl) { if (!(a3.busy > 0)) follow(a3, -0.35, 6);
       if (!(a3.cd > 0) && (!a3.heal || hurt()) && Math.hypot(a3.x - H.x, a3.y - H.y) < k * 0.8) { a3.cd = 240; a3.busy = 40; a3.clip = 'heal'; a3.ft = 0; a3.face = -(H.face || 1); fx('kama_medicine_fog', H.x, H.y, 1, 40); heal(a3.heal ? 0.05 : 0.15); a3.heal = t; } }
     if (t === R.dur + 2 && G.ICO && G.ICO.burst) G.ICO.burst({ x: (a1.x + a2.x + a3.x) / 3, y: H.y }, 'fxp_feather_jade', 6, { z: 0.6 });
-    if (t > R.dur + 16) run = null; }
+    if (t > R.dur + 16) end(); }
+  function end() { if (run) G.NPC = G.NPC.filter(n => !n.kamaF); run = null; }
   /* ---------- 繪製（特效層） ---------- */
   function clipOf(u, a) { return u.act[a.id + '_' + a.clip + '_left3q'] || u.act[a.id + '_run_left3q'] || u.act[a.id + '_idle_left3q']; }
   const VH = {};
   function vh(u, id) { if (VH[id]) return VH[id]; const r = u.act[id + '_idle_left3q']; if (!r) return 200; const L = r.f.map(f => f[5]).sort((p, q) => p - q); return (VH[id] = L[L.length >> 1]); }
-  function draw() { const u = A.get('b_kama'); if (!u) return;
+  function drawFx() { const u = A.get('b_kama'); if (!u) return;   // r3.142.0：特效畫在角色上方
     for (let i = fxL.length - 1; i >= 0; i--) { const q = fxL[i]; q.t++; if (q.t > q.life) { fxL.splice(i, 1); continue; } const f = q.r.f[Math.min(q.r.f.length - 1, Math.floor(q.t / q.life * q.r.f.length))], s = S(q.y);
-      A.draw(u, f, q.x, q.y, HH() * s * q.s / vh(u, 'kama1'), false, Math.min(1, (q.life - q.t) / 8)); }
-    if (!run) return;
-    for (const a of run.A.slice().sort((p, q) => p.y - q.y)) { if (a.a <= 0) continue; const r = clipOf(u, a); if (!r) continue; const f = r.f[Math.floor(a.ft / 4) % r.f.length], s = S(a.y), sc = HH() * s * a.sz / vh(u, a.id);
+      A.draw(u, f, q.x, q.y, HH() * s * q.s / vh(u, 'kama1'), false, Math.min(1, (q.life - q.t) / 8)); } }
+  function drawOne(a) { const u = A.get('b_kama'); if (!u || a.a <= 0) return; { const r = clipOf(u, a); if (!r) return; const f = r.f[Math.floor(a.ft / 4) % r.f.length], s = S(a.y), sc = HH() * s * a.sz / vh(u, a.id);
       ctx.save(); ctx.globalAlpha = 0.3 * a.a; ctx.fillStyle = 'rgba(20,14,8,1)'; ctx.beginPath(); ctx.ellipse(a.x, a.y, HH() * s * 0.22, HH() * s * 0.06, 0, 0, 6.283); ctx.fill(); ctx.restore();
       A.draw(u, f, a.x, a.y, sc, a.face > 0, a.a); } }
   /* ---------- 取得 ---------- */
@@ -87,6 +88,7 @@
     ctx.restore();
     if (cd > 0) { ctx.save(); ctx.fillStyle = 'rgba(8,5,8,.6)'; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.arc(b.x, b.y, b.r - 2, -1.5708, -1.5708 + 6.283 * cd / CDF()); ctx.fill(); ctx.restore(); G.txt(String(Math.ceil(cd / 60)), b.x, b.y + 1, 11, G.C.ink, 'center', G.FONT, 900); } }
   (function hk() { if (!G.STORY || !G.STORY.step || !G.VX || !G.VX.custom) return setTimeout(hk, 60); const st0 = G.STORY.step.bind(G.STORY); G.STORY.step = function () { st0(); try { step(); } catch (e) { console.warn('feather', e); run = null; } }; })();
-  (function hkD() { if (!G.drawLoot) return setTimeout(hkD, 60); const d0 = G.drawLoot; G.drawLoot = function () { d0.apply(this, arguments); try { draw(); } catch (e) { console.warn('featherD', e); } }; })();
+  (function hkD() { if (!G.drawFx || !G.drawNpc) return setTimeout(hkD, 60); const d0 = G.drawFx; G.drawFx = function () { const r = d0.apply(this, arguments); try { drawFx(); } catch (e) { console.warn('featherD', e); } return r; };
+    const dn0 = G.drawNpc; G.drawNpc = function (n) { if (!n.kamaF) return dn0.apply(this, arguments); try { drawOne(n); } catch (e) { console.warn('featherD', e); } }; })();   /* r3.142.0：三兄弟在角色層（依前後排序） */
   G.FEATHER = { has, use, hud, cd: () => cd, CDF, state: () => run };
 })();
