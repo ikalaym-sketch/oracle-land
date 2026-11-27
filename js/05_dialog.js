@@ -22,8 +22,8 @@
     '建御雷': 'takemikazuchi', '小太': 'kota', '鐵心': 'smith', '阿松': 'matsu', '權爺': 'gen', '勘婆': 'okan', '文也': 'fumiya', '道摩': 'doma', '河童長者': 'kappa_elder', '須佐之男': 'susanoo',
     '酒吞童子': 'shuten', '酒吞': 'shuten', '綾小路景綱': 'kagetsuna', '景綱': 'kagetsuna', '茂兵衛爺': 'mohei', '狐族長者': 'fox_elder', '天狗長者': 'tengu_elder', '白衣的巫女': 'yuki', '平八': 'heihachi', '岩藏': 'iwakura',
     '牛若丸': 'ushiwaka', '伊邪那美': 'izanami', '綿津見': 'watatsumi', '冬乃': 'fuyuno', '八絃': 'yatsuo', '弁慶': 'benkei', '時雨': 'shigure', '傳送役・時雨': 'shigure', '五平': 'gohei', '鬼鍛冶權六': 'gonroku', '權六': 'gonroku',
-    '長壁姬': 'osakabe', '源義經': 'yoshitsune', '鬼灘': 'onada', '道滿': 'doman', '澄岳': 'chogaku', '宗八': 'sohachi', '鬼王': 'oniou', '雷獸': 'raiju', '花澄': 'hanasumi', '砂狐': 'sagitsune',
-    '阿德婆婆': 'otoku', '阿德': 'otoku', '蓬庵': 'hoan', '汀江': 'migiwae', '潮丸的娘': 'migiwae', '巡檢孫六': 'magoroku', '九尾': 'kyubi', '鬼族使者': 'oni_envoy', '阿紺': 'okon', '染布的阿紺': 'okon', '爐火女神': 'hearth_goddess',
+    '長壁姬': 'osakabe', '源義經': 'yoshitsune', '鬼灘': 'onada', '道滿': 'doman', '年輕的陰陽師': 'doman', '澄岳': 'chogaku', '宗八': 'sohachi', '鬼王': 'oniou', '雷獸': 'raiju', '花澄': 'hanasumi', '砂狐': 'sagitsune',
+    '阿德婆婆': 'otoku', '阿德': 'otoku', '蓬庵': 'hoan', '汀江': 'migiwae', '潮丸的娘': 'migiwae', '巡檢孫六': 'magoroku', '孫六': 'magoroku', '九尾': 'kyubi', '鬼族使者': 'oni_envoy', '阿紺': 'okon', '染布的阿紺': 'okon', '爐火女神': 'hearth_goddess',
     '海邊的河童': 'kappa_sea', '安倍晴明': 'seimei', '晴明': 'seimei', '阿春': 'oharu', '劍士的亡魂': 'swordsman_ghost', '鎌鼬': 'kamaitachi', '鎌鼬長兄': 'kamaitachi', '阿菊': 'okiku', '河童大將': 'kappa_general',
     '村長': 'village_chief', '鬼族守爐人': 'oni_keeper', '貓又': 'nekomata', '茶屋婆婆': 'teahouse_granny', '梅乃婆婆': 'umeno', '受傷的人魚': 'mermaid', '真穗': 'maho' };
   const BREQ = {};
