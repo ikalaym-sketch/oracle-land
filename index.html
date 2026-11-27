@@ -2,7 +2,7 @@
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d0b10"><link rel="icon" href="icon-192.png">
 <script>
 /* 版本檢查：ver.json 不走快取；與本頁載入的版本不同就換網址重新載入（避免手機用到舊版快取）。每次開啟檢查一次，同一版本最多重載一次。 */
-(function () { var cur = 'r3.186.0';
+(function () { var cur = 'r3.187.0';
   fetch('ver.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
     if (!j || !j.v || j.v === cur) return; var k = 'reload_' + j.v; try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, 1); } catch (e) {}
     location.replace(location.pathname + '?v=' + j.v); }).catch(function () {}); })();
@@ -24,7 +24,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 </style>
 <canvas id="cv"></canvas>
 <div id="rot">請將裝置轉為橫向</div>
-<script src="js/00_core.js?v=r3.186.0"></script>
+<script src="js/00_core.js?v=r3.187.0"></script>
 <script src="js/12_anim.js?v=r3.28.0"></script>
 <script src="js/01_assets.js?v=r3.138.0"></script>
 <script src="js/02_scene.js?v=r3.168.0"></script>
@@ -82,7 +82,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/54_story_b.js?v=r3.163.0"></script>
 <script src="js/54_story_c.js?v=r3.154.0"></script>
 <script src="js/55_wpn_v2.js?v=r3.171.0"></script>
-<script src="js/56_camera.js?v=r3.186.0"></script>
+<script src="js/56_camera.js?v=r3.187.0"></script>
 <script src="js/57_mem.js?v=r3.28.0"></script>
 <script src="js/58_forge.js?v=r3.106.0"></script>
 <script src="js/59_stage.js?v=r3.141.0"></script>
@@ -103,7 +103,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/74_endui.js?v=r3.166.0"></script>
 <script src="js/75_partyup.js?v=r3.33.0"></script>
 <script src="js/76_vfx.js?v=r3.49.0"></script>
-<script src="js/77_moves.js?v=r3.186.0"></script>
+<script src="js/77_moves.js?v=r3.187.0"></script>
 <script src="js/78_mv_ranged.js?v=r3.34.0"></script>
 <script src="js/79_mv_pole.js?v=r3.34.0"></script>
 <script src="js/80_mv_blade.js?v=r3.34.0"></script>
@@ -136,13 +136,13 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/107_ux2.js?v=r3.65.0"></script>
 <script src="js/108_route.js?v=r3.168.0"></script>
 <script src="js/109_katana.js?v=r3.174.0"></script>
-<script src="js/110_katana_hiden.js?v=r3.186.0"></script>
-<script src="js/111_katana_fx.js?v=r3.186.0"></script>
-<script src="js/112_nodachi.js?v=r3.186.0"></script>
-<script src="js/113_naginata.js?v=r3.186.0"></script>
+<script src="js/110_katana_hiden.js?v=r3.187.0"></script>
+<script src="js/111_katana_fx.js?v=r3.187.0"></script>
+<script src="js/112_nodachi.js?v=r3.187.0"></script>
+<script src="js/113_naginata.js?v=r3.187.0"></script>
 <script src="js/114_yari.js?v=r3.80.0"></script>
 <script src="js/115_yumi.js?v=r3.81.0"></script>
-<script src="js/116_yari_fx.js?v=r3.186.0"></script>
+<script src="js/116_yari_fx.js?v=r3.187.0"></script>
 <script src="js/117_teppo.js?v=r3.82.0"></script>
 <script src="js/118_progress.js?v=r3.83.0"></script>
 <script src="js/119_banter2.js?v=r3.84.0"></script>
@@ -187,7 +187,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/159_hubwar3.js?v=r3.165.0"></script>
 <script src="js/160_hwside.js?v=r3.165.0"></script>
 <script src="js/161_hud2.js?v=r3.172.0"></script>
-<script src="js/162_fx3.js?v=r3.186.0"></script>
+<script src="js/162_fx3.js?v=r3.187.0"></script>
 <script src="js/09_main.js?v=r3.138.0"></script>
 
 </body></html>

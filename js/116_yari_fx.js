@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 116_yari_fx.js
- * Version : r3.186.0  (2026-11-28)　r3.186.0：突刺重做成「從手上的槍延伸出去的光槍」（鋼色、深色收邊、氣環、速度線、停頓再收）＋命中刺穿碎光；槍擺弧光同步改鋼色
+ * Version : r3.187.0  (2026-11-28)　r3.187.0：槍頭瘦小、黑邊變細、移動痕跡（光的拖痕、速度線、槍擺弧光）加大；飛行槍頭與巨槍換成同一套鋼色；不再參考角色動作圖
+ * 舊版    : r3.186.0  (2026-11-28)　r3.186.0：突刺重做成「從手上的槍延伸出去的光槍」（鋼色、深色收邊、氣環、速度線、停頓再收）＋命中刺穿碎光；槍擺弧光同步改鋼色
  * 舊版    : r3.185.0  (2026-11-28)　r3.185.0：五招秘傳加演出層（暗場、運鏡、速度線、貫穿畫面的巨槍、地面十字、衝天光柱、透體槍尖）；所有槍氣加深色襯底，白天地面也看得清楚
  * 舊版    : r3.80.0  (2026-11-25)
  * 變更    : r3.80.0 長槍全部招式／技／特技／奧義／秘傳改用槍頭槍氣＋槍擺（重新命名）：身法 12 式、技 4、特技 4、奧義天沼矛、秘傳 5（蜻蛉切／日本號／御手杵／十文字／人間無骨）。
@@ -23,21 +24,13 @@
   const KF = () => G.KF, P = () => G.KF.PAL.lance, rgba = (c, a) => 'rgba(' + c + ',' + (a < 0 ? 0 : a > 1 ? 1 : a).toFixed(3) + ')';
   const WOOD = '74,56,34', WOODL = '150,120,80', BRASS = '178,138,60', BRASSL = '236,206,130', INK = '52,40,22';
   /* ---------- 畫一把槍（本地座標：原點＝手，+x＝槍尖方向） ---------- */
-  function drawSpear(ctx, tx, al, HL, HW, SL) { const C = P(), b = tx - HL, sb = b - HL * 0.16;
+  function drawSpear(ctx, tx, al, HL, HW, SL) { HL *= 0.8; const C = P(), b = tx - HL, sb = b - HL * 0.1;
     /* 槍身：深色木柄＋上緣受光，往後漸淡 */
     const g = ctx.createLinearGradient(sb - SL, 0, sb, 0); g.addColorStop(0, rgba(WOOD, 0)); g.addColorStop(0.45, rgba(WOOD, 0.75 * al)); g.addColorStop(1, rgba(WOOD, 0.95 * al));
     const sw = HW * 0.36; ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(sb - SL, -sw * 0.8); ctx.lineTo(sb, -sw); ctx.lineTo(sb, sw); ctx.lineTo(sb - SL, sw * 0.8); ctx.closePath(); ctx.fill();
     const g2 = ctx.createLinearGradient(sb - SL * 0.7, 0, sb, 0); g2.addColorStop(0, rgba(WOODL, 0)); g2.addColorStop(1, rgba(WOODL, 0.8 * al)); ctx.fillStyle = g2; ctx.fillRect(sb - SL * 0.7, -sw, SL * 0.7, sw * 0.55);
     /* 口金（金屬接環） */
-    ctx.fillStyle = rgba(BRASS, al); ctx.fillRect(sb, -sw * 1.35, HL * 0.16, sw * 2.7); ctx.fillStyle = rgba(BRASSL, al); ctx.fillRect(sb, -sw * 1.35, HL * 0.16, sw * 0.9);
-    /* 槍頭：葉形，上面亮、下面暗，中稜一道，墨線收邊 */
-    const leaf = () => { ctx.beginPath(); ctx.moveTo(tx, 0); ctx.quadraticCurveTo(tx - HL * 0.42, -HW * 1.2, b + HL * 0.05, -HW * 0.42); ctx.lineTo(b, -HW * 0.3); ctx.lineTo(b, HW * 0.3); ctx.lineTo(b + HL * 0.05, HW * 0.42); ctx.quadraticCurveTo(tx - HL * 0.42, HW * 1.2, tx, 0); ctx.closePath(); };
-    ctx.globalCompositeOperation = 'screen'; KF().spr(ctx, C.T.gm, tx - HL * 0.45, 0, HL * 2.4, HW * 6, 0.55 * al); ctx.globalCompositeOperation = 'source-over';
-    ctx.save(); leaf(); ctx.clip(); ctx.fillStyle = rgba(C.lite, al); ctx.fillRect(b - 2, -HW * 1.5, HL + 4, HW * 1.5); ctx.fillStyle = rgba(C.deep, al); ctx.fillRect(b - 2, 0, HL + 4, HW * 1.5);
-    ctx.fillStyle = rgba(C.mid, 0.85 * al); ctx.fillRect(b - 2, HW * 0.08, HL + 4, HW * 0.32); ctx.restore();
-    ctx.strokeStyle = rgba(C.hot, 0.95 * al); ctx.lineWidth = Math.max(1, HW * 0.16); ctx.beginPath(); ctx.moveTo(b + HL * 0.04, 0); ctx.lineTo(tx - HL * 0.04, 0); ctx.stroke();
-    leaf(); ctx.strokeStyle = rgba(INK, 0.6 * al); ctx.lineWidth = 1; ctx.stroke(); }
-  function ghostHead(ctx, tx, al, HL, HW) { const C = P(), b = tx - HL; ctx.fillStyle = rgba(C.mid, al); ctx.beginPath(); ctx.moveTo(tx, 0); ctx.quadraticCurveTo(tx - HL * 0.42, -HW * 1.2, b, -HW * 0.35); ctx.lineTo(b - HL * 0.5, 0); ctx.lineTo(b, HW * 0.35); ctx.quadraticCurveTo(tx - HL * 0.42, HW * 1.2, tx, 0); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle = rgba(BRASS, al); ctx.fillRect(sb, -sw * 1.35, HL * 0.16, sw * 2.7); ctx.fillStyle = rgba(BRASSL, al); ctx.fillRect(sb, -sw * 1.35, HL * 0.16, sw * 0.9); }
   /* 針狀槍氣：前端瞬間射出，尾端隨後追上而消失（不留一條死線） */
   function needle(ctx, x0, x1, w, al) { const C = P(), L = x1 - x0; if (L < 2 || al <= 0) return; ctx.globalCompositeOperation = 'screen'; for (const t of [0.25, 0.6, 0.95]) KF().spr(ctx, C.T.gd, x0 + L * t, 0, Math.min(L, w * 14), w * 5, 0.4 * al);
     ctx.globalCompositeOperation = 'source-over'; const lens = (ww, col, a) => { ctx.fillStyle = rgba(col, a); ctx.beginPath(); ctx.moveTo(x0, 0); ctx.quadraticCurveTo(x0 + L * 0.22, -ww, x1, 0); ctx.quadraticCurveTo(x0 + L * 0.22, ww, x0, 0); ctx.closePath(); ctx.fill(); };
@@ -45,25 +38,10 @@
   function star(ctx, x, s, al, rot) { const C = P(); ctx.save(); ctx.translate(x, 0); ctx.globalCompositeOperation = 'screen'; KF().spr(ctx, C.T.gl, 0, 0, s * 2.2, s * 2.2, 0.7 * al); ctx.globalCompositeOperation = 'source-over'; ctx.rotate(rot || 0); ctx.fillStyle = rgba(C.lite, al);
     for (const [L, W] of [[s, s * 0.1], [s * 0.55, s * 0.08]]) { ctx.beginPath(); ctx.moveTo(-L, 0); ctx.quadraticCurveTo(0, -W, L, 0); ctx.quadraticCurveTo(0, W, -L, 0); ctx.fill(); ctx.rotate(Math.PI / 2); ctx.beginPath(); ctx.moveTo(-L, 0); ctx.quadraticCurveTo(0, -W, L, 0); ctx.quadraticCurveTo(0, W, -L, 0); ctx.fill(); ctx.rotate(-Math.PI / 2); ctx.rotate(Math.PI / 4); } ctx.restore(); }
   /* ---------- 槍頭槍氣（素槍菱刃：直線刃、刃根內收、尖端銳利；後拖漸細氣尾；深金細邊壓輪廓） ---------- */
-  function tipQi(ctx, tx, al, HL, HW, TL) { const C = P(), b = tx - HL, sh = tx - HL * 0.6; if (al <= 0.01) return;
-    /* r3.185.0：深色襯底（白天的沙地上也看得清楚）——槍頭外擴一圈＋氣尾的暗影 */
-    { const DK = '44,32,14'; ctx.globalCompositeOperation = 'source-over'; if (TL > 2) { const g0 = ctx.createLinearGradient(b - TL, 0, b, 0); g0.addColorStop(0, rgba(DK, 0)); g0.addColorStop(1, rgba(DK, 0.5 * al)); ctx.fillStyle = g0; ctx.beginPath(); ctx.moveTo(b + 1, -HW * 1.15); ctx.quadraticCurveTo(b - TL * 0.4, -HW * 0.7, b - TL, 0); ctx.quadraticCurveTo(b - TL * 0.4, HW * 0.7, b + 1, HW * 1.15); ctx.closePath(); ctx.fill(); }
-      ctx.fillStyle = rgba(DK, 0.6 * al); ctx.beginPath(); ctx.moveTo(tx + HL * 0.08, 0); ctx.lineTo(sh, -HW * 1.6); ctx.lineTo(b - HL * 0.06, -HW * 1.0); ctx.lineTo(b - HL * 0.06, HW * 1.0); ctx.lineTo(sh, HW * 1.6); ctx.closePath(); ctx.fill(); }
-    ctx.globalCompositeOperation = 'screen'; KF().spr(ctx, C.T.gd, tx - HL * 0.5, 0, HL * 2.2, HW * 9, 0.55 * al); KF().spr(ctx, C.T.gm, tx - HL * 0.35, 0, HL * 1.1, HW * 4, 0.5 * al);
-    /* 氣尾：從刃根往後漸細、漸淡 */
-    if (TL > 2) { const g = ctx.createLinearGradient(b - TL, 0, b, 0); g.addColorStop(0, rgba(C.mid, 0)); g.addColorStop(1, rgba(C.mid, 0.75 * al)); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(b + 1, -HW * 0.5); ctx.quadraticCurveTo(b - TL * 0.4, -HW * 0.3, b - TL, 0); ctx.quadraticCurveTo(b - TL * 0.4, HW * 0.3, b + 1, HW * 0.5); ctx.closePath(); ctx.fill();
-      const g2 = ctx.createLinearGradient(b - TL * 0.7, 0, b, 0); g2.addColorStop(0, rgba(C.lite, 0)); g2.addColorStop(1, rgba(C.lite, 0.9 * al)); ctx.fillStyle = g2; ctx.beginPath(); ctx.moveTo(b + 1, -HW * 0.16); ctx.lineTo(b - TL * 0.7, 0); ctx.lineTo(b + 1, HW * 0.16); ctx.closePath(); ctx.fill(); }
-    /* 流線：從刃肩往後流出的細氣，兩側帶弧、長短不一（速度感），隨氣尾一起收 */
-    if (TL > HL * 0.15) { const fl = Math.min(1, TL / HL), wv = Math.sin(tx * 0.05);
-      for (const [s, l, o, w] of [[-1, 1.0, 1.7, 0.42], [1, 0.8, 1.5, 0.36], [-1, 0.55, 2.4, 0.26], [1, 0.45, 2.6, 0.22]]) { const L = TL * l * 1.1 + HL * 0.3, x0 = sh + HL * 0.05, ex = x0 - L, my = s * HW * (o + 0.4 * wv), ww = HW * w;
-        const g = ctx.createLinearGradient(ex, 0, x0, 0); g.addColorStop(0, rgba(C.mid, 0)); g.addColorStop(0.6, rgba(C.lite, 0.45 * fl * al)); g.addColorStop(1, rgba(C.lite, 0.85 * fl * al)); ctx.fillStyle = g;
-        ctx.beginPath(); ctx.moveTo(x0, s * HW * 0.85); ctx.quadraticCurveTo(x0 - L * 0.35, my - s * ww, ex, my * 0.7); ctx.quadraticCurveTo(x0 - L * 0.35, my + s * ww * 0.2, x0, s * HW * 0.85 + s * ww); ctx.closePath(); ctx.fill(); } }
-    ctx.globalCompositeOperation = 'source-over';
-    const blade = (s) => { ctx.beginPath(); ctx.moveTo(tx, 0); ctx.lineTo(sh, -HW * s); ctx.lineTo(b + HL * 0.08, -HW * s * 0.55); ctx.lineTo(b, -HW * s * 0.62); ctx.lineTo(b, HW * s * 0.62); ctx.lineTo(b + HL * 0.08, HW * s * 0.55); ctx.lineTo(sh, HW * s); ctx.closePath(); };
-    blade(1.12); ctx.fillStyle = rgba(C.ink, 0.55 * al); ctx.fill();
-    blade(1); ctx.fillStyle = rgba(C.deep, al); ctx.fill();
-    ctx.save(); blade(1); ctx.clip(); ctx.fillStyle = rgba(C.lite, 0.95 * al); ctx.fillRect(b - 1, -HW * 1.2, HL + 2, HW * 1.12); ctx.fillStyle = rgba(C.mid, al); ctx.fillRect(b - 1, -0.5, HL + 2, HW * 0.55); ctx.restore();
-    ctx.fillStyle = rgba(C.hot, al); ctx.beginPath(); ctx.moveTo(tx - HL * 0.02, 0); ctx.lineTo(sh, -HW * 0.16); ctx.lineTo(b + HL * 0.05, -HW * 0.08); ctx.lineTo(b + HL * 0.05, HW * 0.04); ctx.lineTo(sh, HW * 0.06); ctx.closePath(); ctx.fill(); }
+  function tipQi(ctx, tx, al, HL, HW, TL) { if (al <= 0.01) return; const W0 = HW; HL *= 0.8; HW *= 0.58; const b = tx - HL;
+    if (TL > 2) { spTrail(ctx, b - TL, b + HL * 0.1, W0 * 1.15, al, tx + HL * 0.2);   /* 氣尾 */
+      const fl = Math.min(1, TL / HL); ctx.lineCap = 'round'; for (const [oy, l, wd] of [[-2.1, 0.95, 1], [1.8, 0.75, 0.9], [-3.6, 0.5, 0.6], [3.4, 0.4, 0.6]]) { const x1 = b + HL * 0.2, xa = x1 - TL * l; ctx.strokeStyle = rgba(DKI, 0.28 * fl * al); ctx.lineWidth = Math.max(1.2, W0 * 0.42 * wd); ctx.beginPath(); ctx.moveTo(xa, W0 * oy); ctx.lineTo(x1, W0 * oy * 0.8); ctx.stroke(); ctx.strokeStyle = rgba(WHT, 0.85 * fl * al); ctx.lineWidth = Math.max(0.8, W0 * 0.2 * wd); ctx.beginPath(); ctx.moveTo(xa, W0 * oy); ctx.lineTo(x1, W0 * oy * 0.8); ctx.stroke(); } }
+    spHead(ctx, tx, al, HL, HW); }
   /* 碎刃：槍氣停住後碎成幾片小菱光往前飄散 */
   function shatter(x, y, z, f, ang, HL, HW, n, d) { const C = P(), S = []; for (let i = 0; i < n; i++) S.push({ x: -HL * (0.2 + 0.7 * i / n), dy: rnd(-1, 1) * HW * 2.5, v: rnd(0.6, 1.2), r: rnd(-0.6, 0.6), s: rnd(0.12, 0.22) });
     KF().add(16 + d, 'o', (ctx, u) => { const t = u - d; if (t < 0) return; const q = cl(t / 14, 0, 1), a = 1 - ei2(q); ctx.translate(x, y - z); ctx.scale(f, 1); ctx.rotate(ang);
@@ -74,20 +52,19 @@
    * 節奏：2 格刺到底 → 停住微顫 → 慢慢收回。破空：槍身上幾圈被擠開的氣環＋兩側速度線。
    * 命中：槍身穿過妖怪，背後噴出錐形碎光與碎片（刺穿感），重刺另外頓一下。 */
   const DKI = '22,26,58', STL = '168,196,236', STD = '96,120,176', WHT = '255,255,255';
-  function lance(ctx, tx, al, HL, HW, x0) { const b = tx - HL, C = P(); if (al <= 0.01 || tx - x0 < 2) return;
-    const wedge = (w, x1) => { ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x1, -w); ctx.lineTo(x1, w); ctx.closePath(); };
+  /* r3.187.0：槍頭瘦小、黑邊變細；槍身的光與移動痕跡加大 */
+  function spHead(ctx, tx, al, HL, HW) { const b = tx - HL, C = P();
     const head = (s, e) => { ctx.beginPath(); ctx.moveTo(tx + e, 0); ctx.lineTo(b + HL * 0.3, -HW * s); ctx.lineTo(b - e, -HW * s * 0.45); ctx.lineTo(b - e, HW * s * 0.45); ctx.lineTo(b + HL * 0.3, HW * s); ctx.closePath(); };
-    /* 深色襯底 */
-    wedge(HW * 0.95, b); ctx.fillStyle = rgba(DKI, 0.5 * al); ctx.fill(); head(1.5, HL * 0.06); ctx.fillStyle = rgba(DKI, 0.75 * al); ctx.fill();
-    /* 槍身：往槍尖漸實的光 */
-    const g = ctx.createLinearGradient(x0, 0, b, 0); g.addColorStop(0, rgba(STL, 0)); g.addColorStop(0.5, rgba(STL, 0.7 * al)); g.addColorStop(1, rgba(STL, al)); wedge(HW * 0.5, b); ctx.fillStyle = g; ctx.fill();
-    const g2 = ctx.createLinearGradient(x0, 0, b, 0); g2.addColorStop(0, rgba(WHT, 0)); g2.addColorStop(1, rgba(WHT, al)); wedge(HW * 0.2, b); ctx.fillStyle = g2; ctx.fill();
-    ctx.globalCompositeOperation = 'screen'; KF().spr(ctx, C.T.gm, tx - HL * 0.4, 0, HL * 2.0, HW * 7, 0.5 * al); ctx.globalCompositeOperation = 'source-over';
-    /* 口金 */
+    ctx.globalCompositeOperation = 'screen'; KF().spr(ctx, C.T.gm, tx - HL * 0.4, 0, HL * 2.2, HW * 9, 0.5 * al); ctx.globalCompositeOperation = 'source-over';
+    head(1.22, HL * 0.03); ctx.fillStyle = rgba(DKI, 0.55 * al); ctx.fill();
     ctx.fillStyle = rgba(BRASS, al); ctx.fillRect(b - HL * 0.1, -HW * 0.62, HL * 0.1, HW * 1.24); ctx.fillStyle = rgba(BRASSL, al); ctx.fillRect(b - HL * 0.1, -HW * 0.62, HL * 0.1, HW * 0.45);
-    /* 槍頭：上亮下暗、中稜 */
     ctx.save(); head(1, 0); ctx.clip(); ctx.fillStyle = rgba(WHT, al); ctx.fillRect(b - 2, -HW * 1.2, HL + 4, HW * 1.2); ctx.fillStyle = rgba(STD, al); ctx.fillRect(b - 2, 0, HL + 4, HW * 1.2); ctx.fillStyle = rgba(STL, al); ctx.fillRect(b - 2, 0, HL + 4, HW * 0.3); ctx.restore();
-    ctx.strokeStyle = rgba(DKI, 0.85 * al); ctx.lineWidth = Math.max(1, HW * 0.14); head(1, 0); ctx.stroke(); }
+    ctx.strokeStyle = rgba(DKI, 0.6 * al); ctx.lineWidth = Math.max(0.6, HW * 0.07); head(1, 0); ctx.stroke(); }
+  /* 光的拖痕：從 x0 往 x1 漸寬漸實的楔形（深色襯底＋鋼色＋白芯） */
+  function spTrail(ctx, x0, x1, w, al, xt) { if (x1 - x0 < 2 || al <= 0.01) return; const wedge = ww => { ctx.beginPath(); ctx.moveTo(x0, 0); ctx.quadraticCurveTo(x0 + (x1 - x0) * 0.55, -ww * 0.75, x1, -ww); if (xt !== undefined) ctx.lineTo(xt, 0); ctx.lineTo(x1, ww); ctx.quadraticCurveTo(x0 + (x1 - x0) * 0.55, ww * 0.75, x0, 0); ctx.closePath(); };   /* xt：前端收成尖（包住槍頭的光錐） */
+    const gr = (col, a) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, rgba(col, 0)); g.addColorStop(0.55, rgba(col, 0.6 * a * al)); g.addColorStop(1, rgba(col, a * al)); return g; };
+    wedge(w * 1.35); ctx.fillStyle = gr(DKI, 0.4); ctx.fill(); wedge(w); ctx.fillStyle = gr(STL, 0.9); ctx.fill(); wedge(w * 0.36); ctx.fillStyle = gr(WHT, 1); ctx.fill(); }
+  function lance(ctx, tx, al, HL, HW, x0, tw) { if (al <= 0.01 || tx - x0 < 2) return; spTrail(ctx, x0, tx - HL * 0.9, HW * (tw || 1.5), al, tx + HL * 0.22); spHead(ctx, tx, al, HL, HW); }
   /* 刺穿：背後噴出的錐形碎光＋碎片，正面一圈被擠開的氣 */
   function pierce(x, y, f, ang, big) { const k = KF().K(y), N = 8, S2 = []; for (let i = 0; i < N; i++) S2.push([rnd(-0.38, 0.38), rnd(0.5, 1.25), rnd(0.6, 1.1)]);
     KF().add(10, 'o', (ctx, u) => { const q = cl(u / 10, 0, 1), e = eo5(q), al = 1 - ei2(q); ctx.translate(x, y); ctx.scale(f, 1); ctx.rotate(ang);
@@ -98,17 +75,16 @@
     });
     KF().use('lance', () => KF().motes(x, y + 0.02 * k, 0, 4, { ang: f > 0 ? 0 : Math.PI, spread: 0.5, sp: 2.2, life: 14 })); }
   function spear(o) { const f = o.face || o.f || 1, y = o.y, k = KF().K(y), big = o.big || 1, dur = Math.max(2, o.ext || o.dur || 2), quick = (o.life || 10) <= 7, hold = o.hold !== undefined ? o.hold + 1 : 3, rel = quick ? 3 : 6, life = dur + hold + rel;
-    const reach = (o.len || 1.8) * k * 0.95, HL = 0.5 * k * big, HW = 0.05 * k * big * (o.wd || 1), cy = o.cy || 0.55, ang = o.ang || 0, x0 = 0.08 * reach, hx = o.x + f * 0.1 * k, heavy = big >= 1.1 || !!o.shock; let hy = y - cy * k;
-    { const bp = G.WPN.bladePt && Math.abs(o.x - H.x) < 2 && G.WPN.bladePt(); if (bp) hy += cl(bp[1] - hy, -0.2 * k, 0.2 * k); }   /* 高度對齊角色手上的槍（最多修正 0.2 身高，判定不變） */
+    const reach = (o.len || 1.8) * k * 0.95, HL = 0.4 * k * big, HW = 0.036 * k * big * (o.wd || 1), cy = o.cy || 0.55, ang = o.ang || 0, x0 = 0.08 * reach, hx = o.x + f * 0.1 * k, heavy = big >= 1.1 || !!o.shock, hy = y - cy * k, SW0 = 0.05 * k * big;
     KF().add(life + 1, 'o', (ctx, u) => { let tx, al = 1, xs = x0;
       if (u < dur) tx = reach * (0.35 + 0.65 * eo5((u + 1) / dur));
       else if (u < dur + hold) tx = reach + HL * 0.06 * Math.sin((u - dur) * 2.6) * (1 - (u - dur) / hold);   /* 停住微顫 */
       else { const r = cl((u - dur - hold) / rel, 0, 1); tx = reach - reach * 0.45 * ei2(r); xs = x0 + (tx - x0) * 0.5 * r; al = 1 - ei2(r); }
       ctx.translate(hx, hy); ctx.scale(f, 1); ctx.rotate(ang);
       /* 破空：兩側速度線＋槍身上的氣環 */
-      if (u < dur + 3) { const a = 1 - u / (dur + 3); ctx.lineCap = 'round'; for (const [oy, l0, l1] of [[-2.2, 0.25, 0.8], [1.9, 0.35, 0.9], [-3.6, 0.5, 0.95], [3.2, 0.15, 0.6]]) { ctx.strokeStyle = rgba(DKI, 0.35 * a); ctx.lineWidth = Math.max(1.5, HW * 0.4); ctx.beginPath(); ctx.moveTo(tx * l0, HW * oy); ctx.lineTo(tx * l1, HW * oy); ctx.stroke(); ctx.strokeStyle = rgba(WHT, 0.85 * a); ctx.lineWidth = Math.max(1, HW * 0.18); ctx.beginPath(); ctx.moveTo(tx * l0, HW * oy); ctx.lineTo(tx * l1, HW * oy); ctx.stroke(); } }
-      if (u >= dur - 1 && u < dur + 4) { const q = (u - dur + 1) / 5, a = 1 - q; for (let i = 0; i < 2; i++) { const px = reach * (0.5 + i * 0.24) + HW * 4 * q, ry = HW * (1.9 + i * 0.9) * (1 + 0.9 * eo3(q)) * (heavy ? 1.3 : 1), rx = ry * 0.16; ctx.strokeStyle = rgba(DKI, 0.3 * a); ctx.lineWidth = Math.max(1, HW * 0.45 * a); ctx.beginPath(); ctx.ellipse(px, 0, rx * 1.2, ry * 1.04, 0, -1.2, 1.2); ctx.stroke(); ctx.strokeStyle = rgba(WHT, 0.75 * a); ctx.lineWidth = Math.max(1, HW * 0.25 * a); ctx.beginPath(); ctx.ellipse(px, 0, rx, ry, 0, -1.2, 1.2); ctx.stroke(); } }
-      lance(ctx, tx, al, HL, HW, xs);
+      if (u < dur + 5) { const a = 1 - u / (dur + 5); ctx.lineCap = 'round'; for (const [oy, l0, l1, wd] of [[-2.0, 0.1, 0.86, 1.3], [1.7, 0.22, 0.94, 1.1], [-3.6, 0.38, 0.98, 0.8], [3.3, 0.05, 0.7, 0.9], [-5.2, 0.5, 0.9, 0.6], [5.0, 0.3, 0.82, 0.6]]) { ctx.strokeStyle = rgba(DKI, 0.32 * a); ctx.lineWidth = Math.max(1.5, SW0 * 0.46 * wd); ctx.beginPath(); ctx.moveTo(tx * l0, SW0 * oy); ctx.lineTo(tx * l1, SW0 * oy); ctx.stroke(); ctx.strokeStyle = rgba(WHT, 0.9 * a); ctx.lineWidth = Math.max(1, SW0 * 0.22 * wd); ctx.beginPath(); ctx.moveTo(tx * l0, SW0 * oy); ctx.lineTo(tx * l1, SW0 * oy); ctx.stroke(); } }
+      if (u >= dur - 1 && u < dur + 4) { const q = (u - dur + 1) / 5, a = 1 - q; for (let i = 0; i < 2; i++) { const px = reach * (0.5 + i * 0.24) + SW0 * 4 * q, ry = SW0 * (1.9 + i * 0.9) * (1 + 0.9 * eo3(q)) * (heavy ? 1.3 : 1), rx = ry * 0.16; ctx.strokeStyle = rgba(DKI, 0.3 * a); ctx.lineWidth = Math.max(1, SW0 * 0.45 * a); ctx.beginPath(); ctx.ellipse(px, 0, rx * 1.2, ry * 1.04, 0, -1.2, 1.2); ctx.stroke(); ctx.strokeStyle = rgba(WHT, 0.75 * a); ctx.lineWidth = Math.max(1, HW * 0.25 * a); ctx.beginPath(); ctx.ellipse(px, 0, rx, ry, 0, -1.2, 1.2); ctx.stroke(); } }
+      lance(ctx, tx, al, HL, HW, xs, (u < dur + hold ? 2.6 : 1.8));
       if (u >= dur - 1 && u < dur + 3) star(ctx, tx + HW * 0.4, HW * 3.4, 1 - cl((u - dur + 1) / 4, 0, 1), 0.3); });
     if (o.shock) shock(o.x + f * ((o.len || 1.8) * 0.95 + 0.1) * k, y, cy, f, ang, big, dur); }
   /* ---------- 破空碎弧：槍尖前兩片斷開的月牙碎片往前推開 ---------- */
@@ -118,12 +94,12 @@
         for (const [col, aa] of [[C.mid, 0.85], [C.lite, 0.9]]) { ctx.fillStyle = rgba(col, aa * al); ctx.beginPath(); ctx.moveTo(out[0][0], out[0][1]); for (const p of out) ctx.lineTo(p[0], p[1]); for (let i = N; i >= 0; i--) ctx.lineTo(inn[i][0], inn[i][1]); ctx.closePath(); ctx.fill(); } } }); }
   /* ---------- 槍擺（槍花）：槍以手為支點擺動，槍尖在攻擊距離上畫出窄刀光；弧頭是沿槍身方向的槍頭槍氣 ---------- */
   /* o = x,y,f,cy, R（槍尖離手，身高倍）a0→a1（徑度，0＝正前、正值往下）dur w */
-  function swing(o) { const f = o.f, y = o.y, k = KF().K(y), cy = o.cy || 0.55, dur = o.dur || 4, R = o.R || 1.7, a0 = o.a0, a1 = o.a1, sq = o.sq || 1, hx = o.x + f * 0.1 * k, big = o.big || 1, HL = 0.5 * k * big, HW = 0.05 * k * big, life = dur + 7;
-    const span = Math.min(Math.abs(a1 - a0), o.trail || 2.4), sg = a1 > a0 ? 1 : -1, W0 = (o.w || 0.2) * k * 0.55 * big;
+  function swing(o) { const f = o.f, y = o.y, k = KF().K(y), cy = o.cy || 0.55, dur = o.dur || 4, R = o.R || 1.7, a0 = o.a0, a1 = o.a1, sq = o.sq || 1, hx = o.x + f * 0.1 * k, big = o.big || 1, HL = 0.4 * k * big, HW = 0.036 * k * big, life = dur + 9;
+    const span = Math.min(Math.abs(a1 - a0), o.trail || 2.4), sg = a1 > a0 ? 1 : -1, W0 = (o.w || 0.2) * k * 0.95 * big;
     /* r3.186.0：槍擺——槍身以手為支點掃過去，槍尖拖出一道外緣銳利、往尾端漸細的鋼色弧光（深色襯底，白天也清楚） */
     KF().add(life, 'o', (ctx, u) => { const a = a0 + (a1 - a0) * eo3(cl(u / dur, 0, 1)), al = u <= dur ? 1 : 1 - ei2((u - dur) / 7); if (al <= 0.01) return; ctx.translate(hx, y - cy * k); ctx.scale(f, 1);
       const sp = Math.min(span, Math.abs(a - a0)) * (u <= dur ? 1 : 1 - (u - dur) / 9), N = 16; if (sp > 0.05) { const rib = (w, col, aa, off) => { ctx.beginPath(); for (let i = 0; i <= N; i++) { const v = i / N, an = a - sg * sp * (1 - v), r = R * k + off; ctx[i ? 'lineTo' : 'moveTo'](Math.cos(an) * r, Math.sin(an) * r * sq); } for (let i = N; i >= 0; i--) { const v = i / N, an = a - sg * sp * (1 - v), r = R * k + off - w * v * v; ctx.lineTo(Math.cos(an) * r, Math.sin(an) * r * sq); } ctx.closePath(); ctx.fillStyle = rgba(col, aa * al); ctx.fill(); };
-        rib(W0 * 1.5, DKI, 0.5, W0 * 0.22); rib(W0, STL, 0.9, 0); rib(W0 * 0.38, WHT, 1, 0); }
+        rib(W0 * 1.25, DKI, 0.35, W0 * 0.1); rib(W0, STL, 0.85, 0); rib(W0 * 0.34, WHT, 1, 0); }
       if (u <= dur + 2) { const px = Math.cos(a) * R * k, py = Math.sin(a) * R * k * sq, d = Math.hypot(px, py); ctx.rotate(Math.atan2(py, px)); lance(ctx, d + HL * 0.1, u <= dur ? 1 : 1 - (u - dur) / 3, HL, HW, d * 0.12); } });
     KF().use('lance', () => KF().motes(hx + f * Math.cos(a1) * R * k, y, cy, 3, { sp: 1.4, life: 14 })); }
   /* ---------- 以下 r3.80.0：全部招式用的槍氣元件 ---------- */
