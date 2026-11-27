@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 20_npc.js
- * Version : r3.151.1  (2026-11-27)　r3.151.1：沒有待機圖的路人（只有走路／說話兩組動作）停下時改播說話動作（取代比手勢）
+ * Version : r3.151.2  (2026-11-27)　r3.151.2：說話動作當待機時放慢到每格約 0.6 秒
+ * 舊版    : r3.151.1  (2026-11-27)　r3.151.1：沒有待機圖的路人（只有走路／說話兩組動作）停下時改播說話動作（取代比手勢）
  * 舊版    : r3.151.0  (2026-11-27)　r3.151.0：沒有待機圖的路人站著時呼吸加大並輕微晃動
  * 舊版    : r3.129.0  (2026-11-27)　r3.129.0：新兩岸城圖：時雨站位改到西口下方
  * 舊版    : r3.128.3  (2026-11-27)　r3.128.3：時雨初始位置改到西邊神社傳點下方
@@ -88,7 +89,7 @@
   function frame(n) {
     let rec = n.un.act[n.act];
     if (!rec) { const w = n.un.act[moveAct(n)] || n.un.act[Object.keys(n.un.act)[0]]; return w.f[0]; }   // 沒有 idle 的：站姿＝走路第 1 格
-    return A.frameAt(rec, n.ms);
+    return A.frameAt(rec, n.act === 'dialogue' && n.st === 'idle' && !has(n, 'idle') ? n.ms * 0.7 : n.ms);   // r3.151.2：說話動作當待機時放慢（每格約 0.6 秒）
   }
   const busy = n => n.st === 'talk' || n.st === 'meet' || n.chat;
   function pathOk(x0, y0, x1, y1) { const L = Math.hypot(x1 - x0, y1 - y0), k = Math.ceil(L / 24); for (let i = 1; i <= k; i++) if (!SC.walkable(x0 + (x1 - x0) * i / k, y0 + (y1 - y0) * i / k)) return false; return true; }
