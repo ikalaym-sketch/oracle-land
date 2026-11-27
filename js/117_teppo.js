@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 117_teppo.js
- * Version : r3.193.0  (2026-11-28)　r3.193.0：爆炸改回手繪素材；焙烙火矢改往四周拋、每顆都留燃燒；身法逐招區分＋偏強招式收招放慢；托擊（招式）改名槍托反擊；五招秘傳加演出層
+ * Version : r3.197.0  (2026-11-28)　r3.197.0：火龍放射的龍改成手繪火蛇
+ * 舊版    : r3.193.0  (2026-11-28)　r3.193.0：爆炸改回手繪素材；焙烙火矢改往四周拋、每顆都留燃燒；身法逐招區分＋偏強招式收招放慢；托擊（招式）改名槍托反擊；五招秘傳加演出層
  * 舊版    : r3.192.0  (2026-11-28)　r3.192.0：命中分三級（子彈火花／炸裂彈小爆／砲擊大爆）、曳光彈道、槍口火光、自繪火球與焦痕；地面火改用手繪火焰素材排成火帶
  * 舊版    : r3.82.0  (2026-11-25)
  * 變更    : r3.82.0 改用現成素材：大筒＝合戰大筒 war_cannon、爆炸＝fx_blast＋fx_crack_glow＋fx_smoke＋fx_debris、焙烙＝fx_bomb、燃燒地帶＝刑部姬地面火帶＋鬼王火堆、
@@ -224,6 +225,8 @@
   /* 火龍：一條由火焰組成的龍身，從槍口蜿蜒往前衝到 L（身高倍），龍頭較大、帶兩撮火鬚；之後在原地翻騰到結束 */
   function fireDragon(c, L, frames) { const f = c.f, a0 = c.a;
     E(() => KF().add(frames, 'o', (ctx, u) => { if (H.act !== a0 && u > 4) return; const k = K(H.y), p = muzP(c), x0 = p[0], y0 = H.y - p[2] * k, g = eo3(Math.min(1, u / 16)), al = Math.min(1, u / 4) * Math.min(1, (frames - u) / 12), N = 12, hd = L * k * g;
+        /* r3.197.0：火龍＝手繪的火蛇（原本一節一節火苗拼成），從槍口竄出、身體扭動 */
+        if (G.AFX && G.AFX.fr('b_ezo', 'fx_serpent_straight', u > frames - 8 ? 3 : Math.floor(u / 5) % 3, x0, y0 + 0.1 * k, { size: Math.max(k * 0.8, hd * 1.15), by: 'w', anc: [0.04, 0.5], flip: f < 0, a: al })) return;
         for (let i = 0; i <= N; i++) { const v = i / N, d = hd * v, wv = Math.sin(v * 7 - u * 0.33) * 0.3 * k * (0.3 + 0.7 * v), hx = x0 + f * d, hy = y0 + wv * 0.6 + v * 0.25 * k, sz = (0.34 + 0.5 * v) * k * (i === N ? 1.5 : 1); tongue(ctx, hx, hy + sz * 0.5, sz, sz * 0.3, i * 1.37, al);   /* 身體：一節一節的火 */
           if (i === N) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.8 * al; ctx.drawImage(tex(FY), hx - sz * 0.6, hy - sz * 0.6, sz * 1.2, sz * 1.2); ctx.globalAlpha = al; ctx.drawImage(tex(FW), hx + f * sz * 0.1 - sz * 0.22, hy - sz * 0.25, sz * 0.44, sz * 0.44); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } } },
       (q, tt) => { if (tt % 3 === 0) KF().embers(H.x + f * rnd(0.8, L) * K(H.y), H.y, 0.5, 1, { sp: 0.7, life: 26 }); })); }
@@ -325,4 +328,6 @@
   /* 燃燒狀態：拿掉身上火苗與橘色橢圓，只留少量上飄火星（88_rune 與茨木灼燒共用 G.FLAMES） */
   G.FLAMES = (e) => { const ph = e._fsd || (e._fsd = Math.random() * 12 | 0); if ((G.t + ph) % 8 === 0) E(() => { const ox = rnd(-0.28, 0.28) * (e.ratio || 1), hh = rnd(0.22, 0.36); KF().add(14, 'o', (ctx, u) => { const k = K(e.y); tongue(ctx, e.x + ox * k, e.y + 0.02 * k, hh * k, hh * k * 0.3, ph + ox * 9, Math.min(1, u / 3) * Math.min(1, (14 - u) / 5)); }); });   /* r3.192.0：腳邊小火苗 */
     if ((G.t + (e._fsd || (e._fsd = Math.random() * 12 | 0))) % 12 === 0) E(() => KF().embers(e.x, e.y, (e.ratio || 1) * 0.45, 1, { sp: 0.35, life: 24, rx: 0.15 * (e.ratio || 1) })); };
+  /* r3.197.0：拿鐵砲時先備好火龍的手繪素材（已載入不重讀） */
+  setInterval(() => { try { if (G.mode === 'play' && G.AFX && G.WPN && G.WPN.curId && G.WPN.curId() === 'teppo') G.AFX.pre(['b_ezo']); } catch (x) {} }, 2000);
 })();

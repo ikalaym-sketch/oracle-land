@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 113_naginata.js
- * Version : r3.194.0  (2026-11-28)　r3.194.0：立架拒拿掉梭形光（像一片大葉子），只留直立風條；立架截飛補風牆
+ * Version : r3.197.0  (2026-11-28)　r3.197.0：颶燕的龍捲風改成手繪龍捲
+ * 舊版    : r3.194.0  (2026-11-28)　r3.194.0：立架拒拿掉梭形光（像一片大葉子），只留直立風條；立架截飛補風牆
  * 舊版    : r3.183.0  (2026-11-28)　r3.183.0：五招秘傳演出重做（龍捲風、滿天葉刃、風神降臨、雙月合攏、烏雲落雷）＋運鏡；千鳥加鳥形風刃、旋風薙加旋風、立架拒風牆改實色、翼架加展翼
  * 舊版    : r3.76.0  (2026-11-24)
  * 變更    : r3.76.0 新增。薙刀「沉重感的大範圍」（青碧 gale 色盤，用 111 元件）。
@@ -116,7 +117,8 @@
   const init = (c, T, dim) => { const m = c.a.mvx; if (m.cin) return false; m.cin = 1; VX.dim(T, dim); Gl(() => KF().light(c.x, c.y, 3.2, T, 0.3)); return true; };
   const foesAt = (x, y, R) => G.E.filter(e => e.st !== 'dead' && e.delay <= 0 && Math.hypot(e.x - x, (e.y - y) * 1.5) < R);
   /* 龍捲風：貫穿畫面高度的風柱（多層旋轉的漸細風帶＋葉片） */
-  function tornado(x, y, Hh, life) { Gl(() => { const C = KF().PAL.gale; KF().add(life, 'o', (ctx, u) => { const k = HH() * S(y), a = Math.min(1, u / 8) * Math.min(1, (life - u) / 12), N = 11; ctx.globalCompositeOperation = 'screen';
+  function tornado(x, y, Hh, life) { /* r3.197.0：龍捲風＝須佐之男的手繪龍捲（原本程式畫的一圈圈弧線） */ if (G.AFX && G.AFX.play('b_susanoo', 'fx_tornado_loop', { x, y: y + HH() * S(y) * 0.1, size: Hh * HH() * S(y), by: 'h', anc: 'b', tpf: 4, loop: Math.max(1, Math.round(life / 16)), fin: 8, fade: 12 })) { Gl(() => { for (let i = 0; i < 5; i++) KF().leaves(x, y, 0.4 + i * Hh / 5, 8, { sp: 2, life: life, rx: 1.2, stag: life * 0.6 }); }); return; }
+    Gl(() => { const C = KF().PAL.gale; KF().add(life, 'o', (ctx, u) => { const k = HH() * S(y), a = Math.min(1, u / 8) * Math.min(1, (life - u) / 12), N = 11; ctx.globalCompositeOperation = 'screen';
       for (let i = 0; i < N; i++) { const q = i / (N - 1), yy = y - q * Hh * k, w = k * (0.45 + q * 1.5) * (0.9 + 0.1 * Math.sin(u * 0.2 + i)), ox = Math.sin(u * 0.12 + i * 0.7) * 0.18 * k * q; KF().spr(ctx, C.T.gd, x + ox, yy, w * 2.4, k * 0.9, 0.5 * a);
         ctx.strokeStyle = 'rgba(' + (i % 2 ? C.lite : C.mid) + ',' + (0.75 * a).toFixed(3) + ')'; ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1.5, k * 0.11 * (1 - q * 0.4)); const a0 = (u * 0.42 + i * 1.3) % TAU; ctx.beginPath(); ctx.ellipse(x + ox, yy, w, w * 0.22, 0, a0, a0 + 2.2); ctx.stroke(); } });
       for (let i = 0; i < 5; i++) KF().leaves(x, y, 0.4 + i * Hh / 5, 8, { sp: 2, life: life, rx: 1.2, stag: life * 0.6 }); }); }
@@ -195,4 +197,6 @@
     if (L) for (const h of L) { const f = DH[h.id]; if (!f || h.run === WRP[h.id]) continue; const base = h.run; BASE[h.id] = base;
       WRP[h.id] = h.run = function (c, t) { if (t === 1) { base.call(this, c, 1); return; } const C = c.a._comp; if (C && C.rel) f(c, t, C); else base.call(this, c, t); }; } }
   const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0.apply(this, arguments); patch(); try { fxSkills(); } catch (x) {} };
+  /* r3.197.0：拿薙刀時先備好龍捲風的手繪素材（已載入不重讀） */
+  setInterval(() => { try { if (G.mode === 'play' && G.AFX && G.WPN && G.WPN.curId && G.WPN.curId() === 'naginata') G.AFX.pre(['b_susanoo']); } catch (x) {} }, 2000);
 })();

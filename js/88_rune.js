@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 88_rune.js
- * Version : r3.196.0  (2026-11-28)　r3.196.0：靈紋／套裝／神器的幾何圖形全部換成有主題的分層畫法（風刃、斬月、震地、落雷、狐火、光箭、感電、破甲、鏡返、潮浪、鬼火、天光、日鏡、勾玉光線）
+ * Version : r3.197.0  (2026-11-28)　r3.197.0：靈紋／套裝／神器改播手繪素材（風刃、叢雲、斬月、震地、落雷、感電、潮浪、狐火、鬼火、穿雲、鏡返、日鏡、勾玉光線、凍結）；新增手繪素材播放器 G.AFX
+ * 舊版    : r3.196.0  (2026-11-28)　r3.196.0：靈紋／套裝／神器的幾何圖形全部換成有主題的分層畫法（風刃、斬月、震地、落雷、狐火、光箭、感電、破甲、鏡返、潮浪、鬼火、天光、日鏡、勾玉光線）
  * 舊版    : r3.195.0  (2026-11-28)　r3.195.0：霜結腳下的藍色實線圈改成霜霧
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：冰緩狀態不再畫整片白色橢圓 → 身邊飄冰晶＋腳下淡藍霜圈
  * 舊版    : r3.107.2  (2026-11-26)　r3.107.2：吸魂特效改成「被吸過來」：12 縷柔光粒子錯開、螺旋加速吸進胸口＋拖尾，取代一整顆圓球
@@ -108,7 +109,7 @@
   /* ======================= 狀態異常 ======================= */
   function burn(e) { const s = e.st2 = e.st2 || {}; s.bn = Math.min(3, (s.bn || 0) + 1); s.bnT = sec(4); }
   function frost(e) { const s = e.st2 = e.st2 || {}; if ((s.frzCd || 0) > G.t) return; s.fr = (s.fr || 0) + 1; s.frT = sec(4);
-    if (s.fr >= 3) { KU('moon', () => { const K2 = G.KF; K2.burst(e.x, e.y, 0.5 * (e.ratio || 1), 2.2); K2.puff(e.x, e.y, 1.2); K2.glint(e.x, e.y, 0.6 * (e.ratio || 1), 0.5, 12); }); KFa(22, 'o', (c2, u) => { const k = HH() * S(e.y) * (e.ratio || 1); for (let i = 0; i < 7; i++) { const an = i * 0.9 + 0.3, d = k * (0.2 + 0.5 * Math.min(1, u / 10)); snow(c2, e.x + Math.cos(an) * d, e.y - k * 0.5 + Math.sin(an) * d * 0.8, k * 0.07, u * 0.1 + i, 1 - u / 22); } }); s.fr = 0; s.frz = sec(1.5);   /* r3.196.0：凍住的瞬間白霜炸開＋雪花 */ s.frzCd = G.t + sec(6); s.frBig = !!e.bb; G.UI.toast && 0; } }
+    if (s.fr >= 3) { KU('moon', () => { const K2 = G.KF; K2.burst(e.x, e.y, 0.5 * (e.ratio || 1), 2.2); K2.puff(e.x, e.y, 1.2); K2.glint(e.x, e.y, 0.6 * (e.ratio || 1), 0.5, 12); }); { const k = HH() * S(e.y) * (e.ratio || 1); AFX.play('p_shion_fx', 'freeze_snap', { x: e.x, y: e.y + k * 0.05, size: k * 1.7, by: 'h', anc: 'b', tpf: 4 }); }   /* r3.197.0：凍結瞬間＝夥伴紫苑的手繪冰牙合攏 */ if (!AFX.ok('p_shion_fx', 'freeze_snap')) KFa(22, 'o', (c2, u) => { const k = HH() * S(e.y) * (e.ratio || 1); for (let i = 0; i < 7; i++) { const an = i * 0.9 + 0.3, d = k * (0.2 + 0.5 * Math.min(1, u / 10)); snow(c2, e.x + Math.cos(an) * d, e.y - k * 0.5 + Math.sin(an) * d * 0.8, k * 0.07, u * 0.1 + i, 1 - u / 22); } }); s.fr = 0; s.frz = sec(1.5);   /* r3.196.0：凍住的瞬間白霜炸開＋雪花 */ s.frzCd = G.t + sec(6); s.frBig = !!e.bb; G.UI.toast && 0; } }
   function shock(e) { const s = e.st2 = e.st2 || {}; s.sk = sec(6); }
   function armor(e) { e.db = e.db || {}; e.db.def = Math.max(e.db.def || 0, 20); e.db.defT = Math.max(e.db.defT || 0, sec(5)); (e.st2 = e.st2 || {}).ha = sec(5); }
   G.STAT2 = { burn, frost, shock, armor };
@@ -166,11 +167,33 @@
     for (let n = 0; n < 2; n++) { const pts = [], x0 = e.x + (R2() - 0.5) * h * 0.5, y0 = e.y - h * (0.15 + R2() * 0.7); let px = x0, py = y0; pts.push([px, py]); for (let i = 0; i < 4; i++) { px += (R2() - 0.5) * h * 0.3; py += (R2() - 0.5) * h * 0.3; pts.push([px, py]); }
       for (const [w, col, al] of [[0.05, '34,16,80', 0.6], [0.028, '170,140,255', 1], [0.011, '255,255,255', 1]]) { c2.strokeStyle = rgb(col, al); c2.lineWidth = Math.max(0.8, h * w); c2.beginPath(); pts.forEach((p2, i) => c2[i ? 'lineTo' : 'moveTo'](p2[0], p2[1])); c2.stroke(); } } c2.restore(); }
   G.RFX = { wisp, lightArrow, feather, droplet, snow, KU, KFa, rgb };
+  /* r3.197.0：手繪素材特效播放器——直接播頭目／夥伴／里歐招式裡現成的手繪動畫（取代程式畫的幾何圖形）。
+   * 素材第一次用到才下載（之後留在記憶體，不重複讀取）；還沒載好的那一次由呼叫端的 fb() 用舊畫法頂替。
+   * fr(單位, 動畫, 第幾格, x, y, o)：立即畫一格。play(單位, 動畫, o)：播一段。
+   * o：size＝畫面大小（像素，對齊 by：'w' 寬／'h' 高／預設長邊）、anc＝對位點（'c' 中心／'b' 底部中央／[fx,fy] 比例）、ang 旋轉、flip 翻面、a 透明度、add 加亮、sy 垂直壓扁、
+   *    tpf 每格幾幀、fr＝[起,迄] 只播其中幾格、loop 重複幾次、hold 最後一格多停幾幀、at(u)→[x,y,ang] 跟隨、layer、delay、fb。 */
+  const AFX = (function () { const asked = {}, isLv = k => k.slice(0, 3) === 'lv_';
+    function unit(k) { const u = A.get(k); if (u) return u; if (!asked[k]) { asked[k] = 1; try { const q = isLv(k) ? G.LEON.boot().then(() => G.LEON.LD(k)) : A.load(k); if (q && q.catch) q.catch(() => { asked[k] = 0; }); } catch (x) { asked[k] = 0; } } return null; }
+    function rec(k, c) { const u = unit(k); if (!u) return null; const r = isLv(k) ? (u._xr || (u._xr = { f: u.x })) : ((u.fx && u.fx[c]) || (u.act && u.act[c])); if (!r || !r.f || !r.f.length) return null; const im = u.imgs && u.imgs[r.f[0][7] || 0]; if (!im || !(im.naturalWidth || im.width)) return null;
+      if (!r._bb) { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const f of r.f) { const s8 = f[8] || 1; x0 = Math.min(x0, -f[4] * s8); y0 = Math.min(y0, -f[5] * s8); x1 = Math.max(x1, (f[2] - f[4]) * s8); y1 = Math.max(y1, (f[3] - f[5]) * s8); } r._bb = { x0, y0, w: x1 - x0, h: y1 - y0 }; } return [u, r]; }
+    function fr(k, c, fi, x, y, o) { const R2 = rec(k, c); if (!R2) return false; const u = R2[0], r = R2[1], f = r.f[Math.max(0, Math.min(r.f.length - 1, fi | 0))], im = u.imgs[f[7] || 0]; if (!im) return false; o = o || {};
+      const bb = r._bb, s8 = f[8] || 1, sc = (o.size || 100) / (o.by === 'w' ? bb.w : o.by === 'h' ? bb.h : Math.max(bb.w, bb.h)), an = o.anc || 'c', fx = an === 'c' || an === 'b' ? 0.5 : an[0], fy = an === 'c' ? 0.5 : an === 'b' ? 1 : an[1], ax = bb.x0 + bb.w * fx, ay = bb.y0 + bb.h * fy;
+      ctx.save(); ctx.translate(x, y); if (o.flip) ctx.scale(-1, 1); if (o.ang) ctx.rotate(o.ang); if (o.sy) ctx.scale(1, o.sy); if (o.a !== undefined) ctx.globalAlpha *= Math.max(0, Math.min(1, o.a)); if (o.add) ctx.globalCompositeOperation = 'lighter';
+      try { ctx.drawImage(im, f[0], f[1], f[2], f[3], (-f[4] * s8 - ax) * sc, (-f[5] * s8 - ay) * sc, f[2] * s8 * sc, f[3] * s8 * sc); } catch (e) {} ctx.restore(); return true; }
+    function play(k, c, o) { o = o || {}; const R2 = rec(k, c); if (!R2 || !G.KF || !G.KF.add) { if (o.fb) try { o.fb(); } catch (e) {} return false; }
+      const r = R2[1], i0 = o.fr ? o.fr[0] : 0, i1 = o.fr ? o.fr[1] : r.f.length - 1, n = i1 - i0 + 1, tpf = o.tpf || 4, loop = o.loop || 1, hold = o.hold || 0, life = n * tpf * loop + hold, dl = o.delay || 0, fade = o.fade === undefined ? Math.min(6, tpf) : o.fade;
+      G.KF.add(life + dl, o.layer || 'o', (c2, u) => { u -= dl; if (u < 0) return; const p = o.at ? o.at(u) : null; if (o.at && !p) return; const fi = u >= n * tpf * loop ? i1 : i0 + Math.floor(u / tpf) % n, a = (o.a === undefined ? 1 : o.a) * Math.min(1, (life - u) / Math.max(1, fade)) * (o.fin ? Math.min(1, (u + 1) / o.fin) : 1);
+        fr(k, c, fi, p ? p[0] : o.x, p ? p[1] : o.y, { size: typeof o.size === 'function' ? o.size(u) : o.size, by: o.by, anc: o.anc, ang: p && p[2] !== undefined ? p[2] : o.ang, flip: o.flip, a, add: o.add, sy: o.sy }); }); return true; }
+    const pre = L => { for (const k of L) unit(k); };
+    return { fr, play, pre, rec, ok: (k, c) => !!rec(k, c) }; })();
+  G.AFX = AFX;
+  G.RUNE.T = { windBlade: (...a) => windBlade(...a), moon: () => moon(), quake: () => quake(), strike: (...a) => strike(...a), tideFx: (...a) => tideFx(...a), mirrorFx: n => mirrorFx(n), homing: (...a) => homing(...a), sunMirror: () => sunMirror(), lv: (id, v) => { ON.rn[id] = v; }, ray: o => E.push(o) };   /* 測試面板用的觸發入口 */
+
   function statusDraw() { for (const e of G.E) { const s = e.st2; if (!s || e.st === 'dead') continue; const k = Math.max(0.7, (e.ratio || 1) * 0.85), z = (e.ratio || 1) * 0.1;
       if (s.bnT > 0) (G.FLAMES || flames)(e, 1 + s.bn);   // r3.82.0：可由 117 換掉身上火苗   // r3.59.0：原本借用地面火圈圖（整圈火焰）→ 改成身上竄出的小火苗
       if (s.frz > 0) VX.draw2 && VX.draw2(ctx, 'fx_ice_shell', 0, e.x, e.y - HH() * S(e.y) * k * 0.62, k, { a: 0.85 });
       else if (s.fr > 0) frostMotes(e, k, s.fr);   // r3.166.0：原本整片白色橢圓 → 改成身邊飄的冰晶＋腳下霜圈
-      if (s.sk > 0) arcs(ctx, e);   /* r3.196.0：感電＝身上爬的電弧（原本一條閃爍的紫色折線） */
+      if (s.sk > 0) { const hh = HH() * (e.ratio || 1) * S(e.y); if (!AFX.fr('b_raiju', 'raijuo_electric_burst', 1 + Math.floor((G.t + e.x) / 4) % 3, e.x, e.y - hh * 0.5, { size: hh * 1.15, a: 0.9 })) arcs(ctx, e); }   /* r3.197.0：感電＝雷獸的手繪電光 */   /* r3.196.0：感電＝身上爬的電弧（原本一條閃爍的紫色折線） */
       if (s.ha > 0) brokenPlate(ctx, e.x, e.y - HH() * (e.ratio || 1) * S(e.y) * 1.2, Math.max(6, HH() * S(e.y) * 0.075), G.t); } }   /* 破甲＝裂開剝落的甲片（原本一道紅折線＋圓圈） */
 
   /* ======================= 爆氣 ======================= */
@@ -191,7 +214,7 @@
     if (lvOf('rai') && G.PROC('r_rai', 0) && Math.random() < 0.12 && ready('rai', 1)) thunder(e, 'rai');
     if (lvOf('en') && G.PROC('r_en', 30, e) && Math.random() < 0.2) burn(e);
     if (lvOf('hyo') && G.PROC('r_hyo', 30, e)) frost(e);
-    if (lvOf('den') && G.PROC('r_den', 30)) { const s = e.st2; if (s && s.sk > 0) { s.sk = 0; RD(e, 'den', 0.9); const n = nearest(e.x, e.y, HH() * 3, [e]); if (n) { RD(n, 'den', 0.45); VX.bolt && VX.bolt({ x0: e.x, y0: chest(e), x1: n.x, y1: chest(n), col: '200,190,255', life: 12 }); } } else if (Math.random() < 0.15) shock(e); }
+    if (lvOf('den') && G.PROC('r_den', 30)) { const s = e.st2; if (s && s.sk > 0) { s.sk = 0; RD(e, 'den', 0.9); { const hh = HH() * (e.ratio || 1) * S(e.y); AFX.play('b_raiju', 'raijuo_electric_burst', { x: e.x, y: e.y - hh * 0.5, size: hh * 2.0, tpf: 3 }); } const n = nearest(e.x, e.y, HH() * 3, [e]); if (n) { RD(n, 'den', 0.45); VX.bolt && VX.bolt({ x0: e.x, y0: chest(e), x1: n.x, y1: chest(n), col: '200,190,255', life: 12 }); } } else if (Math.random() < 0.15) shock(e); }
     if (lvOf('ha') && big) armor(e);
     if (fin && lvOf('kaze') && ready('kaze', 2)) windBlade('kaze', 1.2, 4.5, '170,255,225');
     if (fin && lvOf('zan') && ready('zan', 3)) moon();
@@ -200,7 +223,7 @@
     if (lvOf('un') && /yumi|teppo/.test(G.WPN && G.WPN.curId && G.WPN.curId()) && G.PROC('r_un', 0) && ++shotN % 5 === 0) homing(e, 0.8 * LVM[lvOf('un')], 'arrow');
     if (lvOf('toki') && comboN >= 30 && QI.t <= 0 && ready('toki', 30)) burst(5, 15, 0, false);
     if (ON.set.yomi && e.hp / e.hpMax < 0.2 && alive(e) && (e._ym || 0) < G.t) { e._ym = G.t + sec(6); s2('fx_yomi_hand', { x: e.x, y: e.y, k: 1, life: 30 }); G.STORY.later(10, () => dmg(e, 2.5, true)); }
-    if (ON.set.tenmon && G.PROC('r_ten', 0) && ++tenN % 10 === 0) { VX.pillar && VX.pillar({ x: e.x, y: e.y, h: 4, wk: 1 }); VX.sigil && VX.sigil({ x: e.x, y: e.y, kind: 'shrine', r: 0.9, life: 34, a: 0.7 }); KU('holy', () => { const K2 = G.KF; K2.light(e.x, e.y, 1.6, 24, 0.6, 0.4); K2.leaves(e.x, e.y, 1.6, 8, { sp: 0.9, life: 40 }); K2.glint(e.x, e.y, 0.1, 0.6, 14); }); G.STORY.later(6, () => dmg(e, 3.0, true)); }   /* r3.196.0：天光＝光柱＋落點金色紋樣＋飄落金羽 */
+    if (ON.set.tenmon && G.PROC('r_ten', 0) && ++tenN % 10 === 0) { VX.pillar && VX.pillar({ x: e.x, y: e.y, h: 4, wk: 1 }); VX.sigil && VX.sigil({ x: e.x, y: e.y, kind: 'shrine', r: 0.9, life: 34, a: 0.7 }); KU('holy', () => { const K2 = G.KF; K2.light(e.x, e.y, 1.6, 24, 0.6, 0.4); K2.glint(e.x, e.y, 0.1, 0.6, 14); }); G.STORY.later(6, () => dmg(e, 3.0, true)); }   /* r3.196.0：天光＝光柱＋落點金色紋樣＋飄落金羽 */
     if (ON.set.foxfire && crit && ready('fox', 2)) for (let i = 0; i < 3; i++) homing(e, 0.6, 'fox', i);
   }
   const do0 = G.damageOni; G.damageOni = function (e, mult, big, fc, opt) { const hero = e && e.st !== 'dead' && !(opt && (opt.party || opt.rune)) && !G._bleedTick, n0 = G.NUMS.length, hp0 = e && e.hp;
@@ -210,10 +233,15 @@
     return r; };
   const ok0 = R.onKill; R.onKill = function (e) { ok0.apply(this, arguments); try {
       if (lvOf('kon') && ready('kon', 0.5)) { const v = Math.round(H.hpMax * 0.03 * LVM[lvOf('kon')]); H.hp = Math.min(H.hpMax, H.hp + v); G.NUMS.push({ x: H.x, y: H.y - HH() * S(H.y) - 10, v: '+' + v, gold: true, t: 0 }); E.push({ k: 'soul', x: e.x, y: chest(e), t: 0, life: 40, sd: Math.random() * 6.28 }); }
-      if (ON.set.onibi) { VX.blast && VX.blast({ x: e.x, y: e.y, r: 1.0 }); { const x0 = e.x, y0 = e.y, W8 = []; for (let i = 0; i < 6; i++) W8.push([rnd(-1, 1), rnd(0.6, 1.2), rnd(0, 6)]); KFa(34, 'o', (c2, u) => { const k = HH() * S(y0); for (const w of W8) wisp(c2, x0 + w[0] * k * 0.6 + Math.sin(u * 0.2 + w[2]) * k * 0.12, y0 - k * (0.3 + u * 0.035 * w[1]), -Math.PI / 2, k * 0.13, 'oni', Math.min(1, u / 4) * (1 - u / 34), 0, w[2]); }); }   /* r3.196.0：鬼火爆＝爆炸後幾縷紫綠怨火往上飄散 */ for (const n of near(e.x, e.y, HH() * 1.5)) if (n !== e) dmg(n, 1.5, true); } } catch (x) { console.warn('rune kill', x); } };
+      if (ON.set.onibi) { VX.blast && VX.blast({ x: e.x, y: e.y, r: 1.0 }); { const x0 = e.x, y0 = e.y, k0 = HH() * S(y0); let okW = 1; for (let i = 0; i < 4; i++) { const dx = (i - 1.5) * 0.42 + rnd(-0.1, 0.1), up = rnd(0.5, 1), fl = i % 2 === 0; if (!AFX.play('b_izanami', 'izanami_wisp', { size: k0 * rnd(1.1, 1.5), by: 'w', flip: fl, tpf: 5, delay: i * 3, at: u => [x0 + dx * k0, y0 - k0 * (0.45 + u * 0.03 * up)] })) { okW = 0; break; } }   /* r3.197.0：鬼火爆＝伊邪那美的手繪怨火 */
+        if (!okW) { const x0 = e.x, y0 = e.y, W8 = []; for (let i = 0; i < 6; i++) W8.push([rnd(-1, 1), rnd(0.6, 1.2), rnd(0, 6)]); KFa(34, 'o', (c2, u) => { const k = HH() * S(y0); for (const w of W8) wisp(c2, x0 + w[0] * k * 0.6 + Math.sin(u * 0.2 + w[2]) * k * 0.12, y0 - k * (0.3 + u * 0.035 * w[1]), -Math.PI / 2, k * 0.13, 'oni', Math.min(1, u / 4) * (1 - u / 34), 0, w[2]); }); } }   /* r3.196.0：鬼火爆＝爆炸後幾縷紫綠怨火往上飄散 */ for (const n of near(e.x, e.y, HH() * 1.5)) if (n !== e) dmg(n, 1.5, true); } } catch (x) { console.warn('rune kill', x); } };
   /* r3.196.0：鏡返＝身前閃現一面銅鏡（鏡框、鏡面漸層、一道反光）→ 碎成鏡片射向目標（原本一圈藍環） */
   function mirrorFx(n) { const hx = H.x, hy = H.y, f = Math.sign(n.x - H.x) || H.face, Sh = []; for (let i = 0; i < 8; i++) Sh.push([rnd(-0.35, 0.35), rnd(-0.5, 0.5), rnd(0, 6), rnd(0.6, 1.2)]);
     KFa(20, 'o', (c2, u) => { const k = HH() * S(hy), mx = hx + f * k * 0.5, my = hy - k * 0.62, tx = n.x, ty = n.y - k * 0.5;
+      /* r3.197.0：鏡返＝狛金的手繪銅鏡立在身前，射出手繪鏡光打向目標（原本程式畫的圓鏡＋三角碎片） */
+      if (AFX.ok('b_mb_komakin', 'komakin_mirror_a')) { const a = Math.min(1, u / 2) * Math.min(1, (20 - u) / 5), dx = tx - mx, dy = ty - my, L = Math.hypot(dx, dy) || 1, lf = dx < 0, an = Math.atan2(dy, dx);
+        AFX.fr('b_mb_komakin', 'komakin_mirror_a', 0, mx, hy - k * 0.1, { size: k * 0.95, by: 'h', anc: 'b', flip: f < 0, a });
+        if (u >= 3) AFX.fr('b_mb_komakin', 'komakin_mirror_ray', Math.min(3, Math.floor((u - 3) / 4)), mx, my, { size: Math.max(L, k * 1.2), by: 'w', anc: [0, 0.5], ang: lf ? Math.PI - an : an, flip: lf, sy: Math.min(1, k * 1.3 / (L * 0.39)), a: Math.min(1, (20 - u) / 4) }); return; }
       if (u < 6) { const g0 = Math.min(1, u / 2), r = k * 0.42 * g0; c2.save(); c2.translate(mx, my); c2.scale(0.55, 1); c2.fillStyle = rgb('40,26,8', 0.7); c2.beginPath(); c2.arc(0, 0, r * 1.14, 0, TAU); c2.fill(); c2.fillStyle = rgb('206,160,70', 1); c2.beginPath(); c2.arc(0, 0, r * 1.06, 0, TAU); c2.fill();
         const gr = c2.createLinearGradient(-r, -r, r, r); gr.addColorStop(0, rgb('235,250,255', 1)); gr.addColorStop(0.5, rgb('130,190,220', 1)); gr.addColorStop(1, rgb('60,100,150', 1)); c2.fillStyle = gr; c2.beginPath(); c2.arc(0, 0, r * 0.9, 0, TAU); c2.fill();
         c2.save(); c2.beginPath(); c2.arc(0, 0, r * 0.9, 0, TAU); c2.clip(); c2.fillStyle = rgb('255,255,255', 0.85); c2.rotate(-0.6); c2.fillRect(-r * 2, -r * 0.2 + (u - 3) * r * 0.3, r * 4, r * 0.22); c2.restore(); c2.restore(); }
@@ -223,7 +251,9 @@
   function tideFx(hx, hy) { const N = 12, F2 = []; for (let i = 0; i < 30; i++) F2.push([rnd(0, TAU), rnd(0.8, 1.1), rnd(0.1, 0.55)]);
     VX.ring && VX.ring({ x: hx, y: hy, r0: 0.3, r1: 2.7, life: 26, col: '120,200,255', lw: 0.22 }); KU('moon', () => { const k = HH() * S(hy); for (let i = 0; i < 8; i++) { const an = i / 8 * TAU; G.STORY.later(6, () => KU('moon', () => G.KF.puff(hx + Math.cos(an) * 1.6 * k, hy + Math.sin(an) * 0.6 * k, 1.0, 22))); } });
     KFa(26, 'o', (c2, u) => { const k = HH() * S(hy), q = u / 26, R0 = k * (0.4 + 2.3 * (1 - Math.pow(1 - q, 2))), a = q < 0.65 ? 1 : 1 - (q - 0.65) / 0.35;
-      KU('moon', () => { for (let i = 0; i < N; i++) { const an = i / N * TAU + 0.2, cx = Math.cos(an); if (Math.abs(cx) < 0.25) continue; G.KF.moonShape(c2, hx + cx * R0, hy + Math.sin(an) * R0 * 0.38 - k * 0.3, k * 0.42 * (1 - q * 0.3), cx > 0 ? 1 : -1, a, k); } });   /* 一圈往外推的浪頭（筆觸月牙） */
+      { const fi = Math.min(5, Math.floor(u / 4.4)), W8 = [[-2.4, 0.9], [2.4, 0.9], [-0.6, 0.75], [0.6, 0.75], [-3.7, 1], [3.7, 1], [-1.2, 1.1], [1.2, 1.1]]; let ok = 1;   /* r3.197.0：潮浪＝河童大將的手繪浪頭，一圈由內往外推（後排先畫） */
+        for (const w8 of W8) { const cx = Math.cos(w8[0]), sy = Math.sin(w8[0]); if (!AFX.fr('b_kappa', 'kappataisho_tide_wave', fi, hx + cx * R0 * 0.85, hy + sy * R0 * 0.36 + k * 0.1, { size: k * 2.3 * w8[1] * (0.7 + 0.3 * q), by: 'w', anc: 'b', flip: cx < 0, a })) { ok = 0; break; } }
+        if (!ok) KU('moon', () => { for (let i = 0; i < N; i++) { const an = i / N * TAU + 0.2, cx = Math.cos(an); if (Math.abs(cx) < 0.25) continue; G.KF.moonShape(c2, hx + cx * R0, hy + Math.sin(an) * R0 * 0.38 - k * 0.3, k * 0.42 * (1 - q * 0.3), cx > 0 ? 1 : -1, a, k); } }); }   /* 一圈往外推的浪頭（筆觸月牙） */
       c2.fillStyle = rgb('240,252,255', 0.95 * a); for (const f2 of F2) { const r = R0 * f2[1]; c2.beginPath(); c2.arc(hx + Math.cos(f2[0]) * r, hy + Math.sin(f2[0]) * r * 0.38 - k * f2[2] * Math.sin(q * Math.PI), Math.max(1, k * 0.02), 0, TAU); c2.fill(); } }); }
   /* 致命傷：紙人替身、八咫鏡（日鏡）；閃避成功：鏡返 */
   const hh0 = G.hurtHero; G.hurtHero = function (atk, srcX) {
@@ -238,18 +268,22 @@
   function thunder(e, id) { const L = LVM[lvOf(id) || 1]; strike(e.x, e.y, 5); VX.sigil && VX.sigil({ x: e.x, y: e.y, kind: 'raiden', r: 0.6, life: 20 });
     dmg(e, 1.5 * L, true); let p = e; const hit = [e]; for (let i = 0; i < 2; i++) { const n = nearest(p.x, p.y, HH() * 3, hit); if (!n) break; hit.push(n); { const a1 = [p.x, chest(p)], b1 = [n.x, chest(n)]; KU('moon', () => { G.KF.bolt(a1[0], a1[1], b1[0], b1[1], 12, 1.6, 1); G.KF.glint(b1[0], n.y, 0.55 * (n.ratio || 1), 0.3, 8); }); } dmg(n, 0.6 * L); p = n; } }
   /* r3.196.0：落雷＝加粗帶墨邊的雷光＋分岔＋落點焦痕、塵與電光（原本一條折線） */
-  function strike(x, y, w) { KU('moon', () => { const K2 = G.KF, k = HH() * S(y); K2.bolt(x + rnd(-0.5, 0.5) * k, y - 6 * k, x, y - 0.1 * k, 16, Math.min(3, w * 0.5), 3); K2.light(x, y, 1.3, 16, 0.7, 0.5); K2.puff(x, y, 0.9); K2.scar && K2.scar(x, y, 1, 1.5); for (let i = 0; i < 3; i++) K2.bolt(x, y - 0.15 * k, x + rnd(-1, 1) * k, y - rnd(0, 0.5) * k, 8, 1, 1); }); }
+  function strike(x, y, w) { KU('moon', () => { const K2 = G.KF, k = HH() * S(y); /* r3.197.0：落雷＝伊邪那美的手繪落雷 */ AFX.play('b_izanami', 'izanami_thunder', { x, y: y + k * 0.08, size: k * (w >= 6 ? 5.2 : 4.4), by: 'h', anc: 'b', tpf: 3, hold: 2, flip: Math.random() < 0.5, fb: () => KU('moon', () => { G.KF.bolt(x + rnd(-0.5, 0.5) * k, y - 6 * k, x, y - 0.1 * k, 16, Math.min(3, w * 0.5), 3); }) }); K2.light(x, y, 1.3, 16, 0.7, 0.5); K2.puff(x, y, 0.9); K2.scar && K2.scar(x, y, 1, 1.5); }); }
   function windBlade(id, coef, len, col, giant) { const f = H.face, L = id === 'kusanagi' ? 1 : LVM[lvOf(id) || 1]; E.push({ k: 'blade', x: H.x, y: H.y, f, d: 0, len: len * HH(), spd: HH() * (giant ? 0.32 : 0.22), coef: coef * L, hit: [], col, giant, t: 0, life: 99 });
     if (giant) { G.SC.shake = Math.max(G.SC.shake || 0, 6); G.UI.toast('草薙劍・叢雲'); } }
-  function moon() { const f = H.face, L = LVM[lvOf('zan')], cx = H.x + f * HH() * 1.0; KU('moon', () => { const K2 = G.KF; K2.smear({ x: H.x, y: H.y, f, cy: 0.6, r: 1.7, sq: 0.8, a0: -1.3, a1: 1.3, w: 0.6, dur: 4, life: 22, tier: 2, trail: 2.6 }); K2.glint(cx + f * HH() * 0.5, H.y, 0.6, 0.5, 12); K2.scar && K2.scar(cx, H.y, f, 2); });   /* r3.196.0：斬月＝帶墨邊的月白大月牙＋地面刀痕（原本一道純白弧線） */
+  function moon() { const f = H.face, L = LVM[lvOf('zan')], cx = H.x + f * HH() * 1.0; { const k0 = HH() * S(H.y), hx0 = H.x, hy0 = H.y; AFX.play('b_yoshitsune', 'fx_yoshitsune_iai_slash', { x: hx0 + f * k0 * 0.9, y: hy0 - k0 * 0.6, size: k0 * 3.6, by: 'w', flip: f < 0, tpf: 4, hold: 3, fb: () => KU('moon', () => G.KF.smear({ x: hx0, y: hy0, f, cy: 0.6, r: 1.7, sq: 0.8, a0: -1.3, a1: 1.3, w: 0.6, dur: 4, life: 22, tier: 2, trail: 2.6 })) }); }   /* r3.197.0：斬月＝義經居合的手繪月弧 */
+    KU('moon', () => { const K2 = G.KF; K2.glint(cx + f * HH() * 0.5, H.y, 0.6, 0.5, 12); K2.scar && K2.scar(cx, H.y, f, 2); });   /* r3.196.0：斬月＝帶墨邊的月白大月牙＋地面刀痕（原本一道純白弧線） */
     for (const n of near(cx, H.y, HH() * 1.5)) dmg(n, 1.6 * L, true); }
-  function quake() { const L = LVM[lvOf('shin')], x = H.x + H.face * HH() * 0.6; { const y0 = H.y; KU('lance', () => { const K2 = G.KF, k = HH() * S(y0); K2.crack(x, y0, 1.5, 70, true); K2.rocks(x, y0, 14, 1.5); for (let i = 0; i < 6; i++) { const an = i / 6 * TAU; K2.puff(x + Math.cos(an) * 1.1 * k, y0 + Math.sin(an) * 0.45 * k, 1.0); } K2.light(x, y0, 1.6, 16, 0.5, 0.2); }); VX.debris2 && VX.debris2({ x, y: y0, n: 6 }); }   /* r3.196.0：震地＝地裂透光＋掀起岩塊＋一圈塵柱（原本裂紋線＋一圈環） */
+  function quake() { const L = LVM[lvOf('shin')], x = H.x + H.face * HH() * 0.6; { const y0 = H.y; KU('lance', () => { const K2 = G.KF, k = HH() * S(y0); AFX.play('b_ezo', 'fx_ground_cracks', { x, y: y0, size: k * 4.4, by: 'w', layer: 'g', tpf: 4, hold: 50, fade: 24, fb: () => KU('lance', () => G.KF.crack(x, y0, 1.5, 70, true)) }); /* r3.197.0：震地的地裂＝手繪熔岩裂紋 */ K2.rocks(x, y0, 14, 1.5); for (let i = 0; i < 6; i++) { const an = i / 6 * TAU; K2.puff(x + Math.cos(an) * 1.1 * k, y0 + Math.sin(an) * 0.45 * k, 1.0); } K2.light(x, y0, 1.6, 16, 0.5, 0.2); }); VX.debris2 && VX.debris2({ x, y: y0, n: 6 }); }   /* r3.196.0：震地＝地裂透光＋掀起岩塊＋一圈塵柱（原本裂紋線＋一圈環） */
     G.SC.shake = Math.max(G.SC.shake || 0, 5); for (const n of near(x, H.y, HH() * 1.4)) { dmg(n, 1.4 * L, true); if (!n.bb) { n.stun = Math.max(n.stun || 0, 30); n.lift = 0; E.push({ k: 'lift', e: n, t: 0, life: 30 }); } } }
   function homing(e, coef, kind, i) { const y0 = H.y - HH() * S(H.y) * 0.7; E.push({ k: 'hm', kind, x: H.x + rnd(-10, 10), y: y0, z: 0, vx: H.face * 4 + (i || 0) * 1.5 - 1.5, vy: -3 - (i || 0), e, coef, t: 0, life: 90 }); }
   function sunMirror() { s2('fx_hikagami', { x: H.x, y: H.y, k: 1.2, life: 40, z: 0.8, add: 1 }); G.UI.banner('八咫鏡・日鏡', '致命傷被鏡光反射'); G.flash = 8;
     const f = H.face; E.push({ k: 'beam', x: H.x, y: H.y - HH() * S(H.y) * 0.7, f, t: 0, life: 24, col: '255,240,190' }); for (const n of foes()) if ((n.x - H.x) * f > 0 && Math.abs(n.x - H.x) < HH() * 9 && Math.abs(n.y - H.y) < HH() * 0.9) dmg(n, 5.0, true); }
   /* 常駐召喚：紙鶴 3、紙狐 1、勾玉 3、風球 3；週期：雷陣、潮浪、天照 */
   const PET = { crane: [], fox: null, mag: [], ball: [], ballT: 0 };
+  /* r3.197.0：身上帶著的靈紋／套裝／神器用到的手繪素材先備好（每半秒檢查一次，已載入的不會重讀） */
+  function afxPre() { const L = []; if (lvOf('kaze')) L.push('lv_windslash'); if (lvOf('zan')) L.push('b_yoshitsune'); if (lvOf('shin')) L.push('b_ezo'); if (lvOf('rai') || ON.set.thunder || ON.set.onibi) L.push('b_izanami'); if (lvOf('den')) L.push('b_raiju'); if (lvOf('un')) L.push('p_hayate_fx'); if (lvOf('hyo')) L.push('p_shion_fx');
+    if (ON.jg.akaorochi) L.push('b_mb_akaorochi'); if (ON.set.tide) L.push('b_kappa'); if (ON.set.foxfire) L.push('b_kyubi'); if (ON.set.mirror || ON.jg.komakin || ON.jg.kinhannya) L.push('b_mb_komakin'); AFX.pre(L); }
   function petSync() { const want = { crane: lvOf('tsuru') ? 3 : 0, fox: !!lvOf('kitsu'), mag: ON.jg.kinhannya ? 3 : 0, ball: ON.set.wind ? 3 : 0 };
     while (PET.crane.length < want.crane) PET.crane.push({ a: PET.crane.length * TAU / 3, cd: 30 + PET.crane.length * 24, x: H.x, y: H.y, st: 0 }); PET.crane.length = want.crane;
     if (want.fox && !PET.fox) PET.fox = { x: H.x - 30, y: H.y + 8, cd: 60, st: 0, f: 1 }; if (!want.fox) PET.fox = null;
@@ -286,16 +320,23 @@
   function entDraw() { const hz = HH() * S(H.y);
     for (const o of E) { const q = o.t / o.life;
       if (o.k === 'blade') { const k = HH() * S(o.y), R0 = k * (o.giant ? 1.7 : 0.95), cy = o.y - k * 0.58;   /* r3.196.0：風刃／叢雲＝筆觸月牙風刃（薙刀那套青碧色）＋後方氣流與葉片；叢雲更大、中間一把劍影、帶雲氣 */
+        /* r3.197.0：風刃＝里歐「風斬」的手繪風刃；叢雲＝赤大蛇的手繪劍氣（原本程式畫的月牙＋長條）。素材還沒載好時才用舊畫法 */
+        const drawn = o.giant ? AFX.fr('b_mb_akaorochi', 'akaorochi_sword_wave', o.t < 3 ? 0 : 1 + Math.floor(o.t / 4) % 2, o.x - o.f * k * 0.4, cy, { size: k * 4.2, by: 'w', flip: o.f < 0 }) : AFX.fr('lv_windslash', null, 3 + Math.floor(o.t / 3) % 3, o.x, cy, { size: k * 3.3, by: 'w', ang: -0.96, flip: o.f < 0 });
+        if (!drawn) {
         ctx.save(); ctx.lineCap = 'round'; for (let i = 0; i < 5; i++) { const yy = cy + (i - 2) * R0 * 0.22, L = R0 * (1.2 + ((i * 37) % 5) * 0.2), x1 = o.x - o.f * R0 * 0.2, x0 = x1 - o.f * L; for (const [w, col, al] of [[0.05, '8,46,42', 0.3], [0.022, '200,255,235', 0.8]]) { const g0 = ctx.createLinearGradient(x0, 0, x1, 0); g0.addColorStop(0, rgb(col, 0)); g0.addColorStop(1, rgb(col, al)); ctx.strokeStyle = g0; ctx.lineWidth = Math.max(1, k * w); ctx.beginPath(); ctx.moveTo(x0, yy + Math.sin(o.t * 0.5 + i) * k * 0.03); ctx.lineTo(x1, yy); ctx.stroke(); } } ctx.restore();
         KU('gale', () => G.KF.moonShape(ctx, o.x, cy, R0, o.f, 1, k));
-        if (o.giant) { ctx.save(); ctx.translate(o.x, cy); ctx.scale(o.f, 1); const bl = (sc, col, al) => { ctx.fillStyle = rgb(col, al); ctx.beginPath(); ctx.moveTo(R0 * 0.75, 0); ctx.lineTo(R0 * 0.45, -k * 0.06 * sc); ctx.lineTo(-R0 * 1.0, -k * 0.045 * sc); ctx.lineTo(-R0 * 1.0, k * 0.045 * sc); ctx.lineTo(R0 * 0.45, k * 0.06 * sc); ctx.closePath(); ctx.fill(); }; bl(1.7, '8,46,42', 0.55); bl(1, '215,255,245', 1); bl(0.4, '255,255,255', 1); ctx.fillStyle = rgb('206,160,70', 1); ctx.fillRect(-R0 * 1.05, -k * 0.15, k * 0.05, k * 0.3); ctx.restore(); }
+        if (o.giant) { ctx.save(); ctx.translate(o.x, cy); ctx.scale(o.f, 1); const bl = (sc, col, al) => { ctx.fillStyle = rgb(col, al); ctx.beginPath(); ctx.moveTo(R0 * 0.75, 0); ctx.lineTo(R0 * 0.45, -k * 0.06 * sc); ctx.lineTo(-R0 * 1.0, -k * 0.045 * sc); ctx.lineTo(-R0 * 1.0, k * 0.045 * sc); ctx.lineTo(R0 * 0.45, k * 0.06 * sc); ctx.closePath(); ctx.fill(); }; bl(1.7, '8,46,42', 0.55); bl(1, '215,255,245', 1); bl(0.4, '255,255,255', 1); ctx.fillStyle = rgb('206,160,70', 1); ctx.fillRect(-R0 * 1.05, -k * 0.15, k * 0.05, k * 0.3); ctx.restore(); } }
         if (o.t % 4 === 0 && o._lt !== o.t) { o._lt = o.t; KU('gale', () => { G.KF.leaves(o.x, o.y, 0.55, o.giant ? 4 : 2, { sp: 1.6, life: 26, rx: 0.5 }); if (o.giant) G.KF.puff(o.x - o.f * k, o.y, 0.9, 20); }); } }
       else if (o.k === 'moon') { /* 斬月改在發動時用月牙元件畫 */ }
-      else if (o.k === 'hm') { const an = Math.atan2(o.vy, o.vx), k = HH() * S(o.y); if (o.kind === 'fox') wisp(ctx, o.x, o.y, an, k * 0.1, 'fox', 1, 1, o.x); else lightArrow(ctx, o.x, o.y, an, k * 0.1, 1); }   /* r3.196.0：狐火＝有狐耳狐眼、拖尾焰的火；穿雲＝金白光箭（原本都是一顆光點） */
+      else if (o.k === 'hm') { const an = Math.atan2(o.vy, o.vx), k = HH() * S(o.y); const lf = Math.cos(an) < 0, ag = lf ? Math.PI - an : an;   /* r3.197.0：狐火＝九尾的手繪狐火；穿雲＝夥伴疾風的手繪重箭 */
+        if (o.kind === 'fox') { if (!AFX.fr('b_kyubi', 'kyubi_fox_fire', 1 + Math.floor(o.t / 4) % 2, o.x, o.y, { size: k * 1.25, by: 'w', ang: ag, flip: lf })) wisp(ctx, o.x, o.y, an, k * 0.1, 'fox', 1, 1, o.x); }
+        else if (!AFX.fr('p_hayate_fx', 'heavy_arrow', 3 + Math.floor(o.t / 3) % 6, o.x, o.y, { size: k * 1.5, by: 'w', ang: ag, flip: lf })) lightArrow(ctx, o.x, o.y, an, k * 0.1, 1); }   /* r3.196.0：狐火＝有狐耳狐眼、拖尾焰的火；穿雲＝金白光箭（原本都是一顆光點） */
       else if (o.k === 'ray') { const a = 1 - q, dx = o.x1 - o.x0, dy = o.y1 - o.y0, L = Math.hypot(dx, dy) || 1, k = HH() * S(o.y1); ctx.save(); ctx.translate(o.x0, o.y0); ctx.rotate(Math.atan2(dy, dx));   /* r3.196.0：勾玉光線＝由粗到細的翠綠光束（墨邊、白芯），命中點綻開一枚小勾玉 */
+        if (AFX.fr('b_mb_komakin', 'komakin_mirror_ray', Math.min(3, Math.floor(q * 4)), 0, 0, { size: L, by: 'w', anc: [0, 0.5], sy: Math.min(1, k * 0.9 / (L * 0.39)), a: Math.min(1, a * 2) })) { ctx.restore(); continue; }   /* r3.197.0：勾玉光線＝手繪鏡光 */
         const beam = (w, col, al) => { ctx.fillStyle = rgb(col, al * a); ctx.beginPath(); ctx.moveTo(0, -w); ctx.quadraticCurveTo(L * 0.5, -w * 0.5, L, 0); ctx.quadraticCurveTo(L * 0.5, w * 0.5, 0, w); ctx.closePath(); ctx.fill(); }; beam(k * 0.07, '8,50,40', 0.6); beam(k * 0.045, '120,240,190', 1); beam(k * 0.018, '255,255,255', 1); ctx.restore();
         sp('fx_magatama', 0, o.x1, o.y1 + k * 0.1, 0.5 + 0.4 * q, { add: 1, a: a }); }
-      else if (o.k === 'beam') { const k = HH() * S(o.y), L = k * 9, a = 1 - q, h = k * 0.42 * (1 - q * 0.5); ctx.save(); ctx.translate(o.x, o.y); ctx.scale(o.f, 1);   /* r3.196.0：日鏡＝鏡前先亮起日輪（光芒旋轉）＋金邊白芯的光束＋金粉（原本一條白色漸層長方形） */
+      else if (o.k === 'beam') { const k = HH() * S(o.y), L = k * 6.5, a = 1 - q, h = k * 0.42 * (1 - q * 0.5); ctx.save(); ctx.translate(o.x, o.y); ctx.scale(o.f, 1);   /* r3.196.0：日鏡＝鏡前先亮起日輪（光芒旋轉）＋金邊白芯的光束＋金粉（原本一條白色漸層長方形） */
+        if (AFX.fr('b_mb_komakin', 'komakin_mirror_ray', Math.min(3, Math.floor(q * 4)), 0, 0, { size: L, by: 'w', anc: [0, 0.5], sy: 0.75, a: Math.min(1, a * 2) })) { ctx.restore(); continue; }   /* r3.197.0：日鏡光束＝狛金的手繪鏡光 */
         const band = (w, col, al) => { ctx.fillStyle = rgb(col, al * a); ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(k * 0.5, -w, k * 1.2, -w); ctx.lineTo(L, -w * 0.7); ctx.lineTo(L, w * 0.7); ctx.lineTo(k * 1.2, w); ctx.quadraticCurveTo(k * 0.5, w, 0, 0); ctx.fill(); };
         band(h * 1.25, '90,50,6', 0.45); band(h, '255,196,90', 0.9); band(h * 0.62, '255,240,190', 1); band(h * 0.28, '255,255,255', 1);
         ctx.rotate(o.t * 0.12); for (let i = 0; i < 12; i++) { ctx.rotate(TAU / 12); ctx.fillStyle = rgb(i % 2 ? '255,196,90' : '255,244,200', 0.9 * a); ctx.beginPath(); ctx.moveTo(k * 0.3, -k * 0.045); ctx.lineTo(k * (i % 2 ? 0.62 : 0.8), 0); ctx.lineTo(k * 0.3, k * 0.045); ctx.fill(); }
@@ -317,7 +358,7 @@
 
   /* ======================= 掛勾 ======================= */
   let tick = 0;
-  const fs0 = G.fxStep; G.fxStep = function () { fs0.apply(this, arguments); try { if (++tick % 30 === 1) { if (!R.S || !ON._t) scan(); ON._t = 1; petSync(); } statusStep(); qiStep(); entStep(); petStep(); } catch (x) { console.warn('rune step', x); } };
+  const fs0 = G.fxStep; G.fxStep = function () { fs0.apply(this, arguments); try { if (++tick % 30 === 1) { if (!R.S || !ON._t) scan(); ON._t = 1; petSync(); afxPre(); } statusStep(); qiStep(); entStep(); petStep(); } catch (x) { console.warn('rune step', x); } };
   const df0 = G.drawFx; G.drawFx = function (Z) { const r = df0.apply(this, arguments); try { statusDraw(); entDraw(); } catch (x) { console.warn('rune draw', x); } return r; };
   const ud0 = G.UI.draw.bind(G.UI); G.UI.draw = function () { ud0(); try { hud(); } catch (x) {} };
   const en0 = G.SC.enter; G.SC.enter = function () { E.length = 0; PET.crane.length = 0; PET.fox = null; PET.mag.length = 0; return en0.apply(this, arguments); };

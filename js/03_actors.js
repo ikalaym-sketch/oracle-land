@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.196.0  (2026-11-28)　受擊白閃減半、舊版預警改柔光、掉落光柱柔邊、秘傳時隱藏妖怪血條
+ * Version : r3.197.0  (2026-11-28)　r3.197.0：敵人普通近戰出手時有爪痕／揮擊弧光
+ * 舊版    : r3.196.0  (2026-11-28)　受擊白閃減半、舊版預警改柔光、掉落光柱柔邊、秘傳時隱藏妖怪血條
  * 舊版    : r3.195.0  (2026-11-28)　會心傷害數字重做（大字、橘紅金黃漸層、斬痕、驚嘆號），跟一般數字拉開
  * 舊版    : r3.190.0  (2026-11-28)　追蹤飛行物轉彎維持原速
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：夥伴特效（spr）可加發光層 glow
@@ -345,7 +346,7 @@ G.ONI_RATIO = 1.38;
       const sp = (e.sm ? 1.25 : 1.05) * (e.db && e.db.slow ? 0.5 : 1); tryMove(e, Math.abs(dx) > reach * 0.68 ? Math.sign(dx) * sp : 0, Math.abs(dy) > 6 ? Math.sign(dy) * sp * 0.6 : 0);
     } else if (e.st === 'atk') {
       const ms = e.t * TK, hitMs = e.atkMs * 0.48;
-      if (!e.atkHit && ms >= hitMs) { e.atkHit = true; SC.shake = 3 + 2 * rr;
+      if (!e.atkHit && ms >= hitMs) { e.atkHit = true; SC.shake = 3 + 2 * rr; if (G.FOEAI && G.FOEAI.meleeFx && e._fc !== 'ranged' && e._fc !== 'spirit') G.FOEAI.meleeFx(e);   /* r3.197.0：普通近戰出手時有爪痕／揮擊弧光 */
         G.FX.push({ k: 'dust', x: e.x + e.face * 60 * rr, y: e.y, t: 0, life: 20 });
         const rx = (H.x - e.x) * e.face;
         if (T !== H) { const px = (T.x - e.x) * e.face; if (px > -10 && px < reach && Math.abs(T.y - e.y) < 30) G.PARTY.hurt(T, e.atk, e.x, e); }

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 139_foeai.js
- * Version : r3.154.0  (2026-11-27)　r3.154.0：重擊時一般妖怪後仰約 0.2 秒；妖怪互相推開（被吸住、擊退中先不推，結束後才散開）
+ * Version : r3.197.0  (2026-11-28)　r3.197.0：敵人招式改播手繪素材（近戰爪痕／揮擊弧光、法球、地爆、重踩震波）
+ * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：重擊時一般妖怪後仰約 0.2 秒；妖怪互相推開（被吸住、擊退中先不推，結束後才散開）
  * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：預警調淡（底色約減半、圖示平常 30%，出手前才亮）
  * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：突進（踏步斬）、群撲、盾擊改約主角跑速 1.1 倍，巨體衝撞 1.3 倍（原本 3～5 倍）
  * 舊版    : r3.126.1  (2026-11-27)　r3.126.1：突擊衝刺降速＝主角跑步 1.2 倍（原本約 6.5 倍）、距離上限 2.5 身高、起手 0.73 秒、回身再衝 25%（精英照舊）、同圖最多 2 隻同時衝刺
@@ -87,17 +88,17 @@
     pack: { ok: (e, d) => d > 1.2 && d < 3.5, start(e) { const k = HH() * S(e.y), mates = G.E.filter(o => o !== e && o._fc === 'swarm' && !o.mv && o.st === 'walk' && !(o.stun > 0) && o.hp > 0 && Math.hypot(o.x - e.x, o.y - e.y) < k * 3).slice(0, 2);
         for (const o of [e].concat(mates)) { const tx = H.x + rnd(-0.3, 0.3) * k, ty = H.y + rnd(-10, 10), Wf = wk(o, 30); begin(o, 'leap', Wf, { tx, ty, sx: o.x, sy: o.y, n: NF(Math.hypot(tx - o.x, ty - o.y), o.y, 1.1) }); o.mv.w = circ(o, tx, ty, k * 0.45, Wf); o._m2 = G.t + cd2(o, 360); } } },
     leap: { step(e, m) { if (m.t < m.W) return; const n = m.n || 12, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); walkTo(e, m.sx + (m.tx - m.sx) * q, m.sy + (m.ty - m.sy) * q);
-        if (q >= 1 && !m.hit) { m.hit = 1; if (inCirc(m.tx, m.ty, k * 0.45)) hurt(e, 1.0); dust(m.tx, m.ty); } return m.t > m.W + n + 20; } },
+        if (q >= 1 && !m.hit) { m.hit = 1; meleeFx(e, 0, m.tx, m.ty); if (inCirc(m.tx, m.ty, k * 0.45)) hurt(e, 1.0); dust(m.tx, m.ty); } return m.t > m.W + n + 20; } },
     /* 雜兵：踏步斬 */
     stepcut: { ok: (e, d) => d > 1.0 && d < 2.3, start(e) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = k * 1.5, x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, 36);
         begin(e, 'cut', Wf, { sx: e.x, sy: e.y, x1, y1, L, n: NF(L * 0.85, e.y, 1.1) }); lane(e, e.x, e.y, x1, y1, k * 0.55, Wf); e._m2 = G.t + cd2(e, 300); } },
     cut: { step(e, m) { if (m.t < m.W) return; const n = m.n || 10, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); walkTo(e, m.sx + (m.x1 - m.sx) * q * 0.85, m.sy + (m.y1 - m.sy) * q * 0.85);
-        if (!m.hit && q > 0.5 && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.55)) { m.hit = 1; hurt(e, 1.2); } if (q >= 1 && !m.d) { m.d = 1; dust(e.x + e.face * k * 0.4, e.y); } return m.t > m.W + n + 24; } },
+        if (!m.fx && q > 0.5) { m.fx = 1; meleeFx(e); } if (!m.hit && q > 0.5 && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.55)) { m.hit = 1; hurt(e, 1.2); } if (q >= 1 && !m.d) { m.d = 1; dust(e.x + e.face * k * 0.4, e.y); } return m.t > m.W + n + 24; } },
     /* 突擊：衝刺＋迴身斬 */
     dash: { ok: (e, d) => d > 1.8 && d < 4.8 && G.E.filter(o => o.mv && o.mv.k === 'run').length < 2, start(e, turn) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = Math.min(k * 2.5, dist(e) * k + k), x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, turn ? 30 : 44), n = Math.max(12, Math.round(Math.hypot(x1 - e.x, y1 - e.y) / (2.75 * 1.05 * S(e.y))));   /* 實測約主角跑步 ×1.2（含縱向位移） */
         begin(e, 'run', Wf, { sx: e.x, sy: e.y, x1, y1, turn, n }); lane(e, e.x, e.y, x1, y1, k * 0.6, Wf); if (!turn) e._m1 = G.t + 240; } },
     run: { step(e, m) { if (m.t < m.W) return; const n = m.n || 16, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); if (!walkTo(e, m.sx + (m.x1 - m.sx) * q, m.sy + (m.y1 - m.sy) * q)) m.t = Math.max(m.t, m.W + n);
-        if (!m.hit && inLane(m.sx, m.sy, e.x, e.y, k * 0.6) && Math.hypot(H.x - e.x, H.y - e.y) < k * 0.7) { m.hit = 1; hurt(e, m.turn ? 1.1 : 1.3); }
+        if (!m.hit && inLane(m.sx, m.sy, e.x, e.y, k * 0.6) && Math.hypot(H.x - e.x, H.y - e.y) < k * 0.7) { m.hit = 1; meleeFx(e); hurt(e, m.turn ? 1.1 : 1.3); }
         if (m.t === m.W + n) dust(e.x, e.y);
         if (m.t > m.W + n + 6) { if (!m.turn && H.hp > 0 && (el(e) || Math.random() < 0.25) && G.t >= (e._m2 || 0)) { e._m2 = G.t + cd2(e, 420); e.mv = null; MV.dash.start(e, 1); return false; } return true; } return false; } },
     /* 遠程：拋射 */
@@ -116,12 +117,12 @@
     /* r3.112.0 重甲：橫掃 */
     sweep: { ok: (e, d) => d < 1.8, start(e) { const k = HH() * S(e.y), Wf = wk(e, 48); if (Math.abs(H.x - e.x) > 4) e.face = Math.sign(H.x - e.x); const x = e.x + e.face * k * 0.6, y = e.y;
         begin(e, 'swing', Wf, { x, y, r: k * 0.95 }); circ(e, x, y, k * 0.95, Wf); e._m1 = G.t + 240; } },
-    swing: { step(e, m) { if (m.t === m.W) { dust(m.x, m.y); G.SC.shake = Math.max(G.SC.shake || 0, 4); if (inCirc(m.x, m.y, m.r)) hurt(e, 1.3); } return m.t > m.W + 28; } },
+    swing: { step(e, m) { if (m.t === m.W) { meleeFx(e, 1, m.x, m.y); dust(m.x, m.y); G.SC.shake = Math.max(G.SC.shake || 0, 4); if (inCirc(m.x, m.y, m.r)) hurt(e, 1.3); } return m.t > m.W + 28; } },
     /* 重甲：盾擊（擊退＋暈 0.5 秒） */
     bash: { ok: (e, d) => d > 0.8 && d < 2.4, start(e) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = k * 1.6, x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, 36);
         begin(e, 'shove', Wf, { sx: e.x, sy: e.y, x1, y1, a, n: NF(L * 0.8, e.y, 1.1) }); lane(e, e.x, e.y, x1, y1, k * 0.6, Wf); e._m2 = G.t + cd2(e, 420); } },
     shove: { step(e, m) { if (m.t < m.W) return; const n = m.n || 10, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); walkTo(e, m.sx + (m.x1 - m.sx) * q * 0.8, m.sy + (m.y1 - m.sy) * q * 0.8);
-        if (!m.hit && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.6) && Math.hypot(H.x - e.x, H.y - e.y) < k * 0.8) { m.hit = 1; const hp0 = H.hp; hurt(e, 1.0);
+        if (!m.hit && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.6) && Math.hypot(H.x - e.x, H.y - e.y) < k * 0.8) { m.hit = 1; meleeFx(e); const hp0 = H.hp; hurt(e, 1.0);
           if (H.hp < hp0) { for (let i = 0; i < 6; i++) { const nx = H.x + Math.cos(m.a) * k * 0.12; if (SC.walkable(nx, H.y)) H.x = nx; } H._stn = 30; G.NUMS.push({ x: H.x, y: H.y - HH() * S(H.y) - 20, v: '暈', t: 0, col: '#ffd08a' }); } }
         return m.t > m.W + n + 20; } },
     /* 巨體：重踩（自身大圈＋震波） */
@@ -140,7 +141,14 @@
   (function hkDm() { if (!G.damageOni) return setTimeout(hkDm, 50); const d0 = G.damageOni; G.damageOni = function (e, mult, big, fc, opt) { if (!e || skip(e) || (e._fc !== 'armor' && e._fc !== 'giant')) return d0.apply(this, arguments);
       const st = e.st, t = e.t, src = (opt && opt.party && opt.party.x !== undefined) ? opt.party : H; let m = mult; if (e._fc === 'armor' && Math.sign(src.x - e.x) === e.face) m *= 0.7;
       const r = d0.call(this, e, m, big, fc, opt); if (e.st === 'hurt' && st !== 'hurt' && e.hp > 0 && (e._fc === 'giant' || !big)) { e.st = st; e.t = t; e.kb = (e.kb || 0) * 0.2; } return r; }; })();
+  /* r3.197.0：敵人招式改用手繪素材（原本近戰沒有特效、法球／地爆／震波是漸層色塊）。素材第一次用到才下載；沒載好的那一次維持舊畫法 */
+  const AX = () => G.AFX, CLAW = /raiju|inugami|hihi|kasha|nue|wani|neko|kumo|okami|gaki|kappa|kodama|karasu|kitsune|itsumade|ningyo|mizuchi|kuma|ushioni/;
+  /* 近戰揮擊：獸類＝爪痕；其餘＝橫掃弧光。big＝重甲橫掃 */
+  function meleeFx(e, big, x, y) { const A2 = AX(); if (!A2) return; const k = HH() * S(e.y) * Math.min(1.8, e.ratio || 1), px = x === undefined ? e.x + e.face * k * 0.55 : x, py = (y === undefined ? e.y : y) - k * 0.5;
+    if (CLAW.test(e.type || '') && !big) A2.play('fx_common', 'weapon_claw_a', { x: px, y: py, size: k * 1.1, flip: e.face < 0, tpf: 3, hold: 1 });
+    else A2.play('b_mb_benkei', 'benkei_sweep_arc', { x: px, y: py + k * 0.1, size: k * (big ? 2.5 : 1.7), by: 'w', flip: e.face < 0, tpf: 3, hold: 1 }); }
   function shock(x, y, r) { const VX = G.VX; G.SC.shake = Math.max(G.SC.shake || 0, 7); dust(x - r * 0.4, y); dust(x + r * 0.4, y); if (G.ICO && G.ICO.burst) G.ICO.burst({ x, y }, 'fxp_rock_chip', 6, { z: 0.2 });
+    if (AX() && AX().play('b_ibaraki', 'ibaraki_shock_wave', { x, y, size: u => r * (1.9 + u * 0.05), by: 'w', layer: 'g', tpf: 4 })) return;   /* 重踩震波＝茨木的手繪衝擊波 */
     if (VX && VX.custom) VX.custom((q, c) => { const u = q.t / q.life, R = r * (0.3 + u * 0.9), a = (1 - u) * 0.8; c.save(); c.translate(x, y); c.scale(1, 0.42);
       const g = c.createRadialGradient(0, 0, R * 0.55, 0, 0, R); g.addColorStop(0, 'rgba(255,170,60,0)'); g.addColorStop(0.7, `rgba(255,170,60,${a * 0.55})`); g.addColorStop(0.88, `rgba(255,220,150,${a})`); g.addColorStop(1, 'rgba(255,150,40,0)');
       c.fillStyle = g; c.beginPath(); c.arc(0, 0, R, 0, 6.283); c.fill(); c.restore(); }, 24, 'o'); }
@@ -154,6 +162,7 @@
       VX.custom((q, c) => { if (q.t < dl) return; const u = Math.min(1, (q.t - dl) / (n - dl)), z = (1 - u) * k * 2.2; c.save(); c.translate(x + ox, y - z); c.rotate(1.5708); if (VX.arrow2) VX.arrow2(c, k * 0.55, '', false); c.restore(); }, n, 'o'); } }
   function orb(e, a) { const k = HH() * S(e.y); ORB.push({ e, x: e.x + e.face * k * 0.3, y: e.y, z: k * 0.6, a, sp: k * 0.04, t: 0, life: 200, atk: e.atk, tr: [] }); }
   function boomFx(x, y, r) { const VX = G.VX; G.SC.shake = Math.max(G.SC.shake || 0, 4); if (G.ICO && G.ICO.burst) G.ICO.burst({ x, y }, 'fxp_talisman', 5, { z: 0.2 });
+    if (AX() && AX().play('b_doma', 'domac_devouring_domain_fx', { x, y, size: r * 3, by: 'w', anc: [0.5, 0.8], tpf: 3 })) return;   /* 地爆＝道摩的手繪咒域 */
     if (VX && VX.custom) VX.custom((q, c) => { const u = q.t / q.life, R = r * (0.5 + u * 0.8), a = (1 - u) * 0.85; c.save(); c.translate(x, y); c.scale(1, 0.42); c.globalCompositeOperation = 'lighter';
       const g = c.createRadialGradient(0, 0, 0, 0, 0, R); g.addColorStop(0, `rgba(235,210,255,${a})`); g.addColorStop(0.45, `rgba(170,90,255,${a * 0.7})`); g.addColorStop(1, 'rgba(90,30,160,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, R, 0, 6.283); c.fill(); c.restore();
       c.save(); c.globalCompositeOperation = 'lighter'; for (let i = 0; i < 5; i++) { const an = i * 1.2566 + q.t * 0.05, hx = x + Math.cos(an) * r * 0.5 * u, hy = y - u * r * 1.2 - i * 3; const g2 = c.createRadialGradient(hx, hy, 0, hx, hy, r * 0.25); g2.addColorStop(0, `rgba(210,160,255,${a * 0.8})`); g2.addColorStop(1, 'rgba(120,50,200,0)'); c.fillStyle = g2; c.beginPath(); c.arc(hx, hy, r * 0.25, 0, 6.283); c.fill(); } c.restore(); }, 26, 'o'); }
@@ -161,7 +170,9 @@
       o.x += Math.cos(o.a) * o.sp; o.y += Math.sin(o.a) * o.sp * 0.6; o.tr.push([o.x, o.y]); if (o.tr.length > 8) o.tr.shift(); const k = HH() * S(o.y);
       if (Math.abs(H.x - o.x) < k * 0.28 && Math.abs(H.y - o.y) < 20 && H.hp > 0) { G.hurtHero(o.atk, o.x); boomFx(o.x, o.y, k * 0.3); ORB.splice(i, 1); continue; }
       if (o.t > o.life || !SC.walkable(o.x, o.y)) { if (o.t <= o.life) boomFx(o.x, o.y, k * 0.25); ORB.splice(i, 1); } } }
-  function orbDraw() { const c = G.ctx; for (const o of ORB) { const k = HH() * S(o.y), R = k * 0.13, a = Math.min(1, (o.life - o.t) / 15); c.save(); c.globalCompositeOperation = 'lighter';
+  function orbDraw() { const c = G.ctx; for (const o of ORB) { const k = HH() * S(o.y), R = k * 0.13, a = Math.min(1, (o.life - o.t) / 15);
+      if (AX() && AX().fr('b_omagatsuhi', 'omagatsuhi_dark_orb', o.t < 4 ? 0 : 1 + Math.floor(o.t / 5) % 2, o.x, o.y - o.z, { size: k * 0.8, flip: Math.cos(o.a) < 0, a })) { c.save(); c.fillStyle = `rgba(30,10,40,${0.18 * a})`; c.beginPath(); c.ellipse(o.x, o.y, R * 1.2, R * 0.4, 0, 0, 6.283); c.fill(); c.restore(); continue; }   /* 法球＝大禍津日的手繪黑球 */
+      c.save(); c.globalCompositeOperation = 'lighter';
       o.tr.forEach((p, i) => { const f = (i + 1) / o.tr.length, rr = R * (0.4 + 0.6 * f); const g = c.createRadialGradient(p[0], p[1] - o.z, 0, p[0], p[1] - o.z, rr); g.addColorStop(0, `rgba(190,120,255,${0.35 * f * a})`); g.addColorStop(1, 'rgba(110,40,200,0)'); c.fillStyle = g; c.beginPath(); c.arc(p[0], p[1] - o.z, rr, 0, 6.283); c.fill(); });
       const pu = 1 + 0.15 * Math.sin(o.t * 0.4), g = c.createRadialGradient(o.x, o.y - o.z, 0, o.x, o.y - o.z, R * 1.8 * pu); g.addColorStop(0, `rgba(250,235,255,${a})`); g.addColorStop(0.3, `rgba(190,110,255,${0.9 * a})`); g.addColorStop(1, 'rgba(100,30,190,0)');
       c.fillStyle = g; c.beginPath(); c.arc(o.x, o.y - o.z, R * 1.8 * pu, 0, 6.283); c.fill(); c.restore();
@@ -196,7 +207,9 @@
   /* ======================= 5. 妖怪村入口 ======================= */
   let tk = 0; (function hkY() { if (!G.STORY || !G.STORY.step) return setTimeout(hkY, 60); const st0 = G.STORY.step.bind(G.STORY); G.STORY.step = function () { st0();
       if (++tk % 20 || SC.id !== 'hub_city' || F().yv_c1_b_patrol || !G.HUB || !G.HUB.marks) return; if (G.HUB.marks.some(m => m.id === 'yokai_path')) G.HUB.marks = G.HUB.marks.filter(m => m.id !== 'yokai_path'); }; })();
-  G.FOEAI = { MODE, on, lvOf, ADD, KIT, MV, W, ORB, tryMove, patch };
+  G.FOEAI = { MODE, on, lvOf, ADD, KIT, MV, W, ORB, tryMove, patch, meleeFx, shock, boomFx, orb };
+  /* r3.197.0：場上有哪類敵人，就先備好那類招式的手繪素材（每秒看一次；已載入的不重讀） */
+  setInterval(() => { try { if (G.mode !== 'play' || !G.AFX || !G.E.length) return; const L = {}; for (const e of G.E) { const c = e._fc; if (c === 'spirit') { L.b_omagatsuhi = 1; L.b_doma = 1; } else if (c === 'giant') L.b_ibaraki = 1; if (c && c !== 'spirit' && c !== 'ranged' && !CLAW.test(e.type || '')) L.b_mb_benkei = 1; } G.AFX.pre(Object.keys(L)); } catch (x) {} }, 1000);
   /* ---------- r3.154.0：受擊後仰＋敵人互相推開 ---------- */
   /* 受擊後仰：重擊（big）打中一般妖怪 → 往被打的方向後仰約 0.2 秒（12 格）；頭目、大型單位不仰 */
   (function hkLean() { if (!G.damageOni || !G.drawOni) return setTimeout(hkLean, 50);
