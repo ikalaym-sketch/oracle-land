@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 56_camera.js
- * Version : r3.184.0  (2026-11-28)　秘傳鏡頭（拉遠、對焦）只套用在秘傳，一般技能與特技不套用
+ * Version : r3.206.0  (2026-11-28)　r3.206.0：鏡頭微調倍率（五段）
+ * 舊版    : r3.184.0  (2026-11-28)　秘傳鏡頭（拉遠、對焦）只套用在秘傳，一般技能與特技不套用
  * 舊版    : r3.177.0  (2026-11-28)　r3.177.0：秘傳時鏡頭拉遠 22%
  * 舊版    : r3.176.0  (2026-11-28)　r3.176.0：秘傳通用演出鏡頭（主角與敵人群中間、挑飛時上移）
  * 舊版    : r3.173.0  (2026-11-28)　r3.173.0：G.CAMFOCUS 演出鏡頭（期間內鏡頭對準指定點）
@@ -19,7 +20,9 @@
   const SC = G.SC, H = G.H, TOWN = 0.82, TALK = 0.8, FIGHT_MAX = 1.3;
   const st = { vis: 0, lead: 0, leadY: 0 };
   const mapK = () => /^(hub_|T_)/.test(SC.id || '') ? TOWN : 1;
-  const baseVis = () => G.ZOOMS[G.SAVE.data.zoom].vis * mapK();
+  /* r3.206.0：鏡頭微調（設定 › 畫面 ›「鏡頭微調」五段）：在遠／中／近之上再乘一個倍率，−2＝再拉遠 20%… +2＝再拉近 20% */
+  const ZK = [1.2, 1.1, 1, 0.9, 0.8]; G.ZOOMK = () => { const v = G.SAVE.data.zk; return ZK[v === undefined ? 2 : Math.max(0, Math.min(4, v))]; };
+  const baseVis = () => G.ZOOMS[G.SAVE.data.zoom].vis * mapK() * G.ZOOMK();
   /* 目標可視高度：基準 × 情境係數 */
   function targetVis() { const b = baseVis();
     if (G.CAMZOOM && G.t < G.CAMZOOM.until && H.act && H.act.mvx && H.act.mvx.hiden) return b * G.CAMZOOM.k;   /* r3.179.0：個別秘傳指定鏡頭距離 */

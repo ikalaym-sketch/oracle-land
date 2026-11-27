@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 16_growth.js
- * Version : r3.203.0  (2026-11-28)　r3.203.0：設定頁改版（分區、選項攤開）；職業頁右側改版（固定名牌＋能力／外掛能力兩頁、等級牌與類型色標）
+ * Version : r3.206.0  (2026-11-28)　r3.206.0：設定新增「鏡頭微調」
+ * 舊版    : r3.203.0  (2026-11-28)　r3.203.0：設定頁改版（分區、選項攤開）；職業頁右側改版（固定名牌＋能力／外掛能力兩頁、等級牌與類型色標）
  * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：設定新增「按鍵位置」
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：拿掉選單「地圖」分頁（統一用小地圖→行旅繪圖）
  * 舊版    : r3.150.0  (2026-11-27)　r3.150.0：轉職為里歐時，原職業的特性／特殊／外掛不生效
@@ -453,7 +454,7 @@
    * 其他模組加進來的設定（難度、夥伴指令…）維持「點一下換下一個」，但樣式統一；存檔／回標題縮成底部一排。 */
   M.PAGE['設定'] = function (x, y, w, h) { const s = S(), D = G.SAVE.data, { box, hit } = ui(), dirty = () => G.SAVE.markDirty();
     const seg = (n, opts, cur, set) => ({ n, opts, cur, set }), cyc = (n, v, f, ic) => ({ n, v, f, ic });
-    const SCR = [seg('視角', G.ZOOMS.map(z => z.n), D.zoom, i => { D.zoom = i; dirty(); }), seg('字體大小', ['小', '中', '大'], D.font, i => { D.font = i; dirty(); G.UI.layout(); }),
+    const SCR = [seg('視角', G.ZOOMS.map(z => z.n), D.zoom, i => { D.zoom = i; dirty(); }), seg('鏡頭微調', ['更遠', '遠', '標準', '近', '更近'], D.zk === undefined ? 2 : D.zk, i => { D.zk = i; dirty(); }), seg('字體大小', ['小', '中', '大'], D.font, i => { D.font = i; dirty(); G.UI.layout(); }),
       seg('按鍵位置', ['標準', '1', '2', '3', '貼角'], D.pad || 0, i => { D.pad = i; dirty(); G.UI.layout(); }), seg('全螢幕', ['關', '開'], document.fullscreenElement ? 1 : 0, i => { if (!!document.fullscreenElement !== !!i) G.UI.fullscreen(); })];
     const SND = [seg('背景音樂', ['關', '小', '中', '大'], s.bgm === undefined ? 2 : s.bgm, i => { s.bgm = i; dirty(); AU.setVol(); }), seg('音效', ['關', '開'], (s.sfx === undefined || s.sfx) ? 1 : 0, i => { s.sfx = !!i; dirty(); if (i) AU.sfx('ui'); })];
     const GAME = [seg('對話速度', ['慢', '普通', '快'], D.textSpeed, i => { D.textSpeed = i; dirty(); })];
