@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 10_banter.js
- * Version : r3.146.0  (2026-11-27)　r3.146.0：閒聊框不再壓左上頭像欄：頭上框會壓到就改畫在腳下；講話的人不在畫面上時改到上方中央；有橫幅時閒聊延後開始
+ * Version : r3.168.0  (2026-11-27)　r3.168.0：夥伴頭上泡泡位置平滑、上下位置一句只決定一次（不再上下飄）
+ * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：閒聊框不再壓左上頭像欄：頭上框會壓到就改畫在腳下；講話的人不在畫面上時改到上方中央；有橫幅時閒聊延後開始
  * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：有橫幅時閒聊延後開始
  * 舊版    : r3.27.7  （r3.27.7：只有目前出戰位上的夥伴會說話（原本已加入但沒帶出門的也會跳台詞）　r3.19.1：夥伴閒聊改成夥伴頭頂泡泡；不在場時才用左上框）
  * 舊版    : r3.9.0  (2026-11-13)
@@ -83,8 +84,9 @@
     const sc = G.SC.depth(P.y), p = G.SC.toScreen(P.x, P.y - G.HERO_H * sc * 1.25); if (p.x < 0 || p.x > G.LW || p.y < 0 || p.y > G.LH) return false;
     ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${12 * G.FS()}px ${G.FONT}`;
     const lines = G.wrap(c.text, Math.min(240, G.LW * 0.32)), lh = 16 * G.FS(), w = Math.max(...lines.map(l => ctx.measureText(l).width), ctx.measureText(d.name).width) + 22, h = 20 + lines.length * lh;
-    const x = Math.max(8 + G.SAFE.l, Math.min(G.LW - w - 8 - G.SAFE.r, p.x - w / 2)); let y = Math.max(8 + G.SAFE.t, p.y - h - 10), dn = false;
-    const hud = hudRect(); if (x < hud.x1 && y < hud.y1) { const f = G.SC.toScreen(P.x, P.y); y = Math.min(G.LH - h - 8, f.y + 14); dn = true; }   // r3.146.0：會壓到左上頭像欄 → 改畫在腳下
+    let x = Math.max(8 + G.SAFE.l, Math.min(G.LW - w - 8 - G.SAFE.r, p.x - w / 2)), y = Math.max(8 + G.SAFE.t, p.y - h - 10), dn = false;
+    const hud = hudRect(); if (c._dn === undefined) c._dn = x < hud.x1 && y < hud.y1; if (c._dn) { const f = G.SC.toScreen(P.x, P.y); y = Math.min(G.LH - h - 8, f.y + 14); dn = true; }   // r3.168.0：上／下只在開頭決定一次
+    if (c._bx === undefined) { c._bx = x; c._by = y; } else { c._bx += (x - c._bx) * 0.12; c._by += (y - c._by) * 0.12; } x = c._bx; y = c._by;   // r3.168.0：位置平滑，不跟著上下飄   // r3.146.0：會壓到左上頭像欄 → 改畫在腳下
     ctx.fillStyle = 'rgba(14,9,12,.86)'; G.rr(x, y, w, h, 9); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.55)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, w - 1, h - 1, 9); ctx.stroke();
     const tx = Math.max(x + 12, Math.min(x + w - 12, p.x)); ctx.fillStyle = 'rgba(14,9,12,.86)'; ctx.beginPath(); if (dn) { ctx.moveTo(tx - 6, y + 1); ctx.lineTo(tx + 6, y + 1); ctx.lineTo(tx, y - 8); } else { ctx.moveTo(tx - 6, y + h - 1); ctx.lineTo(tx + 6, y + h - 1); ctx.lineTo(tx, y + h + 8); } ctx.closePath(); ctx.fill();
     G.txt(d.name, x + 11, y + 11, 10, G.C.gold, 'left', G.FONT_S, 900); lines.forEach((l, i) => G.txt(l, x + 11, y + 11 + (i + 1) * lh, 12, G.C.ink, 'left', G.FONT, 700));

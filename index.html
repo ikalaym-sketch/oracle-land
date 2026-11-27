@@ -2,7 +2,7 @@
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d0b10"><link rel="icon" href="icon-192.png">
 <script>
 /* 版本檢查：ver.json 不走快取；與本頁載入的版本不同就換網址重新載入（避免手機用到舊版快取）。每次開啟檢查一次，同一版本最多重載一次。 */
-(function () { var cur = 'r3.167.0';
+(function () { var cur = 'r3.168.0';
   fetch('ver.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
     if (!j || !j.v || j.v === cur) return; var k = 'reload_' + j.v; try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, 1); } catch (e) {}
     location.replace(location.pathname + '?v=' + j.v); }).catch(function () {}); })();
@@ -24,12 +24,12 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 </style>
 <canvas id="cv"></canvas>
 <div id="rot">請將裝置轉為橫向</div>
-<script src="js/00_core.js?v=r3.167.0"></script>
+<script src="js/00_core.js?v=r3.168.0"></script>
 <script src="js/12_anim.js?v=r3.28.0"></script>
 <script src="js/01_assets.js?v=r3.138.0"></script>
-<script src="js/02_scene.js?v=r3.147.0"></script>
+<script src="js/02_scene.js?v=r3.168.0"></script>
 <script src="js/03_actors.js?v=r3.154.0"></script>
-<script src="js/04_ui.js?v=r3.166.0"></script>
+<script src="js/04_ui.js?v=r3.168.0"></script>
 <script src="js/05_dialog.js?v=r3.166.0"></script>
 <script src="js/06_story_ch1.js?v=r3.166.0"></script>
 <script src="js/07_rpg.js?v=r3.147.0"></script>
@@ -39,16 +39,16 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/16_growth.js?v=r3.166.0"></script>
 <script src="js/14_cheat.js?v=r3.28.0"></script>
 <script src="js/17_menu2.js?v=r3.166.0"></script>
-<script src="js/18_world.js?v=r3.52.0"></script>
+<script src="js/18_world.js?v=r3.168.0"></script>
 <script src="js/19_ui8.js?v=r3.166.0"></script>
-<script src="js/10_banter.js?v=r3.146.0"></script>
+<script src="js/10_banter.js?v=r3.168.0"></script>
 <script src="js/11_npclife.js?v=r3.28.0"></script>
 <script src="js/20_npcdata.js?v=r3.152.0"></script>
 <script src="js/20_npc.js?v=r3.166.0"></script>
 <script src="js/21_shop.js?v=r3.145.0"></script>
-<script src="js/22_event.js?v=r3.153.0"></script>
+<script src="js/22_event.js?v=r3.168.0"></script>
 <script src="js/23_warp.js?v=r3.107.0"></script>
-<script src="js/24_nav.js?v=r3.108.0"></script>
+<script src="js/24_nav.js?v=r3.168.0"></script>
 <script src="js/25_walk.js?v=r3.28.0"></script>
 <script src="js/26_boss.js?v=r3.146.0"></script>
 <script src="js/27_boss_kappa.js?v=r3.28.0"></script>
@@ -121,7 +121,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/92_lab.js?v=r3.49.0"></script>
 <script src="js/93_kassen.js?v=r3.98.0"></script>
 <script src="js/94_gojo.js?v=r3.86.0"></script>
-<script src="js/95_board.js?v=r3.167.0"></script>
+<script src="js/95_board.js?v=r3.168.0"></script>
 <script src="js/96_choice.js?v=r3.57.0"></script>
 <script src="js/97_partner5.js?v=r3.58.0"></script>
 <script src="js/98_explore.js?v=r3.126.0"></script>
@@ -134,7 +134,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/105_forge2.js?v=r3.147.0"></script>
 <script src="js/106_play.js?v=r3.146.0"></script>
 <script src="js/107_ux2.js?v=r3.65.0"></script>
-<script src="js/108_route.js?v=r3.166.0"></script>
+<script src="js/108_route.js?v=r3.168.0"></script>
 <script src="js/109_katana.js?v=r3.143.0"></script>
 <script src="js/110_katana_hiden.js?v=r3.73.0"></script>
 <script src="js/111_katana_fx.js?v=r3.79.0"></script>
@@ -157,7 +157,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/128_bunshin.js?v=r3.101.0"></script>
 <script src="js/129_magatama.js?v=r3.147.0"></script>
 <script src="js/130_icons.js?v=r3.107.0"></script>
-<script src="js/131_foes.js?v=r3.146.0"></script>
+<script src="js/131_foes.js?v=r3.168.0"></script>
 <script src="js/132_shieldfx.js?v=r3.104.2"></script>
 <script src="js/133_bal10.js?v=r3.105.0"></script>
 <script src="js/134_econ.js?v=r3.147.0"></script>
@@ -186,6 +186,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/158_hubwar2.js?v=r3.163.0"></script>
 <script src="js/159_hubwar3.js?v=r3.165.0"></script>
 <script src="js/160_hwside.js?v=r3.165.0"></script>
+<script src="js/161_hud2.js?v=r3.168.0"></script>
 <script src="js/09_main.js?v=r3.138.0"></script>
 
 </body></html>

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 24_nav.js
- * Version : r3.108.0  (2026-11-26)　r3.108.0：雜物打破時呼叫 G.BRKFX（特殊效果）；探索區最多 3 個
+ * Version : r3.168.0  (2026-11-27)　r3.168.0：畫面邊緣出口箭頭改由右上面板的出口列顯示
+ * 舊版    : r3.108.0  (2026-11-26)　r3.108.0：雜物打破時呼叫 G.BRKFX（特殊效果）；探索區最多 3 個
  * 舊版    : r3.107.1  (2026-11-26)　r3.107.1：城鎮不放可打破雜物；野外每張圖最多 2 個、分開擺放
  * 舊版    : r3.100.0  (2026-11-26)　r3.100.0：雜物打破後 1 秒消失，本次遊玩中同一地點不再出現
  * 舊版    : r3.43.2  （r3.43.2：出口底下的平塗黃橢圓改成柔光暈＋上升光點）
@@ -56,7 +57,7 @@
       if (L && nearL) tag(pt.x, pt.y - 46 * s, (L ? '封・' : pt.dir < 0 ? '← ' : pt.dir > 0 ? '' : '↓ ') + nm(p.to) + (pt.dir > 0 && !L ? ' →' : ''), L ? '#ffd0c8' : '#fff3cf', L ? 'rgba(120,30,24,.85)' : 'rgba(20,14,16,.78)', Z); }
   };
   /* ---------- 畫面外的出口：邊緣小箭頭 ---------- */
-  function edges() { const d = SC.def; if (!d || G.MENU.open || G.DLG.active()) return; const tg = G.STORY.target(), m = 26, top = 70 + G.SAFE.t;
+  function edges() { const d = SC.def; if (!d || G.HUD2 || G.MENU.open || G.DLG.active()) return; const tg = G.STORY.target(), m = 26, top = 70 + G.SAFE.t;
     for (const p of d.portals) { if (!showable(p) || SC.lock[p.id]) continue; const pt = exitPt(p); if (tg && Math.hypot(tg.x - pt.x, tg.y - pt.y) < 90) continue;
       const q = SC.toScreen(pt.x, pt.y - 30); if (q.x > -140 && q.x < G.LW + 140 && q.y > -40 && q.y < G.LH + 20) continue;   // r3.27.0：名牌還看得到就不畫邊緣箭頭（避免重複）   // 標記在畫面內就不畫邊緣箭頭
       const right = q.x > G.LW / 2, bot = right ? G.LH * 0.28 : G.LH * 0.6, x = Math.max(m, Math.min(G.LW - m, q.x)), y = Math.max(top, Math.min(bot, q.y));

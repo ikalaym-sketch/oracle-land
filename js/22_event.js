@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 22_event.js
- * Version : r3.153.0  (2026-11-27)　r3.153.0：世界事件提醒移到小地圖下方
+ * Version : r3.168.0  (2026-11-27)　r3.168.0：精英血條縮短（頭目不變）、詞綴圖示與護盾移到血條旁；世界事件長條改到右上面板
+ * 舊版    : r3.153.0  (2026-11-27)　r3.153.0：世界事件提醒移到小地圖下方
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：菁英／章節頭目血條移到上方中央，菁英在畫面外不顯示
  * 舊版    : r3.113.0  (2026-11-26)　r3.113.0：匯出事件工具 EV.H（140_events 新世界事件用）
  * 舊版    : r3.107.0  (2026-11-26)　r3.107.0：副本、合戰難度改只疊等級（不乘血量／攻擊）
@@ -251,7 +252,7 @@
     if (pick) G.UI.near = { label: pick.label || '調查', kind: 'look', run: () => pick.run() }; };
   /* 地圖頁：最下方顯示目前的世界事件 */
   /* r3.19.2：世界事件提醒改畫在遊戲畫面右上（藥鍵下方），點一下開地圖頁 */
-  const udW = G.UI.draw; G.UI.draw = function () { udW(); const w = EV.world(); const B = G.UI.B; B.wev = null; if (!w.k || w.done) return;
+  const udW = G.UI.draw; G.UI.draw = function () { udW(); const w = EV.world(); const B = G.UI.B; B.wev = null; if (!w.k || w.done || G.HUD2) return;
     const t = '世界事件：' + EV.worldText(); ctx.font = `700 ${11 * G.FS()}px ${G.FONT}`; const tw = Math.min(G.LW * 0.42, ctx.measureText(t).width + 22), x = B.menu.x + B.menu.w - tw, y = (G.MMAP && G.MMAP.box ? G.MMAP.box.y + G.MMAP.box.h : B.menu.y + B.menu.h) + 8, h = 24;   // r3.19.3：藥鍵移走，提醒上移到選單下方
     ctx.fillStyle = 'rgba(120,70,20,.78)'; G.rr(x, y, tw, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(243,217,138,.7)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, tw - 1, h - 1, 12); ctx.stroke();
     G.txt(t, x + tw / 2, y + h / 2 + 1, 11, '#f3d98a', 'center', G.FONT, 700); B.wev = { x, y, w: tw, h }; };
@@ -259,9 +260,12 @@
   const dw0 = G.drawWorld; G.drawWorld = function () { dw0(); if (EV.fog) { const g = ctx.createRadialGradient(G.LW / 2, G.LH / 2, G.LH * 0.25, G.LW / 2, G.LH / 2, G.LW * 0.6); g.addColorStop(0, 'rgba(210,214,222,0.08)'); g.addColorStop(1, 'rgba(200,204,214,0.55)'); ctx.fillStyle = g; ctx.fillRect(0, 0, G.LW, G.LH); } };
   const onScr = e => { const p = SC.toScreen ? SC.toScreen(e.x, e.y) : null; return !p || (p.x > -20 && p.x < G.LW + 20 && p.y > -20 && p.y < G.LH + 20); };
   const ud0 = G.UI.draw.bind(G.UI); G.UI.draw = function () { ud0(); const b = G.E.find(e => (e.boss || e.elite) && !e.bb && e.st !== 'dead' && e.delay <= 0 && (e.boss || onScr(e))); if (!b || (G.BOSS && G.BOSS.enc && !G.BOSS.enc.done)) return;   // r3.146.0：菁英只在畫面內才顯示；頭目戰時讓頭目血條
-    const w = Math.min(360, G.LW * 0.42), x = (G.LW - w) / 2, y = G.SAFE.t + 56, name = b.wb || (b.boss ? (SC.def.dungeon ? '副本頭目' : '章節頭目') : '菁英') + '　Lv ' + b.lv;
+    const w = b.boss || b.wb ? Math.min(360, G.LW * 0.42) : Math.min(220, G.LW * 0.25), x = (G.LW - w) / 2, y = G.SAFE.t + (G.HUD2 ? 30 : 56), name = b.wb || (b.boss ? (SC.def.dungeon ? '副本頭目' : '章節頭目') : '菁英') + '　Lv ' + b.lv;
     ctx.fillStyle = 'rgba(12,8,10,.72)'; G.rr(x - 8, y - 18, w + 16, 30, 8); ctx.fill(); G.txt(name, x, y - 8, 11, b.wb ? '#9fe0ef' : b.boss ? '#f0ad52' : '#e3c27a', 'left', G.FONT_S, 900);
-    ctx.fillStyle = 'rgba(60,20,20,.9)'; ctx.fillRect(x, y + 1, w, 6); ctx.fillStyle = b.wb ? '#5fb8d8' : '#d84a3a'; ctx.fillRect(x, y + 1, w * Math.max(0, b.hp) / b.hpMax, 6); };
+    ctx.fillStyle = 'rgba(60,20,20,.9)'; ctx.fillRect(x, y + 1, w, 6); ctx.fillStyle = b.wb ? '#5fb8d8' : '#d84a3a'; ctx.fillRect(x, y + 1, w * Math.max(0, b.hp) / b.hpMax, 6);
+    if (b._sh > 0) { ctx.fillStyle = 'rgba(150,210,255,.95)'; ctx.fillRect(x, y - 1, w * Math.min(1, b._sh / b.hpMax), 2); }   // r3.168.0：詞綴圖示＋護盾畫在血條旁（不再畫在畫面下方）
+    if (b._af && G.FOES && G.FOES.AFX) { let ix = x + w; for (const k of b._af.slice().reverse()) { const t = k === 'shield' && b._sh > 0 ? String(Math.round(b._sh)) : ''; ctx.font = `700 ${9 * G.FS()}px ${G.FONT}`; const tw = t ? ctx.measureText(t).width + 3 : 0; ix -= 15 + tw;
+        if (G.ICO) G.ICO.drawC('ico_elite_' + k, ix + 7, y - 8, 13); if (t) G.txt(t, ix + 15, y - 7, 9, '#9fd8ff', 'left', G.FONT, 700); ix -= 2; } } };
 })();
 /* ---------- r3.54.0：事件陣地（合戰防禦物素材 x2_war）＋道摩大筒 ----------
  * EV.fort(p, kind, c)：camp＝拒馬×2、逆茂木×2、竹束、篝火×2、敵旗×2；invade＝村民的拒馬／竹束／篝火（擋在主角與敵人之間）；

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 02_scene.js
- * Version : r3.147.0  (2026-11-27)　r3.147.0：提示文字去掉開發用語
+ * Version : r3.168.0  (2026-11-27)　r3.168.0：從出入口進圖時站到道路上方約 22% 處（城鎮、安全區除外）
+ * 舊版    : r3.147.0  (2026-11-27)　r3.147.0：提示文字去掉開發用語
  * 舊版    : r3.19.1  （r3.19.1：清怪後 25 秒才再生）
  * 舊版    : r3.10.1  (2026-11-13)
  * 變更    : r3.10.1 出口加頭目戰鎖（G.EV.bossLock）。
@@ -28,7 +29,8 @@ G.SC = {
     const d = G.D.scenes[id]; if (!d) return false; Object.assign(d, META[id] || {});
     this.id = id; this.def = d; this.img = G.IMG[id];
     const ys = d.outer.map(p => p[1]); this.y0 = Math.min(...ys); this.y1 = Math.max(...ys);
-    const p = at || d.start; Object.assign(G.H, { x: p[0], y: p[1], st: 'idle', t: 0, vx: 0 });
+    let p = at || d.start; if (this._pin) p = this.high(p, d);   // r3.168.0：從出入口進來時站在道路上方，看得到背景
+    Object.assign(G.H, { x: p[0], y: p[1], st: 'idle', t: 0, vx: 0 });
     G.E = []; G.FX = []; G.NUMS = []; G.PROJ = []; G.FIELDS = []; G.ZONES = []; G.BUFF && G.BUFF.clear(); G.H.act = null; this.lock = {}; this.auto = false; this.respawnT = 0;
     this.snapCam();
     const S = G.SAVE.data; S.scene = id; S.x = p[0]; S.y = p[1]; S.hp = G.H.hp; G.SAVE.markDirty(); G.SAVE.flush();   // 換場景＝一次寫入
@@ -44,6 +46,10 @@ G.SC = {
       if (!this.walkable(x, y) || Math.hypot(x - G.H.x, y - G.H.y) < 260) continue; G.spawnOni(x, y, 30 + i * 50, (d.lv || 1) + Math.floor(Math.random() * 3)); i++; }
   },
   toScreen(x, y) { const { Z, vw, vh } = this.view(); return { x: (x - (this.cam.x - vw / 2)) * Z, y: (y - (this.cam.y - vh / 2)) * Z }; },
+  high(p, d) { if (/^(hub_|T_)/.test(this.id) || d.safe || d.town || d.hub) return p; let ya = null, yb = null;
+    for (let y = this.y0; y <= this.y1; y += 4) if (this.walkable(p[0], y)) { if (ya === null) ya = y; yb = y; }
+    if (ya === null) return p; const ty = ya + (yb - ya) * 0.22; if (p[1] <= ty) return p;
+    for (let y = ty; y <= p[1]; y += 4) if (this.walkable(p[0], y)) return [p[0], y]; return p; },
   walkable(x, y) { const d = this.def; return G.inPoly(x, y, d.outer) && !d.obstacles.some(o => G.inPoly(x, y, o)); },
   depth(y) { const [a, b] = this.def.depth || [0.9, 1.12]; return a + (b - a) * Math.max(0, Math.min(1, (y - this.y0) / Math.max(1, this.y1 - this.y0))); },
   zoom() { return G.LH / G.ZOOMS[G.SAVE.data.zoom].vis; },
@@ -63,12 +69,12 @@ G.SC = {
       const why = this.lock[p.id] || (G.EV && G.EV.bossLock && G.EV.bossLock()) || (!G.D.scenes[p.to] ? '前方的路尚未開放' : null);
       if (why) { G.UI.toast(why); if (p.rect) H.y -= 8; else H.x += p.id === 'west' ? 6 : -6; return; }
       const back = G.D.scenes[p.to].portals.find(q => q.to === this.id);
-      this.trans = { t: 0, to: p.to, at: back ? back.arrival : null };
+      this.trans = { t: 0, to: p.to, at: back ? back.arrival : null, pin: 1 };
       return;
     }
   },
   step() {
-    if (this.trans) { const T = this.trans; T.t++; if (T.t === 24) this.enter(T.to, T.at); if (T.t >= 48) this.trans = null; }
+    if (this.trans) { const T = this.trans; T.t++; if (T.t === 24) { this._pin = !!T.pin; try { this.enter(T.to, T.at); } finally { this._pin = false; } } if (T.t >= 48) this.trans = null; }
     if (this.shake > 0) this.shake *= 0.86;
     if (this.auto && !this.trans && !G.DLG.active() && !G.E.some(e => e.st !== 'dead')) { if (++this.respawnT === RESPAWN_T) { this.autoSpawn(); G.UI.toast('妖氣又聚集起來了'); } }
     const t = this.camTarget(); this.cam.x += (t.x - this.cam.x) * 0.12; this.cam.y += (t.y - this.cam.y) * 0.12;

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 95_board.js
- * Version : r3.167.0  (2026-11-27)　r3.167.0：公告板改成全畫面木板＋和紙委託籤（種類朱印、地點、目標、預估報酬、接下）；進行中列在下方（進度條、放棄要按兩次）；指名委託要走進過該章地圖才貼
+ * Version : r3.168.0  (2026-11-27)　r3.168.0：G.BOARD.act 給右上任務面板
+ * 舊版    : r3.167.0  (2026-11-27)　r3.167.0：公告板改成全畫面木板＋和紙委託籤（種類朱印、地點、目標、預估報酬、接下）；進行中列在下方（進度條、放棄要按兩次）；指名委託要走進過該章地圖才貼
  * 舊版    : r3.133.0  (2026-11-27)　r3.133.0：各章「探索區討伐」支線改成公告板的指名委託（完成前常駐，最多 2 張）
  * 舊版    : r3.104.2  (2026-11-26)　r3.104.2：公告板貼地（補回圖下緣透明邊）、影子改柔邊、不畫互動光暈；發光標記改柔邊
  * 舊版    : r3.56.0  (2026-11-24)　r3.56.0：聚落公告板移到路邊
@@ -140,5 +141,5 @@
   const gd0 = Q.guide.bind(Q); Q.guide = function () { const g = gd0(); if (g && g.text) return g; const o = BD().act[0]; if (!o) return g;
     const t = '【委託】' + o.desc + '（' + o.k + '／' + o.n + '）'; if (o.map !== SC.id) return { text: t };
     const m = HUB.marks.find(k => k.bq === o.id), e = G.E.find(x => x.bq === o.id && x.st !== 'dead'); return m ? { text: t, x: m.x, y: m.y, label: m.label } : e ? { text: t, x: e.x, y: e.y, label: '精英' } : { text: t }; };
-  G.BOARD = { BD, refresh, make, openBoard, setup };
+  G.BOARD = { BD, refresh, make, openBoard, setup, act: () => BD().act };   // r3.168.0：act 給右上任務面板
 })();

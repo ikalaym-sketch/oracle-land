@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 131_foes.js
- * Version : r3.146.0  (2026-11-27)　r3.146.0：韌性條、等級屬性標籤跟著頭目血條移到上方
+ * Version : r3.168.0  (2026-11-27)　r3.168.0：畫面下方詞綴列停用（改畫在上方精英血條旁）
+ * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：韌性條、等級屬性標籤跟著頭目血條移到上方
  * 舊版    : r3.108.0  (2026-11-26)　r3.108.0：initAff 可加額外詞綴並對外公開（136 封印精英用）
  * 舊版    : r3.105.0  (2026-11-26)　r3.105.0：第 9 步剩餘——遠程妖怪保持距離射箭（太近後退）；困難以上自然出怪提高遠程／突擊比例（10／20／30％）；
  *           普攻每秒傷害依武器實測校正（WF）；修正一般妖怪近戰不經 hurtHero，詛咒／吸血詞綴沒作用
@@ -157,7 +158,7 @@
       G.SHFX.dome(G.ctx, e.x, cy, rx, ry, '110,185,255', '200,235,255', G.t + (e._pid || 0) * 37, a, h ? { age: G.t - h.t, side: h.side } : null); } return r; };
   /* ---------- 繪製：精英詞綴（下方血條上面）；頭目韌性條 ---------- */
   /* 精英血條（22_event 畫在畫面下方）上面：詞綴圖示＋名稱；護盾值畫在血條上緣 */
-  const eui0 = G.UI.draw.bind(G.UI); G.UI.draw = function () { eui0(); if (G.mode !== 'play' || (B && B.enc && !B.enc.done)) return; const b = G.E.find(e => (e.boss || e.elite) && !e.bb && e.st !== 'dead' && e.delay <= 0); if (!b || !b._af) return;
+  const eui0 = G.UI.draw.bind(G.UI); G.UI.draw = function () { eui0(); if (G.HUD2 || G.mode !== 'play' || (B && B.enc && !B.enc.done)) return; const b = G.E.find(e => (e.boss || e.elite) && !e.bb && e.st !== 'dead' && e.delay <= 0); if (!b || !b._af) return;
     const c = G.ctx, w = Math.min(360, G.LW * 0.42), x = (G.LW - w) / 2, y = G.LH - 34 - G.SAFE.b, cy = y - 18 - 15; let cx = x - 8;
     c.font = `700 ${10 * G.FS()}px ${G.FONT}`;
     for (const k of b._af) { const t = AFX[k] + (k === 'shield' && b._sh > 0 ? ' ' + Math.round(b._sh) : ''), tw = c.measureText(t).width, cw = 24 + tw + 8;

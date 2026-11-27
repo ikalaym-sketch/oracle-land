@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 108_route.js
- * Version : r3.166.0  (2026-11-27)　r3.166.0：行旅繪圖右上加「結局走向」切換
+ * Version : r3.168.0  (2026-11-27)　r3.168.0：小地圖可嵌入右上面板（MMAP.draw）
+ * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：行旅繪圖右上加「結局走向」切換
  * 舊版    : r3.153.0  (2026-11-27)　r3.153.0：行旅繪圖（點右上小地圖打開；走過的地圖縮圖、可前往）＋右上小地圖＋時雨的委託解鎖自由前往
  * 舊版    : r3.66.0  (2026-11-24)
  * 變更    : r3.66.0 新增。兩岸城城南告示牌改成「街道路程圖」畫面（原本是對話選項＋◆／✓ 符號、每頁 5 個）：
@@ -168,18 +169,19 @@
     const y0 = Math.max(0, G.SC.y0 - 60), y1 = Math.min(d.h, G.SC.y1 + 20), sx = img.width / d.w, W = 300, Hh = Math.round(Math.max(56, Math.min(110, W * (y1 - y0) / d.w)));
     const c2 = document.createElement('canvas'); c2.width = W; c2.height = Hh; c2.getContext('2d').drawImage(img, 0, y0 * sx, img.width, (y1 - y0) * sx, 0, 0, W, Hh); MM.cv = c2; MM.y0 = y0; MM.y1 = y1; }
   const show = () => G.mode === 'play' && !G.MENU.open && !G.DLG.active() && !(G.STORY && G.STORY.cut) && G.SC.def && !G.SC.trans && !HUB.card;
-  const udM = G.UI.draw; G.UI.draw = function () { MM.box = null; if (show()) try { mini(); } catch (e) { console.warn('mmap', e); } udM.apply(this, arguments); };
-  function mini() { const B = G.UI.B, d = G.SC.def; if (!B || !B.menu) return; if (MM.id !== G.SC.id || !MM.cv) { if (MM.id !== G.SC.id || G.t % 30 === 0) build(G.SC.id); if (!MM.cv) return; }
-    const w = 150, h = MM.cv.height / 2, x = B.menu.x + B.menu.w - w, y = B.menu.y + B.menu.h + 22, X = v => x + w * v / d.w, Y = v => y + h * Math.max(0, Math.min(1, (v - MM.y0) / (MM.y1 - MM.y0)));
-    ctx.fillStyle = 'rgba(12,8,10,.78)'; G.rr(x - 4, y - 18, w + 8, h + 22, 7); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.55)'; ctx.lineWidth = 1; G.rr(x - 3.5, y - 17.5, w + 7, h + 21, 7); ctx.stroke();
-    G.txt(nm(G.SC.id), x, y - 9, 10, GOLD, 'left', G.FONT_S, 900); ctx.globalAlpha = 0.9; ctx.drawImage(MM.cv, x, y, w, h); ctx.globalAlpha = 1;
+  MM.show = show; MM.draw = (x, y, w, h) => { try { return mini(x, y, w, h); } catch (e) { console.warn('mmap', e); } };   // r3.168.0：給右上面板畫
+  const udM = G.UI.draw; G.UI.draw = function () { MM.box = null; if (show() && !G.HUD2) try { mini(); } catch (e) { console.warn('mmap', e); } udM.apply(this, arguments); };
+  function mini(rx, ry, rw, rh) { const B = G.UI.B, d = G.SC.def; if (!B || !B.menu) return; if (MM.id !== G.SC.id || !MM.cv) { if (MM.id !== G.SC.id || G.t % 30 === 0) build(G.SC.id); if (!MM.cv) return; }
+    const emb = rx !== undefined, w = emb ? rw : 150, h = emb ? Math.min(rh, rw * MM.cv.height / MM.cv.width) : MM.cv.height / 2, x = emb ? rx : B.menu.x + B.menu.w - w, y = emb ? ry + (rh - h) / 2 : B.menu.y + B.menu.h + 22, X = v => x + w * v / d.w, Y = v => y + h * Math.max(0, Math.min(1, (v - MM.y0) / (MM.y1 - MM.y0)));
+    if (!emb) { ctx.fillStyle = 'rgba(12,8,10,.78)'; G.rr(x - 4, y - 18, w + 8, h + 22, 7); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.55)'; ctx.lineWidth = 1; G.rr(x - 3.5, y - 17.5, w + 7, h + 21, 7); ctx.stroke();
+    G.txt(nm(G.SC.id), x, y - 9, 10, GOLD, 'left', G.FONT_S, 900); } ctx.globalAlpha = 0.9; ctx.drawImage(MM.cv, x, y, w, h); ctx.globalAlpha = 1;
     const v = G.SC.view(), cx = G.SC.cam.x; ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1; ctx.strokeRect(Math.max(x, X(cx - v.vw / 2)) + .5, y + .5, Math.min(w, X(cx + v.vw / 2) - Math.max(x, X(cx - v.vw / 2))) - 1, h - 1);
     for (const p of d.portals || []) { const px = p.line ? p.line[0][0] : p.rect ? p.rect[0] : p.x; if (px === undefined) continue; const L2 = px < d.w / 2, ax = L2 ? x + 3 : x + w - 3, ay = p.line ? Y((p.line[0][1] + p.line[1][1]) / 2) : y + h / 2;
       ctx.fillStyle = '#8fd38f'; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + (L2 ? 6 : -6), ay - 4); ctx.lineTo(ax + (L2 ? 6 : -6), ay + 4); ctx.fill(); }
     for (const e of G.E) { if (e.st === 'dead' || e.hp <= 0 || e.x < 0 || e.x > d.w) continue; const r = e.elite || e.boss ? 3.2 : 2.2; ctx.fillStyle = '#e8584a'; ctx.beginPath(); ctx.arc(X(e.x), Y(e.y), r, 0, 6.283); ctx.fill(); }
     const tg = G.STORY.target && G.STORY.target(); if (tg && tg.x >= 0 && tg.x <= d.w) { const tx = X(tg.x), ty = Y(tg.y); ctx.fillStyle = '#f3d98a'; ctx.beginPath(); ctx.moveTo(tx, ty - 5); ctx.lineTo(tx + 4, ty); ctx.lineTo(tx, ty + 5); ctx.lineTo(tx - 4, ty); ctx.fill(); }
     const hx = X(G.H.x), hy = Y(G.H.y); ctx.fillStyle = '#7ec8ff'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(hx, hy, 3.4, 0, 6.283); ctx.fill(); ctx.stroke();
-    MM.box = { x: x - 4, y: y - 18, w: w + 8, h: h + 22 }; }
+    MM.box = emb ? { x, y, w, h } : { x: x - 4, y: y - 18, w: w + 8, h: h + 22 }; return h; }
   /* ---------- 時雨的委託：完成後解鎖「走過的地方都能去」 ---------- */
   const Q = G.QST, say = (who, text) => ({ who, text });
   if (Q && Q.add) Q.add({ id: 'side_atlas', ch: 2, after: 'c2_after', title: '行旅繪圖', desc: '傳送役時雨想畫一份各地的行旅繪圖。', reward: { exp: 160, gold: 150 },

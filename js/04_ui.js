@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 04_ui.js
- * Version : r3.166.0  (2026-11-27)　r3.166.0：世界事件提醒的後備改開行旅繪圖
+ * Version : r3.168.0  (2026-11-27)　r3.168.0：右上視角／選單鈕與上方主線橫幅交給 161_hud2；點主角頭像開選單（頭像右上小☰）；畫面外目標只留箭頭
+ * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：世界事件提醒的後備改開行旅繪圖
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：技能鍵冷卻改環狀（補滿閃一下）、按鈕間距加大，文字不變
  * 舊版    : r3.153.0  (2026-11-27)　r3.153.0：小地圖點擊→行旅繪圖；方向提示不壓小地圖
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：提示可帶「前往設定」按鈕；對話中與結束後 2 秒內的橫幅延後；左上改「區域 Lv／難度」
@@ -79,6 +80,7 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
     if (G.mode !== 'play') return;
     if (G.MENU.open) { G.MENU.down(p); return; }
     if (B.toast && UI.tst && UI.tst.act && hit(p, B.toast)) { const a = UI.tst.act; UI.tst = null; IN.stick = null; a(); return; }   // r3.146.0
+    if (G.HUD2 && G.HUD2.tap && G.HUD2.tap(p)) { IN.stick = null; return; }   // r3.168.0：右上面板
     if (hit(p, B.menu)) { G.MENU.show(); IN.stick = null; return; }
     if (G.MMAP && G.MMAP.box && hit(p, G.MMAP.box)) { IN.stick = null; G.ROUTE.atlas(); return; }   // r3.153.0：小地圖→行旅繪圖
     if (B.wev && hit(p, B.wev)) { IN.stick = null; if (G.EV && G.EV.goWorld) G.EV.goWorld(); else if (G.ROUTE && G.ROUTE.atlas) G.ROUTE.atlas(); return; }   // r3.19.2：世界事件提醒
@@ -139,6 +141,7 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
     const MB = G.MMAP && G.MMAP.box, ax = cx + dx * k, ay0 = dx > 0 ? Math.min(cy + dy * k, G.LH * 0.28) : cy + dy * k, ay = MB && ax > MB.x - 40 && ay0 < MB.y + MB.h + 14 ? MB.y + MB.h + 14 : ay0 /* r3.153.0：不壓小地圖 */, an = Math.atan2(dy, dx), pulse = 0.75 + 0.25 * Math.sin(G.t * 0.15);
     ctx.save(); ctx.translate(ax, ay); ctx.rotate(an); ctx.globalAlpha = pulse;
     ctx.fillStyle = C.gold; ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-6, -11); ctx.lineTo(-1, 0); ctx.lineTo(-6, 11); ctx.closePath(); ctx.fill(); ctx.restore();
+    if (G.HUD2) return;   // r3.168.0：只留箭頭，名稱距離改在右上面板
     const dist = Math.round(Math.hypot(tg.x - G.H.x, tg.y - G.H.y) / 10), lab = tg.label + '・' + dist + 'm';
     ctx.font = `700 ${10 * G.FS()}px ${G.FONT}`; const w = ctx.measureText(lab).width + 14, lx = Math.max(8, Math.min(G.LW - w - 8, ax - Math.cos(an) * 34 - w / 2)), ly = Math.max(top - 4, Math.min(bot - 10, ay - Math.sin(an) * 30 - 10)), lx2 = ly < 262 + G.SAFE.t ? Math.max(lx, 158 + (G.SAFE.l || 0)) : lx;   /* r3.21.0：避開夥伴頭像 */
     ctx.fillStyle = 'rgba(12,8,10,.5)'; G.rr(lx2, ly + 2, w, 18, 9); ctx.fill(); G.txt(lab, lx2 + w / 2, ly + 11.5, 10, '#f3d98a', 'center', G.FONT, 700);
@@ -156,12 +159,14 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
     { const d = G.SC.def || {}, df = G.SAVE.data.diff, safe = (d.safe || d.town) && !(G.TRAIN && G.TRAIN.on);   // r3.19.1：地圖等級與難度
       const gd = G.GDIFF ? G.GDIFF.cur() : null, tag = G.TRAIN && G.TRAIN.on ? G.TRAIN.tag() : safe ? '安全區' : '區域 Lv ' + (G.FOEAI ? G.FOEAI.lvOf() : (d.lv || 1)) + '　難度 ' + (gd ? gd.n : '普通') + (df ? '＋' + df.n : '');   /* r3.146.0：原「敵 Lv・普通」看不懂 */   /* r3.32.0：全遊戲難度＋副本難度 */ ctx.font = `700 ${10 * G.FS()}px ${G.FONT}`; const tw2 = ctx.measureText(tag).width + 14;
       ctx.fillStyle = 'rgba(12,8,10,.62)'; G.rr(x0 + 52, y0 + 46, tw2, 16, 8); ctx.fill(); G.txt(tag, x0 + 59, y0 + 54.5, 10, safe ? '#8fd38f' : gd && gd.n !== '普通' ? gd.c : df ? df.c : C.sub, 'left', G.FONT, 700); }
-    const obj = G.STORY.objective();
+    const obj = G.HUD2 ? null : G.STORY.objective();   // r3.168.0：任務改在右上面板
     if (obj) { ctx.font = `700 ${12 * G.FS()}px ${G.FONT}`; const mw = B.zoom.x - 8 - (x0 + 250) - 30; let ob = obj; while (ob.length > 6 && ctx.measureText(ob).width > mw) ob = ob.slice(0, -2) + '…';   /* r3.21.0：太長截斷，不壓血條 */
       const obj2 = ob, ow = ctx.measureText(ob).width + 30, ox = Math.min(B.zoom.x - ow - 8, Math.max((G.LW - ow) / 2, x0 + 250));
       ctx.fillStyle = 'rgba(12,8,10,.6)'; G.rr(ox, y0 + 3, ow, 26, 13); ctx.fill(); ctx.fillStyle = C.gold; ctx.beginPath(); ctx.moveTo(ox + 12, y0 + 11); ctx.lineTo(ox + 16, y0 + 16); ctx.lineTo(ox + 12, y0 + 21); ctx.lineTo(ox + 8, y0 + 16); ctx.fill();
       G.txt(obj2, ox + 21, y0 + 16, 12, C.ink); }
-    pill(B.zoom, '視角：' + G.ZOOMS[G.SAVE.data.zoom].n); pill(B.menu, '☰ 選單'); if (G.SHOP) G.SHOP.hud(B.potion); if (G.FEATHER) G.FEATHER.hud(B.feather);
+    if (!G.HUD2) { pill(B.zoom, '視角：' + G.ZOOMS[G.SAVE.data.zoom].n); pill(B.menu, '☰ 選單'); }
+    else { B.menu = { x: x0 - 4, y: y0 - 4, w: 52, h: 58 }; const bx = x0 + 38, by = y0 + 5; ctx.fillStyle = 'rgba(12,8,10,.88)'; ctx.beginPath(); ctx.arc(bx, by, 8, 0, 6.283); ctx.fill(); ctx.strokeStyle = C.gold; ctx.lineWidth = 1; ctx.stroke();   // r3.168.0：點頭像開選單（右上角小☰）
+      ctx.fillStyle = C.gold; for (let i = -1; i <= 1; i++) ctx.fillRect(bx - 4, by + i * 2.6 - 0.6, 8, 1.3); } if (G.SHOP) G.SHOP.hud(B.potion); if (G.FEATHER) G.FEATHER.hud(B.feather);
     drawGuide();
     if (IN.stick) { const s = IN.stick; ctx.strokeStyle = 'rgba(243,232,210,.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.ox, s.oy, 46, 0, 6.283); ctx.stroke();
       ctx.fillStyle = 'rgba(243,232,210,.32)'; ctx.beginPath(); ctx.arc(s.x, s.y, 20, 0, 6.283); ctx.fill(); }

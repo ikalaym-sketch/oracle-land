@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 18_world.js
- * Version : r3.52.0  (2026-11-23)　r3.52.0：進入章節第一張圖設好章節旗標後立刻重建任務（原本第一個任務要換一次圖才出現）
+ * Version : r3.168.0  (2026-11-27)　r3.168.0：地圖載入完才進圖時保留出入口進場靠上旗標
+ * 舊版    : r3.52.0  (2026-11-23)　r3.52.0：進入章節第一張圖設好章節旗標後立刻重建任務（原本第一個任務要換一次圖才出現）
  * 舊版    : r3.39.0  (2026-11-17)  r3.39.0：進到某章第一張圖，只有前一章完成或該章開場已演才記「到過該章」（測試跳圖不再推進主線）；頭目擊敗橫幅改「討伐」
  * 舊版    : r3.9.1  (2026-11-13)
  * 變更    : r3.9.1 進場 3 秒後背景預先下載相鄰地圖與其妖怪所在的素材包；釋放地圖圖時一併釋放 blob 網址。
@@ -38,7 +39,7 @@
     if (d && WD.is(id) && !d._ready) {
       let T = this.trans; if (!T) T = this.trans = { t: 24, to: id, at: at, hold: true }; T.hold = true;
       const list = (d.foes || []).concat(d.boss ? [d.boss] : []);
-      Promise.all([G.ASSET.img(id, 'a/m/' + id + '.webp'), G.ASSET.enemies(list)]).then(() => { d._ready = true; if (enter0.call(G.SC, id, at)) WD.onEnter(id); if (T) { T.hold = false; } })
+      Promise.all([G.ASSET.img(id, 'a/m/' + id + '.webp'), G.ASSET.enemies(list)]).then(() => { d._ready = true; G.SC._pin = !!(T && T.pin); let ok2; try { ok2 = enter0.call(G.SC, id, at); } finally { G.SC._pin = false; } if (ok2) WD.onEnter(id);   /* r3.168.0：載入完才進圖時也保留「進場靠上」 */ if (T) { T.hold = false; } })
         .catch(e => { if (T) T.hold = false; G.UI.toast('地圖載入失敗，請重試'); console.warn(e); });
       return true;
     }
