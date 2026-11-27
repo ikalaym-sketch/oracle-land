@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.146.0  (2026-11-27)　r3.146.0：「此鍵尚未設定」提示加前往按鈕
+ * Version : r3.148.0  (2026-11-27)　r3.148.0：衝刺 Lv5 穿過的敵人停頓 0.5 秒
+ * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：「此鍵尚未設定」提示加前往按鈕
  * 舊版    : r3.145.0  (2026-11-27)　掉落物：稀品以上才顯示名字，光柱高度依品質拉開；r3.145.0：傷害數字放大（一般 19、暴擊 28），出現與合併時彈一下，暴擊上跳
  * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：和弓特性：普攻出箭中可移動（不轉身，速度 ×0.6）
  * 舊版    : r3.126.0  (2026-11-27)　r3.126.0：里歐出招中本體步進直接略過（讓外層各模組的每格處理照常執行）
@@ -209,7 +210,8 @@ G.ONI_RATIO = 1.38;
     G.FIELDS = G.FIELDS.filter(f => f.t < f.life); };
   function dashHit() { const wp = G.WPN.cur();
     for (const e of G.E) { if (e.st === 'dead' || e.delay > 0 || H.hits.includes(e)) continue;
-      if (Math.abs(e.x - H.x) < 34 && Math.abs(e.y - H.y) < 30) { H.hits.push(e); G.damageOni(e, 1.4, true); hitFx(e, wp); G.hitstop = 4; SC.shake = 5; } } }
+      if (Math.abs(e.x - H.x) < 34 && Math.abs(e.y - H.y) < 30) { H.hits.push(e); G.damageOni(e, 1.4, true); hitFx(e, wp); G.hitstop = 4; SC.shake = 5;
+        if (G.GROW && G.GROW.F && G.GROW.F.dashHit) e.stun = Math.max(e.stun || 0, e.boss || e.bb ? 12 : 30); } } }   // r3.148.0：修練「衝刺」Lv5：穿過的敵人停頓（頭目 0.2 秒）
   function hitFx(e, wp) { const s = SC.depth(e.y); spawnFx(HITFX[wp.hitfx], 0, e.x - H.face * 6, e.y - G.HERO_H * 0.5 * e.ratio * s, H.face, s * 1.4);
     for (let i = 0; i < 4; i++) G.FX.push({ k: 'spark', x: e.x - H.face * 8, y: e.y - 50 * s, vx: H.face * (1 + Math.random() * 3), vy: -1 - Math.random() * 2.5, t: 0, life: 18 }); }
   /* 圖集特效：先找武器包，再找共用包；技能等級 3／5 換 evolved／master 版。特效格的錨點＝圖片中心 → 中心放在 (x,y) */

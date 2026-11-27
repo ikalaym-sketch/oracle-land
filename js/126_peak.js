@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 126_peak.js
- * Version : r3.104.0  (2026-11-26)　r3.104.0：抗魔／破陣／斬妖 10 級極效果生效（131_foes）
+ * Version : r3.148.0  (2026-11-27)　r3.148.0：天命「統御」極效果改成大連攜集氣 +15% 並實裝
+ * 舊版    : r3.104.0  (2026-11-26)　r3.104.0：抗魔／破陣／斬妖 10 級極效果生效（131_foes）
  * 舊版    : r3.103.0  (2026-11-26)　r3.103.0：天命頁加圖示（巔峰、8 種天命）
  * 舊版    : r3.102.0  (2026-11-26)　r3.102.0：天命「共鳴專精」改為生效（129_magatama）
  * 舊版    : r3.101.0  (2026-11-26)　r3.101.0：天命加強：每級效果約翻倍；尋寶改掉落品質；疾風改全技能冷卻 −3%／級＋連續發動（技／奧義／秘傳，第一次結束後自動再放一次）
@@ -48,7 +49,7 @@
   const FATE = [
     ['antimagic', '抗魔', '全抗 +4%、受到的傷害 −1%', '同屬性妖怪的抗性降低（屬性傷害 ×0.5 → ×0.6）', 1],
     ['resonance', '共鳴專精', '選定一種勾玉（勾玉 › 共鳴），共鳴效果 +3%', '該種共鳴計數 +1', 1],
-    ['command', '統御', '夥伴傷害 +6%、夥伴生命 +6%', '夥伴大招冷卻 −15%（之後生效）', 0],
+    ['command', '統御', '夥伴傷害 +6%、夥伴生命 +6%', '大連攜集氣 +15%', 1],   // r3.148.0：極效果改成大連攜集氣（原本寫冷卻、沒作用）
     ['treasure', '尋寶', '掉落品質提升（精品以上機率 +12%）', '擊敗頭目額外掉 1 件裝備', 1],
     ['tenacity', '不撓', '藥水回復 +6%、最大生命 +2%', '復甦每場戰鬥站起次數 +1', 1],
     ['breaker', '破陣', '對精英傷害 +6%', '精英詞綴效果 −30%', 1],
@@ -104,6 +105,9 @@
     r.pp = pp() + n; R.recalc(); dirty(); G.UI.toast('巔峰點數已重置，退回 ' + n + ' 點' + (c ? '（花費 ' + c + '）' : '（本週免費）')); }
   (function sh() { const F = G.FORGE; if (!F || !F.shrineCh) return setTimeout(sh, 50); const s0 = F.shrineCh.bind(F);
     F.shrineCh = function () { const L = s0.apply(this, arguments) || []; if ((d().pk || 0) > 0) { const c = ppResetCost(); L.push({ label: '巔峰點數重置（' + (c ? c + ' 錢' : '本週免費') + '）', then: [{ do: ppReset }] }); } return L; }; })();
+  /* r3.148.0：統御 Lv10＝大連攜集氣 +15%（夥伴集氣條增加時多加 15%） */
+  (function lk() { if (!G.lootStep) return setTimeout(lk, 100); const ls0 = G.lootStep; G.lootStep = function () { const r = ls0.apply(this, arguments), L = (G.PARTY && G.PARTY.list) || [], on = fl('command') >= 10;   /* 每格比對集氣量，增加的部分多加 15% */
+      for (const P of L) { if (on && P._lk != null && P.link > P._lk && P.link < 100) P.link = Math.min(100, P.link + (P.link - P._lk) * 0.15); P._lk = P.link; } return r; }; })();
   G.PEAK = { FATE, fl, fLearn, ppReset, spentPP, ppResetCost };
 
   /* ---------- 天命頁（角色 › 天命） ---------- */

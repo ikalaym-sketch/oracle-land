@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 16_growth.js
- * Version : r3.147.0  (2026-11-27)　r3.147.0：修練頁改版（兩欄卡片＋右側說明與升級鈕，等級用圓點，鎖住的排後面）；職業頁拿掉開發用說明
+ * Version : r3.148.0  (2026-11-27)　r3.148.0：奧義加速每級氣 +5% 生效；衝刺 Lv5 改成「穿過的敵人停頓 0.5 秒」
+ * 舊版    : r3.147.0  (2026-11-27)　r3.147.0：修練頁改版（兩欄卡片＋右側說明與升級鈕，等級用圓點，鎖住的排後面）；職業頁拿掉開發用說明
  * 舊版    : r3.142.0  (2026-11-27)　r3.142.0：普攻連段加成（WPN.CMB）
  * 舊版    : r3.140.0  (2026-11-27)　r3.140.0：普攻節奏：武器倍率（WPN.RHY）×（1＋攻速%），可快可慢；慢下來的武器普攻傷害 ×1/倍率
  * 舊版    : r3.125.0  (2026-11-26)　r3.125.0：第 1 章路線清單加入新插入的地圖
@@ -85,7 +86,7 @@
   const T = (id, cat, n, d1, d5, per, lv5, req, na) => ({ id, cat, n, d1, d5, per, lv5, req: req || 0, na: na || 0 });
   const TRAIN = [
     T('dodge', '身法', '閃避強化', '閃避冷卻 −0.1 秒', '閃避後 1 秒無敵', { dodgeSec: 0.1 }, 'dodgeInv60'),
-    T('dash', '身法', '衝刺', '衝刺距離 +10%', '衝刺穿過敵人時造成 100% 傷害', { dashDist: 10 }, 'dashHit'),
+    T('dash', '身法', '衝刺', '衝刺距離 +10%', '衝刺穿過的敵人受擊停頓 0.5 秒', { dashDist: 10 }, 'dashHit'),   // r3.148.0：Lv5 改效果（原本衝刺本來就有傷害）
     T('decoy', '身法', '誘敵分身', '閃避時留下分身吸引敵人，持續 +0.3 秒', '分身消失時爆炸（80% 範圍傷害）', { decoy: 1 }, 'decoyBoom'),
     T('sprint', '身法', '疾走', '移速 +3%', '脫離戰鬥 3 秒後移速再 +20%', { spd: 3 }, 'sprint'),
     T('light', '身法', '身輕', '閃身／瞬步冷卻 −6%', '閃避後 0.5 秒移動速度 +30%', { dodgeCd: 6 }, 'lightRun'),
@@ -141,6 +142,7 @@
       for (const t of TRAIN) { const lv = d().train[t.id] || 0; if (!lv || t.na) continue; const o = {}; for (const k in t.per) o[k] = t.per[k] * (GR.tEff ? GR.tEff(lv) : lv); if (lv >= 5 && t.lv5) o.rt = t.lv5; E.push(o); }
       return E; },
     apply(s) { const A = {}, F = {}; for (const e of GR.effects()) for (const k in e) { if (k === 'rt') { if (!e.na) F[e.rt] = true; } else if (typeof e[k] === 'number') A[k] = (A[k] || 0) + e[k]; else if (k === '_reso') F.reso = e[k]; }
+      if (A.ultQi) A.qiP = (A.qiP || 0) + A.ultQi;   // r3.148.0：奧義加速每級「氣」+5%（原本沒有作用）
       s._atkP = (s._atkP || 0) + (A.atkP || 0); s.def *= 1 + (A.defP || 0) / 100; s.hp *= 1 + (A.hpP || 0) / 100;
       s.crit += A.crit || 0; s.critD += (A.critD || 0) + (F.critD20 ? 20 : 0); s.spd += A.spd || 0; s.cdr += A.cdr || 0; s.ls += A.ls || 0; s.mf += A.mf || 0; s.gf += A.gf || 0;
       s.aspd = (s.aspd || 0) + (A.aspd || 0); s.dr = Math.min(50, A.dr || 0); s.res = (s.res || 0) + (A.res || 0);
