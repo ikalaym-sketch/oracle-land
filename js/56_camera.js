@@ -21,6 +21,7 @@
   const baseVis = () => G.ZOOMS[G.SAVE.data.zoom].vis * mapK();
   /* 目標可視高度：基準 × 情境係數 */
   function targetVis() { const b = baseVis();
+    if (G.CAMZOOM && G.t < G.CAMZOOM.until && H.act && H.act.mvx && H.act.mvx.hiden) return b * G.CAMZOOM.k;   /* r3.179.0：個別秘傳指定鏡頭距離 */
     if (H.act && H.act.mvx && H.act.mvx.hiden) return b * 1.22;   /* r3.177.0：秘傳時鏡頭拉遠，演出放得下 */
     if (G.CAMLOOK) return b * 1.3;   // r3.56.0：看向指定點（封印石）時拉遠，人和石頭都入鏡
     if (G.STORY && G.STORY.cut) return b;
@@ -43,7 +44,7 @@
   SC.snapCam = function () { st.vis = targetVis(); st.lead = 0; st.leadY = 0; sn0(); };
   const sp0 = SC.step.bind(SC);
   SC.step = function () { if (SC.def) {
-      const tv = targetVis(); st.vis = st.vis ? st.vis + (tv - st.vis) * (tv > st.vis ? 0.04 : 0.025) : tv;   // 拉遠快一點、拉回慢一點
+      const tv = targetVis(); st.vis = st.vis ? st.vis + (tv - st.vis) * (tv > st.vis ? (G.CAMZOOM && G.t < G.CAMZOOM.until ? 0.12 : 0.04) : 0.025) : tv;   // 拉遠快一點、拉回慢一點
       const moving = H.st === 'walk' && !(G.DLG && G.DLG.active()) && !(G.STORY && G.STORY.cut), ux = moving ? (H.ux !== undefined ? H.ux : H.face) : 0, uy = moving ? (H.uy || 0) : 0, k = H.run ? 0.18 : 0.1;
       const talk = G.DLG && G.DLG.active() ? 0.14 : 0;   // 對話時鏡頭下移，讓主角落在對話框上方
       st.lead += (ux * k - st.lead) * 0.035; st.leadY += (uy * k * 0.5 + talk - st.leadY) * 0.035; }

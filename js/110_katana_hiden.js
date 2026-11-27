@@ -1,6 +1,6 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 110_katana_hiden.js
- * Version : r3.178.0  (2026-11-28)　r3.178.0：月下分身重做（五個分身依序衝斬→本尊穿斬→斬月爆開）；燕返・真重做（把敵人來回打三次→巨大月牙刀氣）
+ * Version : r3.178.0  (2026-11-28)　r3.179.0：月下分身背景近全黑、鏡頭更遠、月亮更高更小；r3.178.0：月下分身重做（五個分身依序衝斬→本尊穿斬→斬月爆開）；燕返・真重做（把敵人來回打三次→巨大月牙刀氣）
  * 舊版    : r3.177.0  (2026-11-28)　r3.177.0：月下分身重做：象牙白大滿月高掛、月暈、夜色加深、最後一斬把月亮斬開
  * 舊版    : r3.173.0  (2026-11-28)　r3.173.0：五招秘傳加演出鏡頭（對準敵人群／挑飛高度）；返脈・雷的天雷連落三道
  * 舊版    : r3.73.0  (2026-11-24)
@@ -101,9 +101,9 @@
           for (const q of foes(cx, cy, 1.4 * k)) hitE(c, q, 2.3, { crit: true }); dust(cx, cy, 0.5, 22, 2.0, 40); SC.shake = Math.max(SC.shake || 0, 7); stop(12); } } },
     /* r3.178.0 月下分身（重做）：滿月高掛、鏡頭拉遠 → 五個分身依序從左右兩側衝過敵人各斬一刀（一個接一個，越來越快）→ 本尊最後穿過敵人，收刀時斬痕一起爆開、月亮被斬開 */
     k_bunshin: { T: 92, run(c, t) { const m = c.a.mvx, k = c.hh, TB = 92;
-        if (t === 1) { intro(c, TB); const e = tgt(c, 6); m.e = e; m.p = e ? [e.x, e.y] : [c.x + c.f * 1.4 * k, c.y]; const [px, py] = m.p; focus(c, px, py, 1.35, TB); m.h0 = [c.x, c.y];
-          VX.dim && VX.dim(TB, 0.74);   /* r3.177.0：月下分身重做——夜色更深、象牙白大滿月從敵人身後高處升起（半徑 1.5 身高、月心離地 2.9 身高）、月暈＋光芒、最後一斬把月亮斬開 */
-          VX.custom((o, ctx) => { const s = S(py), kk = HH() * s, rise = KF().eo3(Math.min(1, o.t / 16)), a = Math.min(1, o.t / 10) * Math.min(1, (o.life - o.t) / 10), R = 1.55 * kk, mx = px - c.f * 0.2 * kk, my = py - (2.6 + 0.7 * rise) * kk, cut = o.t >= 70, fl = o.t > 66 && o.t < 76 ? 1.5 : 1;
+        if (t === 1) { intro(c, TB); const e = tgt(c, 6); m.e = e; m.p = e ? [e.x, e.y] : [c.x + c.f * 1.4 * k, c.y]; const [px, py] = m.p; focus(c, px, py, 2.05, TB); m.h0 = [c.x, c.y];
+          VX.dim && VX.dim(TB, 0.93); G.CAMZOOM = { k: 1.62, until: G.t + TB };   /* r3.179.0：背景幾乎全黑，只留人物、月亮、特效；鏡頭再拉遠 */   /* r3.177.0：月下分身重做——夜色更深、象牙白大滿月從敵人身後高處升起（半徑 1.5 身高、月心離地 2.9 身高）、月暈＋光芒、最後一斬把月亮斬開 */
+          VX.custom((o, ctx) => { const s = S(py), kk = HH() * s, rise = KF().eo3(Math.min(1, o.t / 16)), a = Math.min(1, o.t / 10) * Math.min(1, (o.life - o.t) / 10), R = 1.15 * kk, mx = px - c.f * 0.2 * kk, my = py - (3.3 + 0.9 * rise) * kk, cut = o.t >= 70, fl = o.t > 66 && o.t < 76 ? 1.5 : 1;
               ctx.save(); ctx.globalCompositeOperation = 'screen';
               const h = ctx.createRadialGradient(mx, my, R * 0.8, mx, my, R * 2.6); h.addColorStop(0, 'rgba(150,185,255,' + 0.5 * a * fl + ')'); h.addColorStop(0.4, 'rgba(70,110,220,' + 0.22 * a + ')'); h.addColorStop(1, 'rgba(40,70,180,0)'); ctx.fillStyle = h; ctx.fillRect(mx - R * 2.6, my - R * 2.6, R * 5.2, R * 5.2);
               ctx.globalCompositeOperation = 'source-over';
