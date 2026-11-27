@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 113_naginata.js
- * Version : r3.183.0  (2026-11-28)　r3.183.0：五招秘傳演出重做（龍捲風、滿天葉刃、風神降臨、雙月合攏、烏雲落雷）＋運鏡；千鳥加鳥形風刃、旋風薙加旋風、立架拒風牆改實色、翼架加展翼
+ * Version : r3.194.0  (2026-11-28)　r3.194.0：立架拒拿掉梭形光（像一片大葉子），只留直立風條；立架截飛補風牆
+ * 舊版    : r3.183.0  (2026-11-28)　r3.183.0：五招秘傳演出重做（龍捲風、滿天葉刃、風神降臨、雙月合攏、烏雲落雷）＋運鏡；千鳥加鳥形風刃、旋風薙加旋風、立架拒風牆改實色、翼架加展翼
  * 舊版    : r3.76.0  (2026-11-24)
  * 變更    : r3.76.0 新增。薙刀「沉重感的大範圍」（青碧 gale 色盤，用 111 元件）。
  *           範圍：招式／技的判定與刀光半徑 ×1.15、直線長度 ×1.1（招式資料不改，出招時套用）。
@@ -44,7 +45,7 @@
       for (const sd of [-1, 1]) for (let i = 0; i < 5; i++) { const an = (-0.95 + i * 0.42) * op, L = (1.5 - Math.abs(i - 1.5) * 0.2) * k * (0.5 + 0.5 * op), ex = x + sd * Math.cos(an) * L, ey = y + Math.sin(an) * L * 0.75, mx = x + sd * Math.cos(an - 0.5) * L * 0.55, my = y + Math.sin(an - 0.5) * L * 0.5;
         for (const [w, col, al] of [[0.11, C.ink, 0.5], [0.065, C.mid, 0.95], [0.022, C.hot, 1]]) { ctx.strokeStyle = 'rgba(' + col + ',' + (al * a).toFixed(3) + ')'; ctx.lineWidth = Math.max(1, w * k * (1 - i * 0.08)); ctx.beginPath(); ctx.moveTo(x + sd * 0.12 * k, y); ctx.quadraticCurveTo(mx, my, ex, ey); ctx.stroke(); } } });
       KF().leaves(c.x, c.y, 0.7, 12, { sp: 2, life: 30, rx: 1.3 }); }); }
-  const UPR = { run(c, t) { if (t === 2) { const f = c.f; windWall(f, 42); Gl(() => { const x = c.x + c.f * 0.6 * c.hh; KF().light(x, c.y, 1.2, 40, 0.5, 0.8); for (let i = 0; i < 3; i++) KF().leaves(x, c.y, 0.3 + i * 0.5, 6, { ang: Math.PI / 2, spread: 0.4, sp: 1.6, life: 40, stag: 20 }); KF().qi({ x, y: c.y, z: 0.9, ang: Math.PI / 2, len: 2.2, w: 0.16, dur: 4, life: 38, motes: 0 }); }); Gl(() => KF().add(42, 'o', (ctx, u) => { const k = HH() * S(H.y), a = Math.min(1, u / 6) * Math.min(1, (42 - u) / 8), x = H.x + f * 0.6 * k; ctx.globalCompositeOperation = 'screen';   // 立架拒：身前一道直立的柔光風牆＋葉片往上捲
+  const UPR = { run(c, t) { if (t === 2) { const f = c.f; windWall(f, 42); Gl(() => { const x = c.x + c.f * 0.6 * c.hh; KF().light(x, c.y, 1.2, 40, 0.5, 0.8); for (let i = 0; i < 3; i++) KF().leaves(x, c.y, 0.3 + i * 0.5, 6, { ang: Math.PI / 2, spread: 0.4, sp: 1.6, life: 40, stag: 20 }); }); Gl(() => KF().add(42, 'o', (ctx, u) => { const k = HH() * S(H.y), a = Math.min(1, u / 6) * Math.min(1, (42 - u) / 8), x = H.x + f * 0.6 * k; ctx.globalCompositeOperation = 'screen';   // 立架拒：身前一道直立的柔光風牆＋葉片往上捲
           for (let i = 0; i < 5; i++) KF().spr(ctx, KF().PAL.gale.T.gm, x + Math.sin(u * 0.2 + i) * 0.06 * k, H.y - (0.2 + i * 0.28) * k, k * 0.5, k * 0.6, 0.35 * a); })); }
       if (t % 4 === 2 && t < 40) Gl(() => KF().leaves(H.x + c.f * 0.6 * c.hh, H.y, 0.1, 2, { ang: Math.PI / 2, spread: 0.3, sp: 1.6, life: 24 }));
       for (const p of G.PROJ) if (p.enemy && Math.abs(p.x - (H.x + c.f * 0.6 * c.hh)) < 30 && Math.abs(p.y - H.y) < 30) p.left = 0; if (t === 30) { c.a.mvx.hit = 1; MV2.onHit(c.a); } } };
@@ -55,7 +56,7 @@
   const DU = { skill_senpu: { run(c, t) { const lv = c.a.mvx.lv || 1, r = (lv >= 3 ? 2.0 : 1.54) * WR; if (t === 9) { sweep(c, { a0: -2.9, a1: 1.5, r: r / WR, w: 0.55 }); gh(c, { r: r + 0.15, arc: 3.1, m: 1.4, lv: 'heavy', kb: 1.6 }); wide(1); vortex(c, 26, r, () => {}); Gl(() => KF().leaves(c.x, c.y, 0.5, 20, { sp: 2.4, life: 36, rx: 1.4 })); }
       if (lv >= 5 && t === 22) { Gl(() => KF().sweepDust(c.x, c.y, c.f, 2.2, -Math.PI, Math.PI, 8, 1)); pull(c, 2.6); } } } };
   /* 立架截飛：柔光風牆（期間持續），Lv5 擋下並反射遠程（同 92 版） */
-  DU.special_upright = { run(c, t) { const lv = c.a.mvx.lv || 1; c.a.T = lv >= 3 ? 184 : 124; const a0 = c.a;
+  DU.special_upright = { run(c, t) { const lv = c.a.mvx.lv || 1; c.a.T = lv >= 3 ? 184 : 124; const a0 = c.a; if (t === 2 || (t > 2 && t % 40 === 2 && t < c.a.T - 20)) windWall(c.f, 42);   /* r3.194.0：立架截飛原本看不到，補上風牆 */
       if (t === 1) { const f = c.f; Gl(() => KF().add(190, 'o', (ctx, u) => { if (H.act !== a0) return; const k = HH() * S(H.y), a = Math.min(1, u / 6), x = H.x + f * 0.62 * k; ctx.globalCompositeOperation = 'screen';
           for (let i = 0; i < 6; i++) KF().spr(ctx, KF().PAL.gale.T.gm, x + Math.sin(u * 0.2 + i) * 0.07 * k, H.y - (0.15 + i * 0.26) * k, k * 0.5, k * 0.55, 0.32 * a); })); }
       if (t % 5 === 1) Gl(() => KF().leaves(H.x + c.f * 0.62 * c.hh, H.y, 0.1, 2, { ang: Math.PI / 2, spread: 0.3, sp: 1.6, life: 24 }));

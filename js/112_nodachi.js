@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 112_nodachi.js
- * Version : r3.184.0  (2026-11-28)　鬼斬車最後一圈真的把妖怪甩飛（原本擊退量太小又被拉回）
+ * Version : r3.194.0  (2026-11-28)　r3.194.0：長線加長斬線與刀痕；開架補寒光與火星
+ * 舊版    : r3.184.0  (2026-11-28)　鬼斬車最後一圈真的把妖怪甩飛（原本擊退量太小又被拉回）
  * 舊版    : r3.182.0  (2026-11-28)　r3.182.0：長刃離陣補特效（拖刀火星、焦痕、反手月牙刀氣）；出刀起點亮光與拖光
  * 舊版    : r3.181.0  (2026-11-28)　r3.181.0：五招秘傳演出重做（落日、躍空急降、地裂線、岩柱、全黑蓄力、一文字瞬斬）＋運鏡；奧義天地一刀蓄力演出
  * 舊版    : r3.77.0  (2026-11-24)
@@ -39,10 +40,10 @@
       ctx.globalCompositeOperation = 'screen'; for (let i = 0; i < L * 3; i++) KF().spr(ctx, KF().PAL.ember.T.gd, x0 + f * (0.4 + i / 3) * k, y, k * 0.45, k * 0.14, 0.35 * a * (0.7 + 0.3 * Math.sin(u * 0.3 + i))); }); }); }
   /* ---------- 招式補強 ---------- */
   const DM = {
-    long_line: { run(c, t) { const R = ST(c); if (t !== R) return; sm(c, { a0: -1.2, a1: 0.75, sq: 0.2, cy: 0.5, r: 2.6, w: 0.32, dur: 4, trail: 1.8 }); const x0 = c.x, y = c.y, f = c.f, k = c.hh;   // 遠距直斬：壓得很扁的長月牙
+    long_line: { run(c, t) { const R = ST(c); if (t !== R) return; sm(c, { a0: -1.2, a1: 0.75, sq: 0.2, cy: 0.5, r: 2.6, w: 0.32, dur: 4, trail: 1.8 }); E(() => { KF().qi({ x: c.x + c.f * 2.2 * c.hh, y: c.y, z: 0.5, ang: 0, len: 4.6, w: 0.08, dur: 3, life: 18, motes: 6 }); KF().scar && KF().scar(c.x + c.f * 2.2 * c.hh, c.y, c.f, 2); }); shake(5);   /* r3.194.0：收招的份量——一道 4.6 身高長的焰色斬線＋地面刀痕 */ const x0 = c.x, y = c.y, f = c.f, k = c.hh;   // 遠距直斬：壓得很扁的長月牙
         c.later(18, () => { for (let i = 0; i < 4; i++) c.later(i * 2, () => E(() => { const x = x0 + f * (0.8 + i * 0.6) * k; KF().qi({ x, y, z: 0.35, ang: rnd(-0.4, 0.4), len: 0.9, w: 0.07, dur: 2, life: 12, motes: 2 }); KF().embers(x, y, 0.2, 3); }));
           c.hit({ shape: 'line', x: x0, y, len: 3.2, w: 0.4, m: 1.6, lv: 'heavy', kind: 'cut', col: NC }); }); } },
-    opening_brace: { run(c, t) { if (t === 2) E(() => KF().aura(28)); if (t === 28) c.a.mvx.hit = 1; },
+    opening_brace: { run(c, t) { if (t === 2) E(() => { KF().aura(28); KF().glint(c.x + c.f * 0.5 * c.hh, c.y, 0.9, 0.5, 14); KF().embers(c.x, c.y, 0.3, 6, { sp: 0.5, up: 1.2, life: 30 }); KF().light(c.x, c.y, 1.1, 28, 0.4, 0.5); });   /* r3.194.0：開架補刀身寒光與升起的火星 */ if (t === 28) c.a.mvx.hit = 1; },
       counter(c) { c.a.mvx.hit = 1; E(() => { KF().burst(c.x + c.f * 0.35 * c.hh, c.y, 0.65, 1.5, c.f > 0 ? 0.3 : Math.PI - 0.3); KF().embers(c.x + c.f * 0.35 * c.hh, c.y, 0.6, 6); }); sm(c, { a0: -2.0, a1: 0.9, r: 1.5, w: 0.6 }); hit(c, { m: 1.7, lv: 'heavy', kb: 1.4 }); } }
   };
   /* ---------- 技・特技 ---------- */

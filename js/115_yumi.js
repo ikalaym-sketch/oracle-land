@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 115_yumi.js
- * Version : r3.190.0  (2026-11-28)　r3.190.0：箭的飛行重做（更快、光帶、離弦氣環）；五招秘傳加演出層；月影整招重做（消失→滿月→月上剪影→一箭→地裂粉塵）
+ * Version : r3.194.0  (2026-11-28)　r3.194.0：普攻箭光縮小；換步藏弓、標瞄、穩神、凝神追點補表現；穿點離弦、滿弦、追射做出區分
+ * 舊版    : r3.190.0  (2026-11-28)　r3.190.0：箭的飛行重做（更快、光帶、離弦氣環）；五招秘傳加演出層；月影整招重做（消失→滿月→月上剪影→一箭→地裂粉塵）
  * 舊版    : r3.81.0  (2026-11-25)
  * 變更    : r3.81.0 神聖大範圍清怪：追魂矢 Lv1/3/5 = 1/3/5 支（扇形散開再各追一隻，追蹤箭留轉彎軌跡）；凝神追點剩餘箭數改金羽浮在頭上；
  *                   爆裂矢＝神聖光爆（範圍 1.2H）；天弓箭更密、範圍 2.1H；
@@ -37,15 +38,15 @@
   /* r3.190.0：箭的飛行重做——飛得更快（原本放慢到 45%，改 70%），沿實際路徑拖一道「深色襯底＋金＋白芯」的光帶（白天也清楚），
    * 箭頭一顆亮點與十字星；離弦瞬間弓前一圈被推開的氣與幾道短速度線。追蹤箭同一套（看得出轉彎）。 */
   const ADK = '70,44,10', AGD = '255,206,120', AWH = '255,252,240';
-  function arrowFx(p, big) { const w0 = big ? 1.9 : 1, x0 = p.x, y0 = p.y - p.z, P = [[x0, y0]]; let fin = 0, hold = 0; const d0 = Math.sign(p.vx) || 1, a0 = Math.atan2(p.vy * 0.6, p.vx);
+  function arrowFx(p, big) { const nm = !!(H.act && H.act.mvx && H.act.mvx.norm), w0 = (big ? 1.9 : 1) * (nm ? 0.5 : 1),   /* r3.194.0：普攻的箭光縮到一半、不放氣環與箭頭光團（原本滿畫面金光） */ x0 = p.x, y0 = p.y - p.z, P = [[x0, y0]]; let fin = 0, hold = 0; const d0 = Math.sign(p.vx) || 1, a0 = Math.atan2(p.vy * 0.6, p.vx);
     Hy(() => KF().add(420, 'o', (ctx, u) => { const n = P.length, C = KF().PAL.holy; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      if (u < 7) { const k = HH() * S(p.y), q = u / 7, a = 1 - q; ctx.save(); ctx.translate(x0, y0); ctx.rotate(a0);   /* 離弦：氣環＋短速度線 */
+      if (u < 7 && !nm) { const k = HH() * S(p.y), q = u / 7, a = 1 - q; ctx.save(); ctx.translate(x0, y0); ctx.rotate(a0);   /* 離弦：氣環＋短速度線 */
         ctx.strokeStyle = 'rgba(' + ADK + ',' + (0.35 * a).toFixed(3) + ')'; ctx.lineWidth = Math.max(1.2, 0.02 * k * a * w0); ctx.beginPath(); ctx.ellipse(0.1 * k + 0.3 * k * q, 0, 0.022 * k * (1 + q), 0.1 * k * (1 + 1.2 * q) * w0, 0, -1.1, 1.1); ctx.stroke();
         ctx.strokeStyle = 'rgba(' + AWH + ',' + (0.9 * a).toFixed(3) + ')'; ctx.lineWidth = Math.max(1, 0.016 * k * a * w0); ctx.beginPath(); ctx.ellipse(0.1 * k + 0.3 * k * q, 0, 0.02 * k * (1 + q), 0.095 * k * (1 + 1.2 * q) * w0, 0, -1.1, 1.1); ctx.stroke();
         for (const [oy, l] of [[-0.09, 0.9], [0.08, 0.7], [-0.17, 0.5], [0.16, 0.45]]) { ctx.strokeStyle = 'rgba(' + AWH + ',' + (0.8 * a).toFixed(3) + ')'; ctx.lineWidth = Math.max(1, 0.012 * k); ctx.beginPath(); ctx.moveTo(0.15 * k + q * 0.5 * k, oy * k * w0); ctx.lineTo((0.15 + l) * k + q * 0.9 * k, oy * k * w0); ctx.stroke(); } ctx.restore(); }
       if (n < 2) return; const k = HH() * S(P[n - 1][1]);
       for (const [w, col, a] of [[0.06, ADK, 0.3], [0.036, AGD, 0.9], [0.013, AWH, 1]]) for (let i = 1; i < n; i++) { const v = Math.pow(i / (n - 1), 1.4); ctx.strokeStyle = 'rgba(' + col + ',' + (a * v).toFixed(3) + ')'; ctx.lineWidth = Math.max(0.6, w * k * v * w0); ctx.beginPath(); ctx.moveTo(P[i - 1][0], P[i - 1][1]); ctx.lineTo(P[i][0], P[i][1]); ctx.stroke(); }
-      if (!p.dead) { const hx = P[n - 1][0], hy = P[n - 1][1]; ctx.globalCompositeOperation = 'screen'; KF().spr(ctx, C.T.gl, hx, hy, k * 0.5 * w0, k * 0.5 * w0, 0.8); ctx.globalCompositeOperation = 'source-over';
+      if (!p.dead) { const hx = P[n - 1][0], hy = P[n - 1][1]; ctx.globalCompositeOperation = 'screen'; KF().spr(ctx, C.T.gl, hx, hy, k * 0.5 * w0, k * 0.5 * w0, nm ? 0.35 : 0.8); ctx.globalCompositeOperation = 'source-over';
         ctx.fillStyle = 'rgba(' + AWH + ',1)'; ctx.save(); ctx.translate(hx, hy); ctx.rotate(u * 0.3); for (let r = 0; r < 2; r++) { ctx.beginPath(); ctx.moveTo(-0.13 * k * w0, 0); ctx.quadraticCurveTo(0, -0.012 * k, 0.13 * k * w0, 0); ctx.quadraticCurveTo(0, 0.012 * k, -0.13 * k * w0, 0); ctx.fill(); ctx.rotate(Math.PI / 2); } ctx.restore(); } },
       (o, tt) => { if (!p.dead) { P.push([p.x, p.y - p.z]); if (P.length > (big ? 20 : 15)) P.shift(); if (tt % 4 === 0) KF().motes(p.x, p.y, p.z / (HH() * S(p.y)), 1, { sp: 0.15, up: -0.1, life: 16, sz: 0.7 }); }
         else { if (!fin) { fin = 1; P.push([p.x, p.y - p.z]); hold = P.length <= 3 ? 3 : 0; }   /* 近距離一格就命中：也留一道從弓到命中點的光痕 */ if (hold > 0) { hold--; return; } P.shift(); if (P.length > 4) P.shift(); if (P.length < 2) o.t = o.life; } })); }
@@ -264,7 +265,21 @@
       return r; }; })();
   /* ---------- 掛上（每格對照參照，必要時補回） ---------- */
   const WRU = {}, WRP = {};
-  function patch() { const U = MV2.U.yumi, L = MV2.HD.yumi;
+  /* r3.194.0：身法補表現（判定不動）：換步藏弓、標瞄、穩神原本畫面上沒東西；穿點離弦／滿弦／追射原本看起來都只是「射一箭」 */
+  function ymWrap(base, id) { const f = function (c, t) { const sh = c.shoot, k = c.hh;
+      if (id === 'covered_step' && t === 2) Hy(() => { KF().leaves(c.x, c.y, 0.5, 8, { sp: 1.6, life: 30, rx: 0.8 }); KF().glint(c.x, c.y, 0.6, 0.3, 10); KF().puff(c.x, c.y, 0.5, 18); });   /* 換步藏弓：金羽一散、身影淡出 */
+      if (id === 'mark_aim' && t === 3) { const e = MV2.near(c, 9); if (e) Hy(() => KF().add(22, 'o', (ctx, u) => { if (e.st === 'dead') return; const kk = HH() * S(e.y), q = u / 22, r = kk * (0.7 - 0.42 * (1 - Math.pow(1 - Math.min(1, q * 1.6), 3))), a = Math.min(1, u / 3) * (1 - q * q), x = e.x, y = e.y - (e.ratio || 1) * 0.55 * kk; ctx.lineCap = 'round'; for (const [w, col, al] of [[0.04, ADK, 0.45], [0.02, AWH, 1]]) { ctx.strokeStyle = 'rgba(' + col + ',' + (al * a).toFixed(3) + ')'; ctx.lineWidth = Math.max(1, w * kk); ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke(); for (let i = 0; i < 4; i++) { const an = i * Math.PI / 2 + Math.PI / 4 + q; ctx.beginPath(); ctx.moveTo(x + Math.cos(an) * r * 0.7, y + Math.sin(an) * r * 0.7); ctx.lineTo(x + Math.cos(an) * r * 1.45, y + Math.sin(an) * r * 1.45); ctx.stroke(); } } })); }   /* 標瞄：目標身上收束的準星 */
+      if (id === 'steady_focus' && t === 2) Hy(() => { const [mx, my] = muz(c); KF().charge(mx, c.y, (c.y - my) / k, 18, 12); KF().aura && KF().aura(26); KF().light(c.x, c.y, 1.0, 26, 0.35, 0.6); });   /* 穩神：光往弓上收、身周一圈氣 */
+      if (id === 'full_aim' && t === 3) Hy(() => { const [mx, my] = muz(c); KF().charge(mx, c.y, (c.y - my) / k, 16, 18); });   /* 滿弦：蓄力 */
+      c.shoot = function (kd, o) { o = Object.assign({}, o); const [mx, my] = muz(c), z = (c.y - my) / k;
+        if (id === 'piercing_shot') Hy(() => KF().qi({ x: c.x + c.f * 5.2 * k, y: c.y, z, ang: 0, len: 10, w: 0.05, dur: 2, life: 14, motes: 4 }));   /* 穿點離弦：一道貫穿全場的細光 */
+        if (id === 'full_aim') { Hy(() => { KF().burst(mx + c.f * 0.3 * k, c.y, z, 1.6, c.f > 0 ? 0 : Math.PI); KF().light(mx, c.y, 1.4, 12, 0.6, z); }); SC.shake = Math.max(SC.shake || 0, 4); }   /* 滿弦：離弦一震 */
+        if (id === 'follow_shot') c.later(3, () => Hy(() => KF().glint(mx, c.y, z, 0.3, 8)));
+        return sh.call(c, kd, o); };
+      try { return base.apply(this, arguments); } finally { c.shoot = sh; } }; f.__ym = 1; return f; }
+  function patch() { const U = MV2.U.yumi, L = MV2.HD.yumi, D = MV2.D.yumi;
+    if (D) for (const id of ['covered_step', 'mark_aim', 'steady_focus', 'full_aim', 'piercing_shot', 'follow_shot']) { const d = D[id]; if (d && d.run && !d.run.__ym) d.run = ymWrap(d.run, id); }
+    if (U && U.special_tracking && !U.special_tracking.run.__ym) { const r0 = U.special_tracking.run, fn = function (c, t) { if (t === 2) Hy(() => { KF().aura && KF().aura(24); KF().leaves(c.x, c.y, 1.0, 6, { sp: 0.8, life: 34 }); KF().glint(c.x, c.y, 1.05, 0.4, 12); }); return r0.apply(this, arguments); }; fn.__ym = 1; U.special_tracking.run = fn; }   /* 凝神追點：發動時身周一圈氣＋金羽 */
     if (U) for (const k of ['skill_tenkyu', 'special_marked']) { const d = U[k]; if (d && d.run !== WRU[k]) { WRU[k] = d.run = filtered(k === 'skill_tenkyu' ? tenkyuMore(d.run) : d.run); } }
     if (U && U.skill_tsuikon && U.skill_tsuikon.run !== WRU.ts) WRU.ts = U.skill_tsuikon.run = tsuikon(U.skill_tsuikon.run);
     if (U && U.skill_bakuretsu && U.skill_bakuretsu.run !== bakuretsu) U.skill_bakuretsu.run = bakuretsu;
