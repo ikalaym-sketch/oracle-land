@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 10_banter.js
- * Version : r3.145.0  (2026-11-27)　r3.145.0：有橫幅時閒聊延後開始
+ * Version : r3.146.0  (2026-11-27)　r3.146.0：閒聊框不再壓左上頭像欄：頭上框會壓到就改畫在腳下；講話的人不在畫面上時改到上方中央；有橫幅時閒聊延後開始
+ * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：有橫幅時閒聊延後開始
  * 舊版    : r3.27.7  （r3.27.7：只有目前出戰位上的夥伴會說話（原本已加入但沒帶出門的也會跳台詞）　r3.19.1：夥伴閒聊改成夥伴頭頂泡泡；不在場時才用左上框）
  * 舊版    : r3.9.0  (2026-11-13)
  * 變更    : r3.9.0 名冊可擴充（B.extra：隱藏夥伴）；閒聊依劇情進度（前／中／後期／通關後）與所在區域（place）換台詞；新增 boss 觸發。
@@ -76,20 +77,24 @@
     const alive = G.E.some(e => e.st !== 'dead' && e.delay <= 0); if (alive && !B.inFight) { B.inFight = true; B.trigger('fight'); } if (!alive && B.inFight) { B.inFight = false; if (G.E.length) B.trigger('clear'); }
   };
   /* r3.19.1：說話的夥伴在場時，改畫在夥伴頭頂的泡泡（不再與左側頭像重疊） */
+  /* r3.146.0：左上頭像欄範圍（主角＋夥伴＋放招泡泡） */
+  const hudRect = () => { const n = (G.PARTY && G.PARTY.list ? G.PARTY.list.length : 0); return { x1: Math.min(G.SAFE.l, 6) + 8 + 44 + 46 + 120, y1: G.SAFE.t + 84 + n * 58 }; };
   function head(c, d, a) { const P = G.PARTY && G.PARTY.list.find(q => q.id === c.id && q.st !== 'down'); if (!P || G.DLG.active()) return false;
     const sc = G.SC.depth(P.y), p = G.SC.toScreen(P.x, P.y - G.HERO_H * sc * 1.25); if (p.x < 0 || p.x > G.LW || p.y < 0 || p.y > G.LH) return false;
     ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${12 * G.FS()}px ${G.FONT}`;
     const lines = G.wrap(c.text, Math.min(240, G.LW * 0.32)), lh = 16 * G.FS(), w = Math.max(...lines.map(l => ctx.measureText(l).width), ctx.measureText(d.name).width) + 22, h = 20 + lines.length * lh;
-    const x = Math.max(8 + G.SAFE.l, Math.min(G.LW - w - 8 - G.SAFE.r, p.x - w / 2)), y = Math.max(8 + G.SAFE.t, p.y - h - 10);
+    const x = Math.max(8 + G.SAFE.l, Math.min(G.LW - w - 8 - G.SAFE.r, p.x - w / 2)); let y = Math.max(8 + G.SAFE.t, p.y - h - 10), dn = false;
+    const hud = hudRect(); if (x < hud.x1 && y < hud.y1) { const f = G.SC.toScreen(P.x, P.y); y = Math.min(G.LH - h - 8, f.y + 14); dn = true; }   // r3.146.0：會壓到左上頭像欄 → 改畫在腳下
     ctx.fillStyle = 'rgba(14,9,12,.86)'; G.rr(x, y, w, h, 9); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.55)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, w - 1, h - 1, 9); ctx.stroke();
-    const tx = Math.max(x + 12, Math.min(x + w - 12, p.x)); ctx.fillStyle = 'rgba(14,9,12,.86)'; ctx.beginPath(); ctx.moveTo(tx - 6, y + h - 1); ctx.lineTo(tx + 6, y + h - 1); ctx.lineTo(tx, y + h + 8); ctx.closePath(); ctx.fill();
+    const tx = Math.max(x + 12, Math.min(x + w - 12, p.x)); ctx.fillStyle = 'rgba(14,9,12,.86)'; ctx.beginPath(); if (dn) { ctx.moveTo(tx - 6, y + 1); ctx.lineTo(tx + 6, y + 1); ctx.lineTo(tx, y - 8); } else { ctx.moveTo(tx - 6, y + h - 1); ctx.lineTo(tx + 6, y + h - 1); ctx.lineTo(tx, y + h + 8); } ctx.closePath(); ctx.fill();
     G.txt(d.name, x + 11, y + 11, 10, G.C.gold, 'left', G.FONT_S, 900); lines.forEach((l, i) => G.txt(l, x + 11, y + 11 + (i + 1) * lh, 12, G.C.ink, 'left', G.FONT, 700));
     ctx.globalAlpha = 1; return true; }
   B.draw = function () {
-    const c = B.cur; if (!c) return; const d = L[c.id], a = Math.min(1, c.t / 10, (c.life - c.t) / 15), x = 14 + G.SAFE.l, y = 64 + G.SAFE.t;
+    const c = B.cur; if (!c) return; const d = L[c.id], a = Math.min(1, c.t / 10, (c.life - c.t) / 15);
     if (d && head(c, d, a)) return;
     ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${12 * G.FS()}px ${G.FONT}`;
     const lines = G.wrap(c.text, Math.min(320, G.LW * 0.42)), lh = 17 * G.FS(), w = Math.max(...lines.map(l => ctx.measureText(l).width)) + 50, h = 22 + lines.length * lh;
+    const bar = (G.BOSS && G.BOSS.enc && !G.BOSS.enc.done) || G.E.some(e => (e.boss || e.elite) && e.st !== 'dead'), x = (G.LW - w) / 2, y = G.SAFE.t + (bar ? 84 : 40) * G.FS();   // r3.146.0：講話的人不在畫面上 → 上方中央（避開頭像欄、頭目血條）
     ctx.fillStyle = 'rgba(14,9,12,.82)'; G.rr(x, y, w, h, 10); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.45)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, w - 1, h - 1, 10); ctx.stroke();
     if (d.face && G.IMG[d.face]) { ctx.save(); ctx.beginPath(); ctx.arc(x + 20, y + 20, 13, 0, 6.283); ctx.clip(); ctx.drawImage(G.IMG[d.face], x + 7, y + 7, 26, 26); ctx.restore(); }
     else { ctx.fillStyle = '#3a2a30'; ctx.beginPath(); ctx.arc(x + 20, y + 20, 13, 0, 6.283); ctx.fill(); G.txt(d.name[0], x + 20, y + 21, 12, G.C.gold, 'center', G.FONT_S, 900); }

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 26_boss.js
- * Version : r3.145.0  (2026-11-27)　r3.145.0：預警調淡（底色約減半、圖示平常 30%，出手前才亮）
+ * Version : r3.146.0  (2026-11-27)　r3.146.0：頭目血條移到畫面上方中央
+ * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：預警調淡（底色約減半、圖示平常 30%，出手前才亮）
  * 舊版    : r3.117.0  (2026-11-26)　r3.117.0：友軍頭目模式：B.allyStart／allyEnd，用原本招式打敵人（目標＝最近敵人、傷害依主角攻擊、對頭目減半），友軍不畫預警、不推主角、召喚招式不生怪；敵方頭目範圍招也會打到友軍；九尾分身類招式友軍不用
  * 舊版    : r3.96.0  (2026-11-26)　r3.96.0：出招間隔倍率 enc.ck 小於 1 也生效（狂暴、第二型態）
  * 舊版    : r3.94.0  (2026-11-26)　r3.94.0：預兆改逐招計時（B.onBegin 設 m._k／m._W；預兆與命中同一計時，危險區同步放慢）；大招固定瞄準主角；破綻 ×1.5 改易傷區
@@ -400,7 +401,7 @@
       const fr = A.frameAt(f.loop ? Object.assign({}, f.r, { loop: true }) : f.r, f.t * TK); A.draw(uu, fr, x, y, f.s, flip(f.face, f.nat), Math.min(1, (f.life - f.t) / 8) * (f.alpha || 1)); }
   }
   function drawBar(enc) {
-    const w = Math.min(380, G.LW * 0.42), x = (G.LW - w) / 2, y = G.LH - G.SAFE.b - 30 * G.FS(); G.txt(enc.name, G.LW / 2, y - 10 * G.FS(), 13, '#f3d98a', 'center');   // 畫面下方中央，不擋左上主角血條
+    const w = Math.min(380, G.LW * 0.42), x = (G.LW - w) / 2, y = G.SAFE.t + 58 * G.FS(); G.txt(enc.name, G.LW / 2, y - 10 * G.FS(), 13, '#f3d98a', 'center');   // r3.146.0：移到上方中央（任務列下方），不擋右下按鈕
     const n = enc.units.length, gap = 6, sw = (w - gap * (n - 1)) / n;
     enc.units.forEach((e, i) => { const sx = x + i * (sw + gap); ctx.fillStyle = 'rgba(10,6,6,.8)'; ctx.fillRect(sx - 1, y - 1, sw + 2, 8);
       ctx.fillStyle = e.st === 'dead' ? '#555' : G.C.red; ctx.fillRect(sx, y, sw * Math.max(0, e.hp) / e.hpMax, 6);

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 04_ui.js
- * Version : r3.145.0  (2026-11-27)　r3.145.0：訊息排隊（橫幅、提示各一次一個，其餘排隊）
+ * Version : r3.146.0  (2026-11-27)　r3.146.0：提示可帶「前往設定」按鈕；對話中與結束後 2 秒內的橫幅延後；左上改「區域 Lv／難度」
+ * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：訊息排隊（橫幅、提示各一次一個，其餘排隊）
  * 舊版    : r3.110.0  (2026-11-26)　r3.110.0：藥鍵左邊加「鎌鼬之羽」召喚鍵（擁有後才出現）；r3.111.0：左上「敵 Lv」顯示實際等級（困難以上含主角等級）；r3.113.0：點世界事件提醒＝直接傳送到該地圖開始
  * 舊版    : r3.100.0  (2026-11-26)　r3.100.0：右上「談／調查」鈕取消：附近有互動對象且沒有敵人時，「斬」鍵變成「談／查」，上方顯示對象名稱
  * 舊版    : r3.64.0  （r3.64.0：血條加粗、血量數字放大、低血量閃爍）
@@ -48,12 +49,15 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
     },
     /* r3.145.0：訊息排隊——同一時間 1 個橫幅＋1 個提示；後來的排隊（同文字不重複），排隊中顯示時間縮短 */
     bq: [], tq: [],
-    toast(t) { const c = this.tst; if (!c || c.t < 30) { this.tst = { text: t, t: 110 }; return; } if (c.text === t) { c.t = Math.max(c.t, 80); return; }
-      if (!this.tq.includes(t)) { this.tq.push(t); if (this.tq.length > 3) this.tq.shift(); } if (c.t > 70) c.t = 70; },
-    banner(t, sub) { const c = this.ban; if (!c || c.t < 20) { this.ban = { text: t, sub, t: 170 }; return; } if (c.text === t) return;
+    toast(t, act) { const c = this.tst, T = act ? 200 : 110; if (!c || c.t < 30) { this.tst = { text: t, t: T, act }; return; } if (c.text === t) { c.t = Math.max(c.t, 80); return; }   // r3.146.0：act＝提示上的「前往」
+      if (!this.tq.some(q => q.text === t)) { this.tq.push({ text: t, act }); if (this.tq.length > 3) this.tq.shift(); } if (c.t > 70) c.t = 70; },
+    banner(t, sub) { const c = this.ban; if (G.DLG && G.DLG.active()) { if (!this.bq.some(b => b.text === t)) this.bq.push({ text: t, sub }); return; }   // r3.146.0：對話中跳的橫幅，等對話結束
+      if (!c || c.t < 20) { this.ban = { text: t, sub, t: 170 }; return; } if (c.text === t) return;
       if (!this.bq.some(b => b.text === t)) { this.bq.push({ text: t, sub }); if (this.bq.length > 4) this.bq.shift(); } if (c.t > 110) c.t = 110; },
-    step() { if (this.tst && --this.tst.t <= 0) { this.tst = null; if (this.tq.length) this.tst = { text: this.tq.shift(), t: this.tq.length ? 80 : 100 }; }
-      if (this.ban && --this.ban.t <= 0) { this.ban = null; const n = this.bq.shift(); if (n) this.ban = { text: n.text, sub: n.sub, t: this.bq.length ? 130 : 170 }; }
+    step() { if (this.tst && --this.tst.t <= 0) { this.tst = null; const q = this.tq.shift(); if (q) this.tst = { text: q.text, act: q.act, t: q.act ? 200 : this.tq.length ? 80 : 100 }; }
+      const hold = G.DLG && G.DLG._endT && G.t - G.DLG._endT < 120;   // r3.146.0：劇情結束後 2 秒才出橫幅
+      if (!hold && !this.ban && this.bq.length) { const n = this.bq.shift(); this.ban = { text: n.text, sub: n.sub, t: this.bq.length ? 130 : 170 }; }
+      else if (!hold && this.ban && --this.ban.t <= 0) { this.ban = null; const n = this.bq.shift(); if (n) this.ban = { text: n.text, sub: n.sub, t: this.bq.length ? 130 : 170 }; }
       let mx = 0, my = 0; if (IN.stick) { mx = (IN.stick.x - IN.stick.ox) / 46; my = (IN.stick.y - IN.stick.oy) / 46; }
       const K = IN.keys; if (K.has('a') || K.has('arrowleft')) mx -= 1; if (K.has('d') || K.has('arrowright')) mx += 1; if (K.has('w') || K.has('arrowup')) my -= 1; if (K.has('s') || K.has('arrowdown')) my += 1;
       IN.mx = mx; IN.my = my; if (mx || my) IN.lastAct = G.t; }
@@ -71,6 +75,7 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
     if (G.DLG.active()) { G.DLG.tap(p); return; }
     if (G.mode !== 'play') return;
     if (G.MENU.open) { G.MENU.down(p); return; }
+    if (B.toast && UI.tst && UI.tst.act && hit(p, B.toast)) { const a = UI.tst.act; UI.tst = null; IN.stick = null; a(); return; }   // r3.146.0
     if (hit(p, B.menu)) { G.MENU.show(); IN.stick = null; return; }
     if (B.wev && hit(p, B.wev)) { IN.stick = null; if (G.EV && G.EV.goWorld) G.EV.goWorld(); else { G.MENU.show(); G.MENU.goto && G.MENU.goto('地圖'); } return; }   // r3.19.2：世界事件提醒
     if (G.SHOP && hit(p, B.potion)) { G.SHOP.quick(); return; }
@@ -139,7 +144,7 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
     bar(x0 + 52, y0 + 31, bw, 3, rd.exp / G.RPG.needNow(), '#a88a3a', '#f0d27a');
     bar(x0 + 52, y0 + 38, bw * 0.6, 4, rd.qi / 100, '#c06a8a', '#ffc0d6'); if (rd.qi >= 100) G.txt('氣滿', x0 + 58 + bw * 0.6, y0 + 40, 9, '#ffc0d6', 'left', G.FONT, 900);
     { const d = G.SC.def || {}, df = G.SAVE.data.diff, safe = (d.safe || d.town) && !(G.TRAIN && G.TRAIN.on);   // r3.19.1：地圖等級與難度
-      const gd = G.GDIFF ? G.GDIFF.cur() : null, tag = G.TRAIN && G.TRAIN.on ? G.TRAIN.tag() : safe ? '安全區' : '敵 Lv ' + (G.FOEAI ? G.FOEAI.lvOf() : (d.lv || 1)) + '・' + (gd ? gd.n : '普通') + (df ? '＋' + df.n : '');   /* r3.32.0：全遊戲難度＋副本難度 */ ctx.font = `700 ${10 * G.FS()}px ${G.FONT}`; const tw2 = ctx.measureText(tag).width + 14;
+      const gd = G.GDIFF ? G.GDIFF.cur() : null, tag = G.TRAIN && G.TRAIN.on ? G.TRAIN.tag() : safe ? '安全區' : '區域 Lv ' + (G.FOEAI ? G.FOEAI.lvOf() : (d.lv || 1)) + '　難度 ' + (gd ? gd.n : '普通') + (df ? '＋' + df.n : '');   /* r3.146.0：原「敵 Lv・普通」看不懂 */   /* r3.32.0：全遊戲難度＋副本難度 */ ctx.font = `700 ${10 * G.FS()}px ${G.FONT}`; const tw2 = ctx.measureText(tag).width + 14;
       ctx.fillStyle = 'rgba(12,8,10,.62)'; G.rr(x0 + 52, y0 + 46, tw2, 16, 8); ctx.fill(); G.txt(tag, x0 + 59, y0 + 54.5, 10, safe ? '#8fd38f' : gd && gd.n !== '普通' ? gd.c : df ? df.c : C.sub, 'left', G.FONT, 700); }
     const obj = G.STORY.objective();
     if (obj) { ctx.font = `700 ${12 * G.FS()}px ${G.FONT}`; const mw = B.zoom.x - 8 - (x0 + 250) - 30; let ob = obj; while (ob.length > 6 && ctx.measureText(ob).width > mw) ob = ob.slice(0, -2) + '…';   /* r3.21.0：太長截斷，不壓血條 */
@@ -167,7 +172,7 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
       ctx.globalAlpha = a; ctx.fillStyle = 'rgba(150,92,36,.92)'; G.rr(b.x, b.y, b.w, b.h, 16); ctx.fill(); ctx.strokeStyle = '#f3d98a'; ctx.lineWidth = 2; G.rr(b.x + 1, b.y + 1, b.w - 2, b.h - 2, 15); ctx.stroke(); ctx.globalAlpha = 1;
       G.txt(lab, b.x + b.w / 2, b.y + b.h / 2 + 1, 13, C.ink, 'center', G.FONT_S, 900); }
     if (H.st === 'atk') G.txt(['一', '二', '三', '四', '五', '六'][H.combo] + '段', B.atk.x, B.atk.y - B.atk.r - 10, 12, C.gold, 'center', G.FONT_S, 900);
-    if (UI.ban) { const T = UI.ban.t, a = Math.max(0, Math.min(1, T / 20, (170 - T) / 20)); ctx.globalAlpha = a;
+    if (UI.ban && !(G.DLG._endT && G.t - G.DLG._endT < 120)) { const T = UI.ban.t, a = Math.max(0, Math.min(1, T / 20, (170 - T) / 20)); ctx.globalAlpha = a;
       const y = G.LH * 0.3, gr = ctx.createLinearGradient(0, 0, G.LW, 0); gr.addColorStop(0, 'rgba(10,6,8,0)'); gr.addColorStop(.5, 'rgba(10,6,8,.72)'); gr.addColorStop(1, 'rgba(10,6,8,0)');
       ctx.fillStyle = gr; ctx.fillRect(0, y - 26, G.LW, UI.ban.sub ? 64 : 52); G.txt(UI.ban.text, G.LW / 2, y, 20, C.ink, 'center', G.FONT_S, 900);
       if (UI.ban.sub) G.txt(UI.ban.sub, G.LW / 2, y + 26, 12, C.gold, 'center', G.FONT, 700); ctx.globalAlpha = 1; }
@@ -175,6 +180,11 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
       G.txt('― ' + UI.place.text + ' ―', G.LW / 2, y0 + 48 * G.FS(), 13, C.ink, 'center', G.FONT_S, 900); ctx.globalAlpha = 1; }
     G.BANTER.draw(); UI.drawToast();
   };
-  UI.drawToast = function () { if (!UI.tst) return; ctx.globalAlpha = Math.min(1, UI.tst.t / 15); ctx.font = `700 ${13 * G.FS()}px ${G.FONT}`; const w = ctx.measureText(UI.tst.text).width + 32, y = G.LH * 0.62;
+  /* r3.146.0：帶「前往」的提示（點一下直接打開對應選單頁） */
+  function drawActToast() { const T = UI.tst; ctx.globalAlpha = Math.min(1, T.t / 15); ctx.font = `700 ${13 * G.FS()}px ${G.FONT}`; const lab = '前往設定 ›', w1 = ctx.measureText(T.text).width + 24, w2 = ctx.measureText(lab).width + 24, w = w1 + w2, y = G.LH * 0.62, x = (G.LW - w) / 2;
+    ctx.fillStyle = 'rgba(12,8,10,.86)'; G.rr(x, y - 16, w, 32, 16); ctx.fill(); G.txt(T.text, x + w1 / 2, y + 1, 13, C.ink, 'center');
+    ctx.fillStyle = 'rgba(150,92,36,.95)'; G.rr(x + w1, y - 16, w2, 32, 16); ctx.fill(); G.txt(lab, x + w1 + w2 / 2, y + 1, 13, '#fbeee0', 'center', G.FONT_S, 900); ctx.globalAlpha = 1;
+    UI.B.toast = { x: x + w1, y: y - 16, w: w2, h: 32 }; }
+  UI.drawToast = function () { UI.B.toast = null; if (!UI.tst) return; if (UI.tst.act) return drawActToast(); ctx.globalAlpha = Math.min(1, UI.tst.t / 15); ctx.font = `700 ${13 * G.FS()}px ${G.FONT}`; const w = ctx.measureText(UI.tst.text).width + 32, y = G.LH * 0.62;
     ctx.fillStyle = 'rgba(12,8,10,.82)'; G.rr((G.LW - w) / 2, y - 15, w, 30, 15); ctx.fill(); G.txt(UI.tst.text, G.LW / 2, y + 1, 13, C.ink, 'center'); ctx.globalAlpha = 1; };
 })();

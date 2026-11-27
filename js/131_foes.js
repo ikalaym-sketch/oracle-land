@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 131_foes.js
- * Version : r3.108.0  (2026-11-26)　r3.108.0：initAff 可加額外詞綴並對外公開（136 封印精英用）
+ * Version : r3.146.0  (2026-11-27)　r3.146.0：韌性條、等級屬性標籤跟著頭目血條移到上方
+ * 舊版    : r3.108.0  (2026-11-26)　r3.108.0：initAff 可加額外詞綴並對外公開（136 封印精英用）
  * 舊版    : r3.105.0  (2026-11-26)　r3.105.0：第 9 步剩餘——遠程妖怪保持距離射箭（太近後退）；困難以上自然出怪提高遠程／突擊比例（10／20／30％）；
  *           普攻每秒傷害依武器實測校正（WF）；修正一般妖怪近戰不經 hurtHero，詛咒／吸血詞綴沒作用
  * 舊版    : r3.104.2  (2026-11-26)　r3.104.2：護盾改用 132 護罩（半透明柔邊罩體＋氣流＋受擊漣漪，破盾碎裂飛散），不再換氣焰顏色
@@ -164,7 +165,7 @@
       G.txt(t, cx + 24, cy + 1, 10, k === 'shield' && b._sh > 0 ? '#9fd8ff' : '#e3c27a', 'left', G.FONT, 700); cx += cw + 4; }
     if (b._sh > 0) { c.fillStyle = 'rgba(150,210,255,.95)'; c.fillRect(x, y - 2, w * Math.min(1, b._sh / b.hpMax), 3); } };
   const ui0 = G.UI.draw.bind(G.UI); G.UI.draw = function () { ui0(); const enc = B && B.enc; if (!enc || enc.done || G.mode !== 'play' || !enc.units) return; const c = G.ctx;
-    const w = Math.min(380, G.LW * 0.42), x = (G.LW - w) / 2, y = G.LH - G.SAFE.b - 30 * G.FS(), n = enc.units.length, gap = 6, sw = (w - gap * (n - 1)) / n;
+    const w = Math.min(380, G.LW * 0.42), x = (G.LW - w) / 2, y = G.SAFE.t + 58 * G.FS(), n = enc.units.length,   /* r3.146.0：跟著頭目血條移到上方 */ gap = 6, sw = (w - gap * (n - 1)) / n;
     enc.units.forEach((e, i) => { if (!(e._tgm > 0) || e.st === 'dead') return; const sx = x + i * (sw + gap); c.fillStyle = 'rgba(10,6,6,.8)'; c.fillRect(sx - 1, y + 6, sw + 2, 4); c.fillStyle = G.t < (e._brkT || 0) ? '#fff2b0' : '#e3b84a'; c.fillRect(sx, y + 7, sw * Math.max(0, e._tg) / e._tgm, 2); });
     const tl = TIER[enc.tier] || '', ic = enc.fel && G.ICO && G.ICO.drawC('ico_el_' + enc.fel, x + 7, y - 10 * G.FS(), 15) ? 17 : 0; if (tl) G.txt(tl + (enc.fel ? '・' + ELN[enc.fel] : ''), x + ic, y - 10 * G.FS(), 10, '#cdbfa6', 'left'); };
   G.FOES = { WP, CLS, TY, CL, EL, AFX, AF, TIER, ELN, aff, elK, initFoe, initAff, tierOf, classOf: t => CL[t] || 'grunt' };

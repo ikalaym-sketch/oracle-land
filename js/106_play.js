@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 106_play.js
- * Version : r3.145.0  (2026-11-27)　r3.145.0：合併傷害數字時記下時間（03 畫彈跳）
+ * Version : r3.146.0  (2026-11-27)　r3.146.0：敵人互推距離加大
+ * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：合併傷害數字時記下時間（03 畫彈跳）
  * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：戰鬥中淡化路人時，跳過援軍、支援角色、鎌鼬三兄弟
  * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：救援士兵、小雪不套「靠近敵人變半透明」
  * 舊版    : r3.105.0  (2026-11-26)　r3.105.0：合併傷害數字也用「萬」
@@ -42,8 +43,8 @@
     separate(); if (SK.hurt > 0) SK.hurt--;
     if (G.t % 10 === 0) fadeNpc(); }
   function separate() { const E = G.E, A = []; for (const e of E) if (e.st !== 'dead' && e.delay <= 0 && !e.hidden) A.push(e); const n = A.length; if (n < 2 || n > 60) return;
-    const SC = G.SC; for (let i = 0; i < n; i++) { const a = A[i]; for (let j = i + 1; j < n; j++) { const b = A[j], dx = b.x - a.x, dy = (b.y - a.y) * 1.6, d = Math.hypot(dx, dy), r = 15 * ((a.ratio || 1) + (b.ratio || 1));
-        if (d >= r) continue; const vy = Math.abs(dy) < 6 ? ((i + j) % 2 ? 1 : -1) * (Math.abs(dx) * 0.9 + 6) : dy, vx = d > 0.01 ? dx : (i % 2 ? 1 : -1), vl = Math.hypot(vx, vy), ux = vx / vl, uy = vy / vl / 1.6,   /* 同一橫列時往上下錯開，避免排成一列 */ push = Math.min(1.2, (r - d) / 2), ab = !!a.boss, bb = !!b.boss; if (ab && bb) continue;
+    const SC = G.SC; for (let i = 0; i < n; i++) { const a = A[i]; for (let j = i + 1; j < n; j++) { const b = A[j], dx = b.x - a.x, dy = (b.y - a.y) * 1.6, d = Math.hypot(dx, dy), r = 24 * ((a.ratio || 1) + (b.ratio || 1));   /* r3.146.0：15→24，避免 4 隻疊成一團 */
+        if (d >= r) continue; const vy = Math.abs(dy) < 6 ? ((i + j) % 2 ? 1 : -1) * (Math.abs(dx) * 0.9 + 6) : dy, vx = d > 0.01 ? dx : (i % 2 ? 1 : -1), vl = Math.hypot(vx, vy), ux = vx / vl, uy = vy / vl / 1.6,   /* 同一橫列時往上下錯開，避免排成一列 */ push = Math.min(1.8, (r - d) / 2), ab = !!a.boss, bb = !!b.boss; if (ab && bb) continue;
         const pa = bb ? push * 2 : ab ? 0 : push, pb = ab ? push * 2 : bb ? 0 : push;
         if (pa) { const x = a.x - ux * pa, y = a.y - uy * pa; if (SC.walkable(x, y)) { a.x = x; a.y = y; } }
         if (pb) { const x = b.x + ux * pb, y = b.y + uy * pb; if (SC.walkable(x, y)) { b.x = x; b.y = y; } } } } }

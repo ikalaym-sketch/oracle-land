@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 05_dialog.js
- * Version : r3.145.0  (2026-11-27)　r3.145.0：對話改成半身頭像：框外上方站人，位置在一段對話內固定（蒼真右、對方左），講話的人亮、其他人暗；名字牌移到講話者那側；有底色的頭像自動去背
+ * Version : r3.146.0  (2026-11-27)　r3.146.0：記錄對話結束時間（_endT，橫幅延後用）
+ * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：對話改成半身頭像：框外上方站人，位置在一段對話內固定（蒼真右、對方左），講話的人亮、其他人暗；名字牌移到講話者那側；有底色的頭像自動去背
  * 舊版    : r3.90.0  (2026-11-26)　r3.90.0：選項框加寬（440→560）；選項文字太長先縮字、再分兩行，不再超出框
  * 舊版    : r2.0.0  (2026-11-10)
  * 變更    : r2.0.0 對話框高度、行距、換行寬度隨字體大小縮放；新增鐵心頭像。
@@ -24,7 +25,7 @@
       if (!L) return this.finish();
       if (L.text) { const lg = G.SAVE.data.log; lg.push([L.who || '', L.text]); if (lg.length > 60) lg.splice(0, lg.length - 60); }
     },
-    finish() { const d = this.done; this.list = null; this.choice = null; G.SAVE.markDirty(); G.SAVE.flush(); d && d(); },
+    finish() { const d = this.done; this._endT = G.t; this.list = null; this.choice = null; G.SAVE.markDirty(); G.SAVE.flush(); d && d(); },
     advance() { const L = this.list && this.list[this.i]; if (!L || this.choice) return;
       if (this.shown < L.text.length) { this.shown = L.text.length; return; }
       this.i++; if (this.i >= this.list.length) this.finish(); else this.prep(); },

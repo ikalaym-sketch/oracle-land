@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.145.0  (2026-11-27)　掉落物：稀品以上才顯示名字，光柱高度依品質拉開；r3.145.0：傷害數字放大（一般 19、暴擊 28），出現與合併時彈一下，暴擊上跳
+ * Version : r3.146.0  (2026-11-27)　r3.146.0：「此鍵尚未設定」提示加前往按鈕
+ * 舊版    : r3.145.0  (2026-11-27)　掉落物：稀品以上才顯示名字，光柱高度依品質拉開；r3.145.0：傷害數字放大（一般 19、暴擊 28），出現與合併時彈一下，暴擊上跳
  * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：和弓特性：普攻出箭中可移動（不轉身，速度 ×0.6）
  * 舊版    : r3.126.0  (2026-11-27)　r3.126.0：里歐出招中本體步進直接略過（讓外層各模組的每格處理照常執行）
  * 舊版    : r3.111.0  (2026-11-26)　r3.111.0：近戰外框橢圓預警停用（改由 139_foeai 畫頭目同款預警）
@@ -102,7 +103,7 @@ G.ONI_RATIO = 1.38;
       /* 招式（組合技） */
       if (key[0] === 'c') { const ci = +key[1] - 1, ch = W.chain(ci), cs = H.chainSt;   // 招式鍵：連按依序出第 1→2→3 段
         let seg = cs && cs.k === ci && cs.win > 0 && cs.i < 2 && ch[cs.i + 1] ? cs.i + 1 : 0;
-        const mv = wp.MV[ch[seg]]; if (!mv) { G.UI.toast('此鍵尚未設定招式（選單 › 武器 › 按鍵）'); continue; }
+        const mv = wp.MV[ch[seg]]; if (!mv) { G.UI.toast('此鍵尚未設定招式', () => { G.MENU.show(); G.MENU.goto && G.MENU.goto('按鍵'); }); continue; }
         if (!W.mvOk(mv)) { G.UI.toast(mv.n + '：熟練度 ' + mv.u + ' 解鎖'); continue; }
         const ck = 'k:' + ci; if (!seg && (H.cd[ck] || 0) > 0) continue; face();
         if (startAct(mv.id, mv.k === 'guard' ? 'guard' : 'skill', { mult: (G.GROW ? G.GROW.mvMul() : 1) * (seg === 2 ? 1.2 : 1), chainK: ci, seg })) {
@@ -112,7 +113,7 @@ G.ONI_RATIO = 1.38;
         continue; }
       /* 技 A／技 B／奧義 */
       const s = key === 'ult' ? W.ult() : wp.SK[sl[key === 'skA' ? 'A' : 'B']];
-      if (!s) { G.UI.toast('此鍵尚未設定技能（選單 › 技能）'); continue; }
+      if (!s) { G.UI.toast('此鍵尚未設定技能', () => { G.MENU.show(); G.MENU.goto && G.MENU.goto('技能'); }); continue; }
       const lv = W.lv(s.id); if (!lv) { G.UI.toast(s.n + '：尚未學會（選單 › 技能）'); continue; }
       if (s.t === '奧義') { if (rd.qi < 100) { G.UI.toast('「氣」尚未集滿'); continue; } }
       else if ((H.cd[s.id] || 0) > 0) continue;

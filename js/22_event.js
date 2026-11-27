@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 22_event.js
- * Version : r3.113.0  (2026-11-26)　r3.113.0：匯出事件工具 EV.H（140_events 新世界事件用）
+ * Version : r3.146.0  (2026-11-27)　r3.146.0：菁英／章節頭目血條移到上方中央，菁英在畫面外不顯示
+ * 舊版    : r3.113.0  (2026-11-26)　r3.113.0：匯出事件工具 EV.H（140_events 新世界事件用）
  * 舊版    : r3.107.0  (2026-11-26)　r3.107.0：副本、合戰難度改只疊等級（不乘血量／攻擊）
  * 舊版    : r3.56.0  （r3.56.0：寶箱打開後淡出移除；道摩軍人數加倍＋援軍　r3.54.0：世界事件——人已在該圖也會開始、任務波次結束後補發、被任務打斷可重來；山賊營／入侵／道摩軍加合戰防禦物與更多守軍；道摩大筒會砲擊　r3.28.0：炭里改為第五章「炭里長屋」　r3.19.3：世界事件提醒移到選單鍵下方）
  * 舊版    : r3.19.2  （r3.19.2：世界事件提醒移到遊戲畫面右上角，地圖頁不再壓一條）
@@ -255,8 +256,9 @@
     G.txt(t, x + tw / 2, y + h / 2 + 1, 11, '#f3d98a', 'center', G.FONT, 700); B.wev = { x, y, w: tw, h }; };
   /* 迷霧＋頭目血條 */
   const dw0 = G.drawWorld; G.drawWorld = function () { dw0(); if (EV.fog) { const g = ctx.createRadialGradient(G.LW / 2, G.LH / 2, G.LH * 0.25, G.LW / 2, G.LH / 2, G.LW * 0.6); g.addColorStop(0, 'rgba(210,214,222,0.08)'); g.addColorStop(1, 'rgba(200,204,214,0.55)'); ctx.fillStyle = g; ctx.fillRect(0, 0, G.LW, G.LH); } };
-  const ud0 = G.UI.draw.bind(G.UI); G.UI.draw = function () { ud0(); const b = G.E.find(e => (e.boss || e.elite) && !e.bb && e.st !== 'dead' && e.delay <= 0); if (!b) return;
-    const w = Math.min(360, G.LW * 0.42), x = (G.LW - w) / 2, y = G.LH - 34 - G.SAFE.b, name = b.wb || (b.boss ? (SC.def.dungeon ? '副本頭目' : '章節頭目') : '菁英') + '　Lv ' + b.lv;
+  const onScr = e => { const p = SC.toScreen ? SC.toScreen(e.x, e.y) : null; return !p || (p.x > -20 && p.x < G.LW + 20 && p.y > -20 && p.y < G.LH + 20); };
+  const ud0 = G.UI.draw.bind(G.UI); G.UI.draw = function () { ud0(); const b = G.E.find(e => (e.boss || e.elite) && !e.bb && e.st !== 'dead' && e.delay <= 0 && (e.boss || onScr(e))); if (!b || (G.BOSS && G.BOSS.enc && !G.BOSS.enc.done)) return;   // r3.146.0：菁英只在畫面內才顯示；頭目戰時讓頭目血條
+    const w = Math.min(360, G.LW * 0.42), x = (G.LW - w) / 2, y = G.SAFE.t + 56, name = b.wb || (b.boss ? (SC.def.dungeon ? '副本頭目' : '章節頭目') : '菁英') + '　Lv ' + b.lv;
     ctx.fillStyle = 'rgba(12,8,10,.72)'; G.rr(x - 8, y - 18, w + 16, 30, 8); ctx.fill(); G.txt(name, x, y - 8, 11, b.wb ? '#9fe0ef' : b.boss ? '#f0ad52' : '#e3c27a', 'left', G.FONT_S, 900);
     ctx.fillStyle = 'rgba(60,20,20,.9)'; ctx.fillRect(x, y + 1, w, 6); ctx.fillStyle = b.wb ? '#5fb8d8' : '#d84a3a'; ctx.fillRect(x, y + 1, w * Math.max(0, b.hp) / b.hpMax, 6); };
 })();
