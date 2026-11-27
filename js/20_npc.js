@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 20_npc.js
- * Version : r3.151.2  (2026-11-27)　r3.151.2：說話動作當待機時放慢到每格約 0.6 秒
+ * Version : r3.153.1  (2026-11-27)　r3.153.1：店家身上有任務時只顯示任務名牌，不再兩個名牌疊在一起
+ * 舊版    : r3.151.2  (2026-11-27)　r3.151.2：說話動作當待機時放慢到每格約 0.6 秒
  * 舊版    : r3.151.1  (2026-11-27)　r3.151.1：沒有待機圖的路人（只有走路／說話兩組動作）停下時改播說話動作（取代比手勢）
  * 舊版    : r3.151.0  (2026-11-27)　r3.151.0：沒有待機圖的路人站著時呼吸加大並輕微晃動
  * 舊版    : r3.129.0  (2026-11-27)　r3.129.0：新兩岸城圖：時雨站位改到西口下方
@@ -190,7 +191,8 @@
     ctx.fillStyle = 'rgba(30,20,10,.28)'; const sw = Math.max(5, (n.an ? 0.36 : 0.24) * n.un.refH * sc * (n.fly ? 0.3 : 1)); ctx.beginPath(); ctx.ellipse(n.x, n.y, sw, sw * 0.32, 0, 0, 6.283); ctx.fill();
     if (!n.un.act[n.act] && !n.an) { const b = 1 + Math.sin((G.t + n.hx) * 0.06) * 0.028, sw = Math.sin((G.t + n.hx) * 0.031) * 0.025; ctx.save(); ctx.translate(n.x, n.y - lift); ctx.rotate(sw * 0.4); ctx.scale(1 + (b - 1) * 0.4, b);   /* r3.151.0：呼吸加大＋輕微左右晃（原本 1.2% 看起來像定格） */ A.draw(n.un, fr, 0, 0, sc, n.face < 0, n.alpha); ctx.restore(); }   // r3.41.0：沒有待機圖的 NPC 輕微呼吸
     else A.draw(n.un, fr, n.x, n.y - lift, sc, n.face < 0, n.alpha);
-    if (n.shop || (G.UI.near && G.UI.near.amb === n)) { const top = n.y - lift - n.un.refH * sc - 6, Z = SC.view().Z;   // 名牌（固定螢幕大小）
+    const qOn = n.shop && G.QST && G.QST.marks && G.QST.marks.some(m => m.q && m.x > -999 && Math.abs(m.x - n.x) < 24 && Math.abs(m.y - n.y) < 24);   /* r3.153.1：店家身上有任務標記時，只留任務名牌（不疊兩個） */
+    if ((n.shop && !qOn) || (G.UI.near && G.UI.near.amb === n && !qOn)) { const top = n.y - lift - n.un.refH * sc - 6, Z = SC.view().Z;   // 名牌（固定螢幕大小）
       ctx.save(); ctx.translate(n.x, top); ctx.scale(1 / Z, 1 / Z); const lab = n.shop && G.SHOP ? D.SHOPN[G.SHOP.type(n.shop)] : n.name, f = 10 * G.FS();
       ctx.font = `700 ${f}px ${G.FONT}`; const w = ctx.measureText(lab).width + (n.shop ? 26 : 12);
       ctx.fillStyle = n.shop ? 'rgba(120,70,20,.88)' : 'rgba(12,8,10,.7)'; G.rr(-w / 2, -f - 8, w, f + 8, 6); ctx.fill();
