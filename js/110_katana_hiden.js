@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 110_katana_hiden.js
- * Version : r3.180.0  (2026-11-28)　r3.180.0：打刀五招秘傳運鏡（拉遠→追蹤→收招推近）、實心分身、地面月光、一閃・朧重做、千鳥十字與返脈・雷加大；r3.179.0：月下分身背景近全黑、鏡頭更遠、月亮更高更小；r3.178.0：月下分身重做（五個分身依序衝斬→本尊穿斬→斬月爆開）；燕返・真重做（把敵人來回打三次→巨大月牙刀氣）
+ * Version : r3.183.0  (2026-11-28)　開放 tintOf 給其他武器的秘傳共用（內容未變）
+ * 舊版    : r3.180.0  (2026-11-28)　r3.180.0：打刀五招秘傳運鏡（拉遠→追蹤→收招推近）、實心分身、地面月光、一閃・朧重做、千鳥十字與返脈・雷加大；r3.179.0：月下分身背景近全黑、鏡頭更遠、月亮更高更小；r3.178.0：月下分身重做（五個分身依序衝斬→本尊穿斬→斬月爆開）；燕返・真重做（把敵人來回打三次→巨大月牙刀氣）
  * 舊版    : r3.177.0  (2026-11-28)　r3.177.0：月下分身重做：象牙白大滿月高掛、月暈、夜色加深、最後一斬把月亮斬開
  * 舊版    : r3.173.0  (2026-11-28)　r3.173.0：五招秘傳加演出鏡頭（對準敵人群／挑飛高度）；返脈・雷的天雷連落三道
  * 舊版    : r3.73.0  (2026-11-24)
@@ -72,6 +73,7 @@
     VX.custom((o, ctx) => { const a = Math.min(1, o.t / 2) * Math.min(1, (life - o.t) / (life * 0.5)); if (a <= 0) return; ctx.save(); if (face < 0) { ctx.translate(x * 2, 0); ctx.scale(-1, 1); }
       const dr = (im, kx, al) => { const w = fr[2] * sc * kx, h = fr[3] * sc * kx, mx = x - fr[4] * sc + fr[2] * sc / 2, my = y - fr[5] * sc + fr[3] * sc / 2; ctx.globalAlpha = al; ctx.drawImage(im, mx - w / 2, my - h / 2, w, h); };
       dr(rim, 1.09, 0.85 * a); dr(body, 1, 0.95 * a); ctx.globalCompositeOperation = 'lighter'; dr(rim, 1, 0.18 * a); ctx.restore(); }, life, 'o'); }
+  G.KT.tintOf = tintOf;   /* 給其他武器的秘傳用（風神剪影） */
   function shot(c, x, y, up, zoom, T) { G.CAMFOCUS = { x, y: y - up * c.hh, until: G.t + T }; G.CAMZOOM = { k: zoom, until: G.t + T }; }
   function dashClone(c, x0, y0, x1, y1, n, onMid) { const f = x1 > x0 ? 1 : -1; for (let i = 0; i <= n; i++) c.later(i, () => { const u = i / n, x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u; if (i === n || i % 2 === 0) cloneAt(x, y, f, i === n ? 12 : 4, 'issen'); if (i % 2 === 0) dust(x, y, 0.3, 1, 0.5, 14); if (i === Math.round(n / 2) && onMid) onMid(f); }); }
   /* ---------- 五招秘傳 ---------- */
