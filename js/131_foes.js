@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 131_foes.js
- * Version : r3.199.0  (2026-11-28)　r3.199.0：遠程敵人的箭改手繪箭矢
+ * Version : r3.200.0  (2026-11-28)　r3.200.0：遠程敵人的箭放大並拖手繪光痕
+ * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：遠程敵人的箭改手繪箭矢
  * 舊版    : r3.168.0  (2026-11-27)　r3.168.0：畫面下方詞綴列停用（改畫在上方精英血條旁）
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：韌性條、等級屬性標籤跟著頭目血條移到上方
  * 舊版    : r3.108.0  (2026-11-26)　r3.108.0：initAff 可加額外詞綴並對外公開（136 封印精英用）
@@ -105,7 +106,7 @@
     return true; }
   function shoot(e, tx, ty) { const VX = G.VX; if (!VX || !VX.custom) return; const s = S(e.y), k = HH() * s, gun = /gun/.test(e.type), z = 0.55 * k, ang = Math.atan2(ty - e.y, tx - e.x), sp = (gun ? 9 : 6) * Math.max(0.6, s), atk = e.atk * (gun ? 1 : 0.8);
     let x = e.x + e.face * 0.3 * k, y = e.y, dist = 0;
-    VX.custom((q, c) => { if (!gun && G.AFX) { const lf = Math.cos(ang) < 0; if (G.AFX.fr('fx_common', 'projectile_arrow_a', Math.floor(G.t / 4) % 4, x, y - z, { size: k * 0.95, by: 'w', ang: lf ? Math.PI - ang : ang, flip: lf })) return; }   /* r3.199.0：遠程敵人的箭＝手繪箭矢 */ c.save(); c.translate(x, y - z); c.rotate(ang); if (VX.arrow2) VX.arrow2(c, k * (gun ? 0.3 : 0.62), '', false); c.restore(); }, 200, 'o',
+    VX.custom((q, c) => { if (!gun && G.AFX) { const lf = Math.cos(ang) < 0; const ag = lf ? Math.PI - ang : ang; G.AFX.fr('b_mb_ise', 'ise_yoshimori_arrow_trail', 1 + Math.floor(G.t / 4) % 2, x - Math.cos(ang) * k * 0.95, y - z - Math.sin(ang) * k * 0.95, { size: k * 1.9, by: 'w', ang: ag, flip: lf, a: 0.9 });   /* r3.200.0：箭後面拖一道手繪的光痕、箭放大，飛行中看得清楚 */ if (G.AFX.fr('fx_common', 'projectile_arrow_a', Math.floor(G.t / 4) % 4, x, y - z, { size: k * 1.2, by: 'w', ang: ag, flip: lf })) return; }   /* r3.199.0：遠程敵人的箭＝手繪箭矢 */ c.save(); c.translate(x, y - z); c.rotate(ang); if (VX.arrow2) VX.arrow2(c, k * (gun ? 0.3 : 0.62), '', false); c.restore(); }, 200, 'o',
       { step: q => { x += Math.cos(ang) * sp; y += Math.sin(ang) * sp * 0.6; dist += sp; if (Math.abs(H.x - x) < 0.25 * k && Math.abs(H.y - y) < 18) { const hp0 = H.hp; G.hurtHero(atk, e.x); if (e._af && H.hp < hp0) heroHit(e, hp0 - H.hp, true); q.t = q.life; } else if (dist > 9 * k) q.t = q.life; } }); }
   /* 每格：只跑有詞綴的精英 */
   (function hk() { if (!G.heroStep) return setTimeout(hk, 50); const hs0 = G.heroStep; G.heroStep = function () { const r = hs0.apply(this, arguments);

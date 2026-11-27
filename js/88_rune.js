@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 88_rune.js
- * Version : r3.199.0  (2026-11-28)　r3.199.0：破甲標記、風球（軌道有變化）、怒氣結束震波、冰緩冰晶改播手繪素材
+ * Version : r3.200.0  (2026-11-28)　r3.200.0：素材播放器支援染色；風球、冰緩冰晶放大
+ * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：破甲標記、風球（軌道有變化）、怒氣結束震波、冰緩冰晶改播手繪素材
  * 舊版    : r3.197.0  (2026-11-28)　r3.197.0：靈紋／套裝／神器改播手繪素材（風刃、叢雲、斬月、震地、落雷、感電、潮浪、狐火、鬼火、穿雲、鏡返、日鏡、勾玉光線、凍結）；新增手繪素材播放器 G.AFX
  * 舊版    : r3.196.0  (2026-11-28)　r3.196.0：靈紋／套裝／神器的幾何圖形全部換成有主題的分層畫法（風刃、斬月、震地、落雷、狐火、光箭、感電、破甲、鏡返、潮浪、鬼火、天光、日鏡、勾玉光線）
  * 舊版    : r3.195.0  (2026-11-28)　r3.195.0：霜結腳下的藍色實線圈改成霜霧
@@ -133,7 +134,7 @@
   function frostMotes(e, k, n) { const sc = S(e.y), h = HH() * (e.ratio || 1) * sc, t = G.t, seed = e._fs || (e._fs = Math.random()), m = Math.min(5, 2 + n);
     ctx.save(); { const rx = h * 0.42 * k; ctx.save(); ctx.translate(e.x, e.y); ctx.scale(1, 0.3); const gg = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); gg.addColorStop(0, 'rgba(225,245,255,' + (0.3 + 0.08 * n) + ')'); gg.addColorStop(0.6, 'rgba(170,220,255,' + (0.16 + 0.05 * n) + ')'); gg.addColorStop(1, 'rgba(170,220,255,0)'); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, rx, 0, TAU); ctx.fill(); ctx.restore(); }   /* r3.195.0：腳下不畫藍色實線圈，改一小片霜霧（層數越多越濃） */
     /* r3.199.0：冰緩＝3～5 根細小、尖端朝下的手繪冰晶繞著身體轉（轉到背後的較淡） */
-    if (AFX.ok('fx_common', 'skill_ice_shard_a')) { for (let i = 0; i < m; i++) { const a = t * 0.045 + i * TAU / m + seed * 6, bk = Math.sin(a) < 0; AFX.fr('fx_common', 'skill_ice_shard_a', Math.floor(t / 4 + i) % 4, e.x + Math.cos(a) * h * 0.4 * k, e.y - h * (0.62 + 0.08 * Math.sin(t * 0.06 + i * 1.9)) + Math.sin(a) * h * 0.09, { size: Math.max(14, h * 0.24), by: 'w', ang: Math.PI / 2, sy: 0.6, a: bk ? 0.5 : 0.95 }); } ctx.restore(); return; }
+    if (AFX.ok('fx_common', 'skill_ice_shard_a')) { for (let i = 0; i < m; i++) { const a = t * 0.045 + i * TAU / m + seed * 6, bk = Math.sin(a) < 0; AFX.fr('fx_common', 'skill_ice_shard_a', Math.floor(t / 4 + i) % 4, e.x + Math.cos(a) * h * 0.4 * k, e.y - h * (0.62 + 0.08 * Math.sin(t * 0.06 + i * 1.9)) + Math.sin(a) * h * 0.09, { size: Math.max(18, h * 0.34), by: 'w', ang: Math.PI / 2, sy: 0.6, a: bk ? 0.5 : 0.95 }); } ctx.restore(); return; }
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < m; i++) { const a = t * 0.035 + i * TAU / m + seed * 6, ph = (t * 0.012 + i * 0.29 + seed) % 1, x = e.x + Math.cos(a) * h * 0.28 * k, y = e.y - h * (0.15 + 0.7 * ph), r = (2.2 + (i % 2)) * Math.max(0.7, sc), al = Math.sin(ph * Math.PI) * 0.9;
       ctx.strokeStyle = 'rgba(150,215,255,' + al + ')'; ctx.lineWidth = 1; ctx.beginPath();
@@ -182,11 +183,13 @@
     function fr(k, c, fi, x, y, o) { const R2 = rec(k, c); if (!R2) return false; const u = R2[0], r = R2[1], f = r.f[Math.max(0, Math.min(r.f.length - 1, fi | 0))], im = u.imgs[f[7] || 0]; if (!im) return false; o = o || {};
       const bb = r._bb, s8 = f[8] || 1, sc = (o.size || 100) / (o.by === 'w' ? bb.w : o.by === 'h' ? bb.h : Math.max(bb.w, bb.h)), an = o.anc || 'c', fx = an === 'c' || an === 'b' ? 0.5 : an[0], fy = an === 'c' ? 0.5 : an === 'b' ? 1 : an[1], ax = bb.x0 + bb.w * fx, ay = bb.y0 + bb.h * fy;
       ctx.save(); ctx.translate(x, y); if (o.flip) ctx.scale(-1, 1); if (o.ang) ctx.rotate(o.ang); if (o.sy) ctx.scale(1, o.sy); if (o.a !== undefined) ctx.globalAlpha *= Math.max(0, Math.min(1, o.a)); if (o.add) ctx.globalCompositeOperation = 'lighter';
-      try { ctx.drawImage(im, f[0], f[1], f[2], f[3], (-f[4] * s8 - ax) * sc, (-f[5] * s8 - ay) * sc, f[2] * s8 * sc, f[3] * s8 * sc); } catch (e) {} ctx.restore(); return true; }
+      try { if (o.tint) { const t = tinted(u, f, im, o.tint); ctx.drawImage(t, 0, 0, f[2], f[3], (-f[4] * s8 - ax) * sc, (-f[5] * s8 - ay) * sc, f[2] * s8 * sc, f[3] * s8 * sc); } else ctx.drawImage(im, f[0], f[1], f[2], f[3], (-f[4] * s8 - ax) * sc, (-f[5] * s8 - ay) * sc, f[2] * s8 * sc, f[3] * s8 * sc); } catch (e) {} ctx.restore(); return true; }
+    /* r3.200.0：染色（tint＝'r,g,b'）——把素材乘上指定顏色（例：米白新月→金色），每格只做一次、最多留 80 格 */
+    const TC = new Map(); function tinted(u, f, im, col) { const key = u.key + ':' + (f[7] || 0) + ':' + f[0] + ',' + f[1] + ':' + col; let c = TC.get(key); if (c) return c; c = document.createElement('canvas'); c.width = f[2]; c.height = f[3]; const g = c.getContext('2d'); g.drawImage(im, f[0], f[1], f[2], f[3], 0, 0, f[2], f[3]); g.globalCompositeOperation = 'multiply'; g.fillStyle = 'rgb(' + col + ')'; g.fillRect(0, 0, f[2], f[3]); g.globalCompositeOperation = 'destination-in'; g.drawImage(im, f[0], f[1], f[2], f[3], 0, 0, f[2], f[3]); if (TC.size >= 80) TC.delete(TC.keys().next().value); TC.set(key, c); return c; }
     function play(k, c, o) { o = o || {}; const R2 = rec(k, c); if (!R2 || !G.KF || !G.KF.add) { if (o.fb) try { o.fb(); } catch (e) {} return false; }
       const r = R2[1], i0 = o.fr ? o.fr[0] : 0, i1 = o.fr ? o.fr[1] : r.f.length - 1, n = i1 - i0 + 1, tpf = o.tpf || 4, loop = o.loop || 1, hold = o.hold || 0, life = n * tpf * loop + hold, dl = o.delay || 0, fade = o.fade === undefined ? Math.min(6, tpf) : o.fade;
       G.KF.add(life + dl, o.layer || 'o', (c2, u) => { u -= dl; if (u < 0) return; const p = o.at ? o.at(u) : null; if (o.at && !p) return; const fi = u >= n * tpf * loop ? i1 : i0 + Math.floor(u / tpf) % n, a = (o.a === undefined ? 1 : o.a) * Math.min(1, (life - u) / Math.max(1, fade)) * (o.fin ? Math.min(1, (u + 1) / o.fin) : 1);
-        fr(k, c, fi, p ? p[0] : o.x, p ? p[1] : o.y, { size: typeof o.size === 'function' ? o.size(u) : o.size, by: o.by, anc: o.anc, ang: p && p[2] !== undefined ? p[2] : o.ang, flip: o.flip, a, add: o.add, sy: o.sy }); }); return true; }
+        fr(k, c, fi, p ? p[0] : o.x, p ? p[1] : o.y, { size: typeof o.size === 'function' ? o.size(u) : o.size, by: o.by, anc: o.anc, ang: p && p[2] !== undefined ? p[2] : o.ang, flip: o.flip, a, add: o.add, sy: o.sy, tint: o.tint }); }); return true; }
     const pre = L => { for (const k of L) unit(k); };
     return { fr, play, pre, rec, ok: (k, c) => !!rec(k, c) }; })();
   G.AFX = AFX;
@@ -352,7 +355,7 @@
     for (const c of PET.crane) sp('shiki_crane', Math.floor(G.t / 6) % 4, c.x, c.y, 0.9, { flip: (c.st ? (c.tg && c.tg.x < c.x) : Math.sin(c.a) > 0) });
     if (PET.fox) sp('shiki_fox', PET.fox.st ? 4 + Math.floor(G.t / 5) % 4 : Math.floor(G.t / 8) % 4, PET.fox.x, PET.fox.y, 0.55, { flip: PET.fox.f < 0 });
     for (const m of PET.mag) sp('fx_magatama', 0, H.x + Math.cos(m.a) * hz * 0.75, H.y - hz * 1.0 + Math.sin(m.a) * hz * 0.2, 0.9, { add: 1 });
-    for (const b of PET.ball) { if (AFX.fr('b_susanoo', 'fx_wind_gather', 1 + Math.floor((G.t + (b.i || 0) * 3) / 5) % 2, b.x, b.y, { size: hz * 0.85, flip: Math.sin(b.a) < 0 })) continue;   /* r3.199.0：風球＝須佐之男的手繪旋風 */
+    for (const b of PET.ball) { if (AFX.fr('b_susanoo', 'fx_wind_gather', 1 + Math.floor((G.t + (b.i || 0) * 3) / 5) % 2, b.x, b.y, { size: hz * 1.05, flip: Math.sin(b.a) < 0 })) continue;   /* r3.199.0：風球＝須佐之男的手繪旋風 */
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, hz * 0.22); g.addColorStop(0, 'rgba(240,255,250,.9)'); g.addColorStop(0.5, 'rgba(150,240,210,.55)'); g.addColorStop(1, 'rgba(150,240,210,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, hz * 0.22, 0, TAU); ctx.fill();
       ctx.strokeStyle = 'rgba(220,255,245,.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(b.x, b.y, hz * 0.15, b.a * 3, b.a * 3 + 3.6); ctx.stroke(); ctx.restore(); } }
 
