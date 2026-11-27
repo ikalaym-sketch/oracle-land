@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 67_cast.js
- * Version : r3.159.0  (2026-11-27)　r3.159.0：兩岸城攻防篇講話者圖（冬馬、孫六、甚藏、真穗、鬼女、被綁住的小妖、玄符）
+ * Version : r3.166.0  (2026-11-27)　r3.166.0：店家身上有委託時也走 G.SHOPTALK（先聊天，選項：店的功能／委託／再聊聊／離開）
+ * 舊版    : r3.159.0  (2026-11-27)　r3.159.0：兩岸城攻防篇講話者圖（冬馬、孫六、甚藏、真穗、鬼女、被綁住的小妖、玄符）
  * 舊版    : r3.151.3  (2026-11-27)　r3.151.3：借用同名路人當任務 NPC 時也開啟原地小走動（阿德這類後續對話 NPC 原本聊完就站著）
  * 舊版    : r3.141.0  (2026-11-27)　r3.141.0：補劇情角色指定圖（新劇情 14 人＋小河童／人魚）；任務加人時同圖已有劇情專用人物（鐵心、小雪…）→ 不另生，任務記號移到他身上（原 156_castfix 併入）
  * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：戰鬥類事件（入侵、據點、伏擊…）在章節地圖的村莊也讓村民退場
@@ -46,6 +47,7 @@
     if (ms.length === 1 && !n.shop) { G.UI.near = null; ms[0].run(); return; }
     if (!ms.length && !n.shop) { G.DLG.start(chat(n)); return; }
     const C = ms.map(m => ({ label: (m.main || m.q.main ? '【主線】' : '【支線】') + m.q.title + (m.qmark === '!' ? '（委託）' : ''), then: later(() => { G.UI.near = null; m.run(); }) }));
+    if (n.shop && G.SHOP && G.SHOPTALK) { G.SHOPTALK(n, { extra: C }); return; }   // r3.166.0：店家先聊天，委託跟店的功能一起放在選項
     if (n.shop && G.SHOP) { const ty = G.SHOP.type(n.shop); C.push({ label: ty === 'warp' ? '前往副本／合戰' : '看看商品', then: later(() => ty === 'warp' && G.WARP ? G.WARP.open(n) : G.SHOP.open(n.shop, n)) }); }
     C.push({ label: '閒聊', then: later(() => G.DLG.start(chat(n))) }, { label: '離開', then: [] });
     const g = (D && D.GREET[n.role]) || ['有什麼事？']; G.DLG.start([{ who: n.name, text: g[Math.floor(Math.random() * g.length)] }, { choice: C }]); }

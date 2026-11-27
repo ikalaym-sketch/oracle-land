@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 06_story_ch1.js
- * Version : r3.39.0  (2026-11-17)  r3.39.0：打完鎌鼬不再直接對話／章節完成；改設 kamaBeat，由 87 的戰後定點（巢邊三兄弟）走近觸發 kamaWin
+ * Version : r3.166.0  (2026-11-27)  r3.166.0：鐵心改成先聊天，「鍛冶」放在對話選項
+ * 舊版    : r3.39.0  (2026-11-17)  r3.39.0：打完鎌鼬不再直接對話／章節完成；改設 kamaBeat，由 87 的戰後定點（巢邊三兄弟）走近觸發 kamaWin
  * 舊版    : r3.18.2  （r3.18.2：神社升級改找小雪奉納）
  * 舊版    : r3.18.1  （鐵心開放鍛冶：強化／勾玉／打造）
  * 舊版    : r3.12.0  (2026-11-14)
@@ -33,6 +34,7 @@ const AGAIN = {
   '勘婆': ['草藥要趁露水沒乾時採，藥性才足。', '受了傷別硬撐，回來我幫你看看。', '妖氣重的地方，草都長得歪歪的。'],
   '鐵心': ['刀要常磨，人也一樣。', '爐子修好了。素材帶來，強化、打洞、打造套裝都找我。', '妖骨硬得很，拿來淬火正好。'] };
 const AGAIN_I = {};
+function nextAgain(who) { const L = AGAIN[who]; const i = AGAIN_I[who] = ((AGAIN_I[who] === undefined ? -1 : AGAIN_I[who]) + 1) % L.length; return L[i]; }   // r3.166.0：店家對話共用
 function again(who) { const L = AGAIN[who]; const i = AGAIN_I[who] = ((AGAIN_I[who] === undefined ? -1 : AGAIN_I[who]) + 1) % L.length; G.DLG.start([{ who, text: L[i] }]); }
 (function () {
   const S = () => G.SAVE.data, F = () => G.SAVE.data.flags, say = (who, text) => ({ who, text });
@@ -219,7 +221,7 @@ function again(who) { const L = AGAIN[who]; const i = AGAIN_I[who] = ((AGAIN_I[w
         marks = [
           { id: 'matsu', node: 'home_stand', label: '阿松', get main() { return !F().matsu; }, when: () => true, run: () => F().matsu ? again('阿松') : G.DLG.start(T.matsu, () => { F().matsu = true; }) },
           { id: 'herb', node: 'herb_stand', label: '勘婆', get main() { return !F().herb; }, when: () => true, run: () => F().herb ? again('勘婆') : G.DLG.start(T.herb, () => { F().herb = true; }) },
-          { id: 'smith', node: 'mill_stand', label: '鐵心', when: () => true, run: () => F().smith ? G.DLG.start([{ choice: [{ label: '鍛冶（強化／勾玉／打造）', then: [{ do: () => G.SHOP.open('smith_village', { name: '鐵心' }) }] }, { label: '閒聊', then: [{ do: () => again('鐵心') }] }, { label: '離開', then: [] }] }]) : G.DLG.start(T.smith, () => { F().smith = true; gift(1, 1, 1); }) },
+          { id: 'smith', node: 'mill_stand', label: '鐵心', when: () => true, run: () => F().smith ? (G.SHOPTALK ? G.SHOPTALK({ name: '鐵心' }, { chat: () => [{ who: '鐵心', text: nextAgain('鐵心') }], acts: [{ label: '鍛冶（強化／勾玉／打造）', run: () => G.SHOP.open('smith_village', { name: '鐵心' }) }] }) : G.DLG.start([{ choice: [{ label: '鍛冶（強化／勾玉／打造）', then: [{ do: () => G.SHOP.open('smith_village', { name: '鐵心' }) }] }, { label: '閒聊', then: [{ do: () => again('鐵心') }] }, { label: '離開', then: [] }] }])) : G.DLG.start(T.smith, () => { F().smith = true; gift(1, 1, 1); }) },
           { id: 'shiro', node: 'wheel_stand', label: '水車旁', kind: 'look', main: true, when: () => F().matsu && F().herb && !F().shiro, run: () => G.DLG.start(T.shiro, () => { F().shiro = true; lockEast(false); G.UI.banner('往東・杉影溪橋古道'); }) }
         ];
       },

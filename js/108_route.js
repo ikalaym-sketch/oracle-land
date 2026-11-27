@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 108_route.js
- * Version : r3.153.0  (2026-11-27)　r3.153.0：行旅繪圖（點右上小地圖打開；走過的地圖縮圖、可前往）＋右上小地圖＋時雨的委託解鎖自由前往
+ * Version : r3.166.0  (2026-11-27)　r3.166.0：行旅繪圖右上加「結局走向」切換
+ * 舊版    : r3.153.0  (2026-11-27)　r3.153.0：行旅繪圖（點右上小地圖打開；走過的地圖縮圖、可前往）＋右上小地圖＋時雨的委託解鎖自由前往
  * 舊版    : r3.66.0  (2026-11-24)
  * 變更    : r3.66.0 新增。兩岸城城南告示牌改成「街道路程圖」畫面（原本是對話選項＋◆／✓ 符號、每頁 5 個）：
  *           ・左：12 章直式木札（可捲動），左側圓印寫章數，右側蓋章表示狀態——朱印「進行中」、墨印「平定」、未開放＝暗木札「未踏」。
@@ -101,16 +102,18 @@
   const canGo = (id, c) => seen()[id] && id !== G.SC.id && (free() || isHub(id) || (c > 0 && HUB.firstOf(c) === id));
   function busy() { const L = G.EV && G.EV.bossLock && G.EV.bossLock(); if (L) return L; if (G.QWAVE && G.QWAVE.on) return '妖怪還沒退散，先把牠們打完吧'; if (G.E.some(e => e.st !== 'dead' && e.hp > 0)) return '附近還有妖怪，打完再走吧'; return ''; }
   function qOf(id) { const Q = G.QST, qs = G.SAVE.data.qs || {}; if (!Q) return null; for (const q of Q.L) { const s = qs[q.id]; if (!s || s.done) continue; const st = q.steps[s.s]; if (st && st.map === id) return q; } return null; }
-  RT.atlas = function (c) { const here = G.SC.id, hc = HUB.chOf(here); RT.ac = c !== undefined ? c : (isHub(here) && !hc ? 0 : hc || 0); RT.pick = here; M.route = 2; M.scroll.atlasL = Math.max(0, (RT.ac - 2) * 52); M.show(); };
+  RT.atlas = function (c) { RT.tab = ''; const here = G.SC.id, hc = HUB.chOf(here); RT.ac = c !== undefined ? c : (isHub(here) && !hc ? 0 : hc || 0); RT.pick = here; M.route = 2; M.scroll.atlasL = Math.max(0, (RT.ac - 2) * 52); M.show(); };
   function goAtlas(id) { const b = busy(); if (b) return G.UI.toast(b); M.close(); HUB.travel(0, '你們循著行旅繪圖，往「' + nm(id) + '」去……', [], id); }
   function tag(x, y, t, col) { ctx.font = `900 ${9 * G.FS()}px ${G.FONT}`; const w = ctx.measureText(t).width + 10; ctx.fillStyle = col; G.rr(x, y, w, 15, 4); ctx.fill(); G.txt(t, x + w / 2, y + 8, 9, '#fbf4e6', 'center', G.FONT, 900); }
   const drawR = M.draw; M.draw = function () { if (M.route !== 2) return drawR.apply(this, arguments); const { button, hit, scrollArea, clip } = M.ui; M.hits = []; M.area = [];
     ctx.fillStyle = 'rgba(10,7,9,.95)'; ctx.fillRect(0, 0, G.LW, G.LH);
     const L = 12 + G.SAFE.l, T = 12 + G.SAFE.t, B = G.LH - 12 - G.SAFE.b, Rt = G.LW - 12 - G.SAFE.r, SH = 34 * G.FS(), SN = seen();
     const tot = Object.keys(SN).filter(k => G.D.scenes[k] && (HUB.chOf(k) || isHub(k))).length;
-    G.txt('行旅繪圖', L + 6, T + SH / 2 + 1, 18, GOLD, 'left', G.FONT_S, 900); ctx.font = `900 ${18 * G.FS()}px ${G.FONT_S}`; G.txt('已走過 ' + tot + ' 個地方', L + 20 + ctx.measureText('行旅繪圖').width, T + SH / 2 + 2, 11, C.sub, 'left', G.FONT, 600);
+    if (RT.tab === 'fate') G.txt('結局走向', L + 6, T + SH / 2 + 1, 18, GOLD, 'left', G.FONT_S, 900); else { G.txt('行旅繪圖', L + 6, T + SH / 2 + 1, 18, GOLD, 'left', G.FONT_S, 900); ctx.font = `900 ${18 * G.FS()}px ${G.FONT_S}`; G.txt('已走過 ' + tot + ' 個地方', L + 20 + ctx.measureText('行旅繪圖').width, T + SH / 2 + 2, 11, C.sub, 'left', G.FONT, 600); }
     button(Rt - 84, T, 84, SH, '✕ 離開', () => M.close());
     const top = T + SH + 10, h = B - top, lw = Math.min(230, (Rt - L) * 0.3), RH = 46;
+    if (G.FATE) { const fa = RT.tab === 'fate'; button(Rt - 84 - 10 - 112, T, 112, SH, fa ? '行旅繪圖' : '結局走向', () => { RT.tab = fa ? '' : 'fate'; });   // r3.166.0：結局走向也放在這裡
+      if (fa) { G.FATE.draw(L, top, Rt - L, h); return; } }
     /* 左：據點＋章節木札 */
     const off = scrollArea('atlasL', L, top, lw, h, 13 * (RH + 6) + 8); clip(L, top, lw, h);
     for (let c = 0; c <= 12; c++) { const y = top + 4 + c * (RH + 6) + off; if (y > top + h || y + RH < top) continue;

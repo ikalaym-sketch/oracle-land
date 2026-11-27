@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 17_menu2.js
- * Version : r3.34.0  （r3.34.0：公開 M.GROUPS；武器分組加「秘傳書」）
+ * Version : r3.166.0  （r3.166.0：拿掉「地圖」分組→改「任務」；結局走向移到「角色」）
+ * 舊版    : r3.34.0  （r3.34.0：公開 M.GROUPS；武器分組加「秘傳書」）
  * 舊版    : r3.32.0  （r3.32.0：地圖分組加「結局走向」頁）
  * 舊版    : r3.19.2  （r3.19.2：按鍵頁「斬」右下移；選單左欄滿版貼齊）
  * 舊版    : r3.19.1  （r3.19.1：左欄加寬；子選項改統一方框＋底線樣式）
@@ -18,15 +19,15 @@
 'use strict';
 (function () {
   const ctx = G.ctx, C = G.C, M = G.MENU, fs = () => G.FS();
-  const GROUPS = [['角色', [['狀態', '角色'], ['職業', '職業'], ['修練', '修練']]], ['裝備', [['穿戴', '裝備'], ['背包', '背包'], ['素材', '素材']]],
-    ['武器', [['熟練度', '武器'], ['技能', '技能'], ['按鍵', '按鍵']]], ['夥伴', [['夥伴', '夥伴']]], ['地圖', [['地圖', '地圖'], ['任務', '任務'], ['結局走向', '結局走向']]], ['系統', [['設定', '設定']]]];
+  const GROUPS = [['角色', [['狀態', '角色'], ['職業', '職業'], ['修練', '修練'], ['結局走向', '結局走向']]], ['裝備', [['穿戴', '裝備'], ['背包', '背包'], ['素材', '素材']]],
+    ['武器', [['熟練度', '武器'], ['技能', '技能'], ['按鍵', '按鍵']]], ['夥伴', [['夥伴', '夥伴']]], ['任務', [['任務', '任務']]], ['系統', [['設定', '設定']]]];
   M.GROUPS = GROUPS;   // r3.34.0：給其他模組加子分頁（77 秘傳書）
   const ICON = G.ICON = {};   // 之後：ICON['角色'] = Image；沒有就畫淡框
   function iconBox(key, x, y, s, on) { if (G.drawIcon && G.drawIcon(key, x, y, s, on ? 1 : 0.8)) return;
     ctx.strokeStyle = on ? 'rgba(243,217,138,.55)' : 'rgba(227,194,122,.22)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, s - 1, s - 1, 5); ctx.stroke(); }
   M.iconBox = iconBox;
   const groups = () => { const used = new Set(); GROUPS.forEach(g => g[1].forEach(s => used.add(s[1])));
-    const sys = GROUPS[5][1].slice(); for (const t of M.TABS) if (!used.has(t) && M.PAGE[t]) sys.push([t, t]);
+    const sys = GROUPS[5][1].slice(); for (const t of M.TABS) if (!used.has(t) && M.PAGE[t] && t !== '地圖') sys.push([t, t]);   // r3.166.0：地圖改由小地圖→行旅繪圖
     return GROUPS.slice(0, 5).concat([['系統', sys]]); };
   M.grp = 0; M.sub = {}; M.OPTS = M.OPTS || {};
   const show0 = M.show; M.show = function (tab) { show0.call(this); if (typeof tab === 'number') { const n = M.TABS[tab]; groups().forEach((g, i) => g[1].forEach((s, j) => { if (s[1] === n) { M.grp = i; M.sub[i] = j; } })); } };

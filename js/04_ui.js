@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 04_ui.js
- * Version : r3.154.0  (2026-11-27)　r3.154.0：技能鍵冷卻改環狀（補滿閃一下）、按鈕間距加大，文字不變
+ * Version : r3.166.0  (2026-11-27)　r3.166.0：世界事件提醒的後備改開行旅繪圖
+ * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：技能鍵冷卻改環狀（補滿閃一下）、按鈕間距加大，文字不變
  * 舊版    : r3.153.0  (2026-11-27)　r3.153.0：小地圖點擊→行旅繪圖；方向提示不壓小地圖
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：提示可帶「前往設定」按鈕；對話中與結束後 2 秒內的橫幅延後；左上改「區域 Lv／難度」
  * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：訊息排隊（橫幅、提示各一次一個，其餘排隊）
@@ -80,7 +81,7 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
     if (B.toast && UI.tst && UI.tst.act && hit(p, B.toast)) { const a = UI.tst.act; UI.tst = null; IN.stick = null; a(); return; }   // r3.146.0
     if (hit(p, B.menu)) { G.MENU.show(); IN.stick = null; return; }
     if (G.MMAP && G.MMAP.box && hit(p, G.MMAP.box)) { IN.stick = null; G.ROUTE.atlas(); return; }   // r3.153.0：小地圖→行旅繪圖
-    if (B.wev && hit(p, B.wev)) { IN.stick = null; if (G.EV && G.EV.goWorld) G.EV.goWorld(); else { G.MENU.show(); G.MENU.goto && G.MENU.goto('地圖'); } return; }   // r3.19.2：世界事件提醒
+    if (B.wev && hit(p, B.wev)) { IN.stick = null; if (G.EV && G.EV.goWorld) G.EV.goWorld(); else if (G.ROUTE && G.ROUTE.atlas) G.ROUTE.atlas(); return; }   // r3.19.2：世界事件提醒
     if (G.SHOP && hit(p, B.potion)) { G.SHOP.quick(); return; }
     if (G.FEATHER && G.FEATHER.has() && hit(p, B.feather)) { G.FEATHER.use(); return; }
     if (hit(p, B.zoom)) { G.SAVE.data.zoom = (G.SAVE.data.zoom + 1) % 3; G.SAVE.markDirty(); return; }

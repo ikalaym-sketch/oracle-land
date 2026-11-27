@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 19_ui8.js
- * Version : r3.3.0  (2026-11-12)
+ * Version : r3.166.0  (2026-11-27)　r3.166.0：選單分組「任務」圖示
+ * 舊版    : r3.3.0  (2026-11-12)
  * 變更    : r3.3.0 新增。P8 介面圖示接入：技能／招式圖示（選單按鍵頁＋戰鬥按鍵）、選單分頁圖示、裝備部位圖示、
  *           NPC 新頭像（權爺、阿松、小雪、鐵心）。
  * 說明    : 圖集 a/p/ui_icons.webp（96px 格，369 個）＋ ui_faces.webp（128px，40 個頭像），索引 a/p/ui.json。
@@ -21,7 +22,7 @@
         c.getContext('2d').drawImage(im, p[0], p[1], F.s, F.s, 0, 0, F.s, F.s); G.IMG[k] = c; } }
   };
   /* 選單分頁／子分頁圖示 */
-  const ALIAS = { '角色': 'ui_icon_quest_target', '裝備': 'item_armor_windway_body', '武器': 'item_weapon_katana_ferry', '夥伴': 'ui_icon_interact_hand', '地圖': 'ui_icon_map_village', '系統': 'ui_icon_material_bag',
+  const ALIAS = { '角色': 'ui_icon_quest_target', '裝備': 'item_armor_windway_body', '武器': 'item_weapon_katana_ferry', '夥伴': 'ui_icon_interact_hand', '地圖': 'ui_icon_map_village', '任務': 'ui_icon_map_village', '角色/結局走向': 'ui_icon_map_village', '系統': 'ui_icon_material_bag',
     '角色/狀態': 'ui_icon_quest_target', '角色/職業': 'item_accessory_yata', '角色/修練': 'item_consumable_clearbreath', '裝備/穿戴': 'item_armor_windway_head', '裝備/背包': 'ui_icon_material_bag',
     '武器/熟練度': 'item_material_tamahagane', '武器/技能': 'item_key_jade_light', '武器/按鍵': 'ui_icon_interact_exclamation', '系統/設定': 'item_accessory_compass', '系統/測試': 'item_accessory_abacus',
     slot_weapon: 'item_weapon_katana_ferry', slot_head: 'item_armor_windway_head', slot_body: 'item_armor_windway_body', slot_hands: 'item_armor_windway_hands', slot_feet: 'item_armor_windway_feet', slot_charm: 'item_accessory_yasakani' };

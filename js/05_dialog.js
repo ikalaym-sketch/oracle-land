@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 05_dialog.js
- * Version : r3.160.0  (2026-11-27)　r3.160.0：玄符（黑符的雙胞胎哥哥）共用黑符半身像
+ * Version : r3.166.0  (2026-11-27)　r3.166.0：選項上方已有台詞時不再顯示「你要怎麼做？」
+ * 舊版    : r3.160.0  (2026-11-27)　r3.160.0：玄符（黑符的雙胞胎哥哥）共用黑符半身像
  * 舊版    : r3.157.2  (2026-11-27)　r3.157.2：對話開始前先等半身像載好（最多 0.6 秒），連選項分支一起預載——修正第一次出場（如五條大橋弁慶）沒有頭像
  * 舊版    : r3.157.0  (2026-11-27)　r3.157.0：接入 68 張對話半身像（a/bust，講話時才載入；茨木／景綱／晴明等簡稱也對得到）
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：出選項時上方保留上一句台詞（誰在問、問什麼）
@@ -85,7 +86,7 @@
       if (pv && cy0 - 30 > 70 + G.SAFE.t) { const pw = Math.min(600, G.LW - 60), px = (G.LW - pw) / 2, Ls = (ctx.font = `600 ${13 * G.FS()}px ${G.FONT}`, G.wrap(pv.text, pw - 32)).slice(0, 2), ph = 20 + Ls.length * 18 + (pv.who ? 14 : 0), py = cy0 - 34 - ph;
         ctx.fillStyle = 'rgba(12,8,10,.88)'; G.rr(px, py, pw, ph, 8); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.4)'; ctx.lineWidth = 1; G.rr(px + .5, py + .5, pw - 1, ph - 1, 8); ctx.stroke();
         let ly = py + 14; if (pv.who) { G.txt(pv.who, px + 16, ly, 12, G.C.gold, 'left', G.FONT_S, 900); ly += 16; } Ls.forEach(l => { G.txt(l, px + 16, ly + 2, 13, G.C.ink, 'left', G.FONT, 600); ly += 18; }); }
-      G.txt('你要怎麼做？', G.LW / 2, choiceRect(0, this.choice.length).y - 22, 13, G.C.sub, 'center', G.FONT, 500);
+      if (!pv) G.txt('你要怎麼做？', G.LW / 2, choiceRect(0, this.choice.length).y - 22, 13, G.C.sub, 'center', G.FONT, 500);
       this.choice.forEach((c, k) => { const b = choiceRect(k, this.choice.length); ctx.fillStyle = 'rgba(16,10,14,.9)'; G.rr(b.x, b.y, b.w, b.h, 8); ctx.fill();
         ctx.strokeStyle = G.C.gold; ctx.lineWidth = 1.2; G.rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 8); ctx.stroke(); choiceLabel(c.label, b); });
       return; }

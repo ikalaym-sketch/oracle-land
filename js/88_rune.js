@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 88_rune.js
- * Version : r3.107.2  (2026-11-26)　r3.107.2：吸魂特效改成「被吸過來」：12 縷柔光粒子錯開、螺旋加速吸進胸口＋拖尾，取代一整顆圓球
+ * Version : r3.166.0  (2026-11-27)　r3.166.0：冰緩狀態不再畫整片白色橢圓 → 身邊飄冰晶＋腳下淡藍霜圈
+ * 舊版    : r3.107.2  (2026-11-26)　r3.107.2：吸魂特效改成「被吸過來」：12 縷柔光粒子錯開、螺旋加速吸進胸口＋拖尾，取代一整顆圓球
  * 舊版    : r3.94.0  (2026-11-26)　r3.94.0：觸發改每次出手 1 次＋內部冷卻（雷鳴 1 秒、燃燒／冰霜同目標 0.5 秒）
  * 舊版    : r3.82.0  (2026-11-25)　r3.82.0：燃燒畫法改走 G.FLAMES（117 換成火星）　r3.63.0：強化 +20 的裝備靈紋 +1 級　r3.59.0：r3.59.0：燃燒改成身上火苗（原本是地面火圈）　r3.57.0：RUNE.lines 給物品卡折疊區
  * 舊版    : r3.43.1  (2026-11-18)　r3.43.1：護法光環改用結界光罩
@@ -125,10 +126,17 @@
       ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x, y - sz * 2.2); ctx.quadraticCurveTo(x + sz * 1.1, y - sz * 0.2, x, y + sz * 0.9); ctx.quadraticCurveTo(x - sz * 1.1, y - sz * 0.2, x, y - sz * 2.2); ctx.fill(); }
     ctx.restore(); }
   G.FLAMES = flames;
+  function frostMotes(e, k, n) { const sc = S(e.y), h = HH() * (e.ratio || 1) * sc, t = G.t, seed = e._fs || (e._fs = Math.random()), m = Math.min(5, 2 + n);
+    ctx.save(); ctx.strokeStyle = 'rgba(120,190,255,.55)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(e.x, e.y, h * 0.32 * k, h * 0.09 * k, 0, 0, TAU); ctx.stroke();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < m; i++) { const a = t * 0.035 + i * TAU / m + seed * 6, ph = (t * 0.012 + i * 0.29 + seed) % 1, x = e.x + Math.cos(a) * h * 0.28 * k, y = e.y - h * (0.15 + 0.7 * ph), r = (2.2 + (i % 2)) * Math.max(0.7, sc), al = Math.sin(ph * Math.PI) * 0.9;
+      ctx.strokeStyle = 'rgba(150,215,255,' + al + ')'; ctx.lineWidth = 1; ctx.beginPath();
+      for (let j = 0; j < 3; j++) { const b = j * Math.PI / 3 + a * 0.5; ctx.moveTo(x - Math.cos(b) * r, y - Math.sin(b) * r); ctx.lineTo(x + Math.cos(b) * r, y + Math.sin(b) * r); } ctx.stroke(); }
+    ctx.restore(); }
   function statusDraw() { for (const e of G.E) { const s = e.st2; if (!s || e.st === 'dead') continue; const k = Math.max(0.7, (e.ratio || 1) * 0.85), z = (e.ratio || 1) * 0.1;
       if (s.bnT > 0) (G.FLAMES || flames)(e, 1 + s.bn);   // r3.82.0：可由 117 換掉身上火苗   // r3.59.0：原本借用地面火圈圖（整圈火焰）→ 改成身上竄出的小火苗
       if (s.frz > 0) VX.draw2 && VX.draw2(ctx, 'fx_ice_shell', 0, e.x, e.y - HH() * S(e.y) * k * 0.62, k, { a: 0.85 });
-      else if (s.fr > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(160,220,255,' + (0.12 * s.fr) + ')'; ctx.beginPath(); ctx.ellipse(e.x, chest(e), HH() * 0.4 * S(e.y) * k, HH() * 0.6 * S(e.y) * k, 0, 0, TAU); ctx.fill(); ctx.restore(); }
+      else if (s.fr > 0) frostMotes(e, k, s.fr);   // r3.166.0：原本整片白色橢圓 → 改成身邊飄的冰晶＋腳下霜圈
       if (s.sk > 0 && G.t % 6 < 3) { const y = chest(e), r = HH() * 0.45 * S(e.y); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = 'rgba(200,190,255,.9)'; ctx.lineWidth = 1.4; ctx.beginPath();
         let px = e.x - r, py = y; ctx.moveTo(px, py); for (let i = 0; i < 5; i++) { px += r * 0.4; py = y + rnd(-r * 0.4, r * 0.4); ctx.lineTo(px, py); } ctx.stroke(); ctx.restore(); }
       if (s.ha > 0) { const y = e.y - HH() * (e.ratio || 1) * S(e.y) * 1.15; ctx.save(); ctx.strokeStyle = 'rgba(255,120,100,.95)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(e.x - 5, y - 5); ctx.lineTo(e.x + 1, y); ctx.lineTo(e.x - 2, y + 2); ctx.lineTo(e.x + 5, y + 6); ctx.stroke();

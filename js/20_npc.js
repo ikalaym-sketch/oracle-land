@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 20_npc.js
- * Version : r3.153.1  (2026-11-27)　r3.153.1：店家身上有任務時只顯示任務名牌，不再兩個名牌疊在一起
+ * Version : r3.166.0  (2026-11-27)　r3.166.0：店家對話改成先閒聊，店的功能（鍛冶、買藥…）放在對話選項裡；G.SHOPTALK 給其他店家共用
+ * 舊版    : r3.153.1  (2026-11-27)　r3.153.1：店家身上有任務時只顯示任務名牌，不再兩個名牌疊在一起
  * 舊版    : r3.151.2  (2026-11-27)　r3.151.2：說話動作當待機時放慢到每格約 0.6 秒
  * 舊版    : r3.151.1  (2026-11-27)　r3.151.1：沒有待機圖的路人（只有走路／說話兩組動作）停下時改播說話動作（取代比手勢）
  * 舊版    : r3.151.0  (2026-11-27)　r3.151.0：沒有待機圖的路人站著時呼吸加大並輕微晃動
@@ -163,6 +164,16 @@
     if (!n.li) n.li = 1 + Math.floor(Math.random() * pool.length); const t = pool[n.li++ % pool.length];   // 輪流出，不連續重複
     return t.split('｜').map(s => s[0] === '>' ? { who: '蒼真', text: s.slice(1) } : { who: n.name, text: s });
   }
+  /* r3.166.0：店家對話統一——先聊一句（台詞或招呼），選項＝店的功能／其他（委託）／再聊聊／離開；再聊聊後回到同一組選項 */
+  const ACT = { med: '買藥', tea: '點些吃的', smith: '鍛冶（強化／打造）', goods: '買點雜貨', curio: '看看珍品', warp: '前往副本／合戰', yg: '交換妖玉', peddler: '看看貨' };
+  function shopChat(n) { const ty = n.shop && G.SHOP ? G.SHOP.type(n.shop) : '', hi = D.SHOPHI[ty], L = talkLines(n);
+    if (hi && (L.length === 1 && /點點頭/.test(L[0].text) || Math.random() < 0.35)) return [{ who: n.name, text: hi[Math.floor(Math.random() * hi.length)] }]; return L; }
+  G.SHOPTALK = function (n, o) { o = o || {}; const later = f => [{ do: () => G.STORY.later(2, f) }], ty = n.shop && G.SHOP ? G.SHOP.type(n.shop) : '', chat = o.chat || (() => shopChat(n));
+    const acts = o.acts || (ty ? [{ label: ACT[ty] || '看看商品', run: () => ty === 'warp' && G.WARP ? G.WARP.open(n) : G.SHOP.open(n.shop, n) }] : []);
+    const menu = () => ({ choice: acts.map(a => ({ label: a.label, then: later(a.run) })).concat(o.extra || [], [{ label: '再聊聊', then: later(() => G.DLG.start(chat().concat([menu()]), o.done)) }, { label: '離開', then: [] }]) });
+    G.DLG.start((o.open || chat()).concat([menu()]), o.done); };
+  G.SHOPTALK.ACT = ACT;
+  AM.talk = n => interact(n);
   function interact(n) {
     if (n.onTalk) return n.onTalk(n);
     if (n.an) { const s = D.ANIMAL[n.u] || ['……']; AM.bubs = AM.bubs.filter(b => b.n !== n); bubble(n, s[Math.floor(Math.random() * s.length)], 90);
@@ -170,10 +181,7 @@
     if (AM.conv && (AM.conv.a === n || AM.conv.b === n)) endConv();
     n.chat = true; n.st = 'idle'; AM.bubs = AM.bubs.filter(b => b.n !== n);
     const done = () => { n.chat = false; n.st = 'idle'; n.t = 120; };
-    if (n.shop && G.SHOP) { const ty = G.SHOP.type(n.shop), hi = D.SHOPHI[ty] || ['歡迎。'];
-      G.DLG.start([{ who: n.name, text: hi[Math.floor(Math.random() * hi.length)] },
-        { choice: [{ label: ty === 'warp' ? '前往副本／合戰' : '看看商品', then: [{ do: () => ty === 'warp' && G.WARP ? G.WARP.open(n) : G.SHOP.open(n.shop, n) }] }, { label: '隨便聊聊', then: talkLines(n) }, { label: '離開', then: [] }] }], done);
-      return; }
+    if (n.shop && G.SHOP) { G.SHOPTALK(n, { done }); return; }   // r3.166.0：先閒聊，店的功能放在對話選項裡
     G.DLG.start(talkLines(n), done);
   }
   /* 主角附近可互動的路人：接在劇情互動點之後（劇情優先） */
