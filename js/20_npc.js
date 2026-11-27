@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 20_npc.js
- * Version : r3.151.0  (2026-11-27)　r3.151.0：沒有待機圖的路人（只有走路／說話兩組動作，如五平、阿德、平八、長者）站著時：呼吸加大並輕微晃動，每 3～8 秒比一次手勢（說話動作 1.3 秒）
+ * Version : r3.151.1  (2026-11-27)　r3.151.1：沒有待機圖的路人（只有走路／說話兩組動作）停下時改播說話動作（取代比手勢）
+ * 舊版    : r3.151.0  (2026-11-27)　r3.151.0：沒有待機圖的路人站著時呼吸加大並輕微晃動
  * 舊版    : r3.129.0  (2026-11-27)　r3.129.0：新兩岸城圖：時雨站位改到西口下方
  * 舊版    : r3.128.3  (2026-11-27)　r3.128.3：時雨初始位置改到西邊神社傳點下方
  * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：事件控制中的 NPC（st＝ev，救援士兵）不會被拉去閒聊
@@ -81,7 +82,7 @@
   /* ---------- 動作取格 ---------- */
   const has = (n, a) => !!n.un.act[a];
   const moveAct = n => MOVE.find(a => has(n, a)) || 'walk';
-  const idleAct = n => FLY[n.u] ? 'hover' : has(n, 'idle') ? 'idle' : null;
+  const idleAct = n => FLY[n.u] ? 'hover' : has(n, 'idle') ? 'idle' : has(n, 'dialogue') ? 'dialogue' : null;   // r3.151.1：沒有待機圖的人，停下時用說話動作
   const extras = n => Object.keys(n.un.act).filter(a => !NOEXTRA.includes(a));
   function play(n, a) { if (n.act !== a) { n.act = a; n.ms = 0; } }
   function frame(n) {
@@ -115,12 +116,11 @@
         if (dh < 120 && Math.abs(H.x - n.x) > 6) n.face = Math.sign(H.x - n.x); continue; }
       if (n.st === 'idle') { play(n, idleAct(n) || 'idle'); if (n.hold && n.pace && !n.chat && dh > 60 && --n.t <= 0) { const a = Math.random() * 6.283, r = 18 + Math.random() * 30, x = n.px + Math.cos(a) * r, y = n.py + Math.sin(a) * r * 0.4;   // r3.41.0：任務 NPC 在原地附近小走動
           if (SC.walkable(x, y)) { n.st = 'walk'; n.tx = x; n.ty = y; } n.t = 180 + Math.random() * 240; continue; }
-        if (!n.an && !has(n, 'idle') && has(n, 'dialogue') && (n.gt = (n.gt || 120 + Math.random() * 240) - 1) <= 0) { n.gt = 200 + Math.random() * 300; n.st = 'act'; play(n, 'dialogue'); continue; }   // r3.151.0：沒有待機圖的人偶爾比手勢
         if ((dh < 70 && !n.an) || n.hold) continue;
         if (--n.t <= 0) { const ex = extras(n), r = Math.random();
           if (ex.length && r < 0.3) { n.st = 'act'; play(n, ex[Math.floor(Math.random() * ex.length)]); }
           else { const t = pickTarget(n); if (t) { n.st = 'walk'; n.tx = t[0]; n.ty = t[1]; } else n.t = 60; } } }
-      else if (n.st === 'act') { const rec = n.un.act[n.act]; if (!rec || (!rec.loop && n.ms >= A.dur(rec)) || (rec.loop && n.ms > (n.act === 'dialogue' && !has(n, 'idle') ? 1300 : 2600))) { n.st = 'idle'; n.t = 80 + Math.random() * 240; } }
+      else if (n.st === 'act') { const rec = n.un.act[n.act]; if (!rec || (!rec.loop && n.ms >= A.dur(rec)) || (rec.loop && n.ms > 2600)) { n.st = 'idle'; n.t = 80 + Math.random() * 240; } }
       else if (n.st === 'walk' || n.st === 'meet') { const dx = n.tx - n.x, dy = n.ty - n.y, d = Math.hypot(dx, dy), sp = n.spd * SC.depth(n.y);
         play(n, moveAct(n)); if (Math.abs(dx) > 2) n.face = Math.sign(dx);
         if (d <= sp) { n.x = n.tx; n.y = n.ty; if (n.st === 'meet') { n.st = 'talk'; } else { n.st = 'idle'; n.t = 90 + Math.random() * 300; if (n.onArrive) n.onArrive(n); } }
