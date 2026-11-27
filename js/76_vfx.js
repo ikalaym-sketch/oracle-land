@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 76_vfx.js
- * Version : r3.49.0  (2026-11-18)  r3.49.0：範圍判定加大型妖怪身體寬度
+ * Version : r3.190.0  (2026-11-28)　追蹤飛行物：轉彎維持原速、越飛轉越急、目標死亡改追最近的（修正追蹤箭停在半空）
+ * 舊版    : r3.49.0  (2026-11-18)  r3.49.0：範圍判定加大型妖怪身體寬度
  * 舊版    : r3.37.0  (2026-11-17)  r3.37.0：箭與焙烙玉改用第二代素材（86_fx2）；r3.36.0：箭改用素材箭、尺寸縮小（0.62→0.42、重箭 0.95→0.6 身高）
  * 變更    : r3.34.0 新增。程式繪製特效元件（規格 VFX_SPEC v2.1 第一節），全部以世界座標＋景深縮放繪製。
  *           元件：ribbon 刀幕／thrust 突刺／ring 衝擊環／crack 裂地／spark 火花／smoke 煙／glow 光暈／wind 風切／
@@ -67,7 +68,9 @@
   VX.P = [];
   VX.shot = o => { const p = Object.assign({ k: 'bullet', z: HH() * 0.6 * S(o.y), vz: 0, pierce: 1, hits: [], t: 0, dist: 0, range: HH() * 8, col: '255,200,110' }, o); VX.P.push(p); return p; };
   function projStep() { for (const p of VX.P) { if (p.dead) continue; p.t++;
-      if (p.home && p.home.st !== 'dead' && p.home.hp > 0) { const dx = p.home.x - p.x, dy = (p.home.y - p.y), sp = Math.hypot(p.vx, p.vy), d = Math.hypot(dx, dy) || 1, k = p.turn || 0.12; p.vx += (dx / d * sp - p.vx) * k; p.vy += (dy / d * sp - p.vy) * k; }
+      if (p.home && (p.home.st === 'dead' || !(p.home.hp > 0))) { let best = null, bd = HH() * 6; for (const e of G.E) { if (e.st === 'dead' || e.delay > 0 || e.hp <= 0 || p.hits.includes(e)) continue; const d = Math.hypot(e.x - p.x, e.y - p.y); if (d < bd) { bd = d; best = e; } } if (best) p.home = best; }   /* r3.190.0：目標死了就改追最近的 */
+      if (p.home && p.home.st !== 'dead' && p.home.hp > 0) { const sp = p.sp0 || (p.sp0 = Math.hypot(p.vx, p.vy)) || 1, dx = p.home.x - p.x, dy = (p.home.y - p.y), d = Math.hypot(dx, dy) || 1, k = Math.min(0.6, (p.turn || 0.12) + p.t * 0.008); p.vx += (dx / d * sp - p.vx) * k; p.vy += (dy / d * sp - p.vy) * k;
+        const v = Math.hypot(p.vx, p.vy); if (v > 0.001) { p.vx *= sp / v; p.vy *= sp / v; } else { p.vx = dx / d * sp; p.vy = dy / d * sp; } }   /* r3.190.0：轉彎時維持原速（原本轉大彎會越轉越慢、停在半空），越飛轉得越急（不再繞圈） */
       p.x += p.vx; p.y += p.vy; p.dist += Math.hypot(p.vx, p.vy);
       if (p.grav) { p.vz += p.grav; p.z -= p.vz; if (p.z <= 0) { p.z = 0; p.dead = 1; if (p.onLand) p.onLand(p); continue; } }
       if (p.trail) { p.tr = p.tr || []; p.tr.push([p.x, p.y, p.z]); if (p.tr.length > p.trail) p.tr.shift(); }

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 116_yari_fx.js
- * Version : r3.188.0  (2026-11-28)　r3.188.0：針山兩排時後排錯開半格、略小
+ * Version : r3.190.0  (2026-11-28)　r3.190.0：KF.pierce 可指定顏色（給和弓用）
+ * 舊版    : r3.188.0  (2026-11-28)　r3.188.0：針山兩排時後排錯開半格、略小
  * 舊版    : r3.187.0  (2026-11-28)　r3.187.0：槍頭瘦小、黑邊變細、移動痕跡（光的拖痕、速度線、槍擺弧光）加大；飛行槍頭與巨槍換成同一套鋼色；不再參考角色動作圖
  * 舊版    : r3.186.0  (2026-11-28)　r3.186.0：突刺重做成「從手上的槍延伸出去的光槍」（鋼色、深色收邊、氣環、速度線、停頓再收）＋命中刺穿碎光；槍擺弧光同步改鋼色
  * 舊版    : r3.185.0  (2026-11-28)　r3.185.0：五招秘傳加演出層（暗場、運鏡、速度線、貫穿畫面的巨槍、地面十字、衝天光柱、透體槍尖）；所有槍氣加深色襯底，白天地面也看得清楚
@@ -67,14 +68,14 @@
     wedge(w * 1.35); ctx.fillStyle = gr(DKI, 0.4); ctx.fill(); wedge(w); ctx.fillStyle = gr(STL, 0.9); ctx.fill(); wedge(w * 0.36); ctx.fillStyle = gr(WHT, 1); ctx.fill(); }
   function lance(ctx, tx, al, HL, HW, x0, tw) { if (al <= 0.01 || tx - x0 < 2) return; spTrail(ctx, x0, tx - HL * 0.9, HW * (tw || 1.5), al, tx + HL * 0.22); spHead(ctx, tx, al, HL, HW); }
   /* 刺穿：背後噴出的錐形碎光＋碎片，正面一圈被擠開的氣 */
-  function pierce(x, y, f, ang, big) { const k = KF().K(y), N = 8, S2 = []; for (let i = 0; i < N; i++) S2.push([rnd(-0.38, 0.38), rnd(0.5, 1.25), rnd(0.6, 1.1)]);
+  function pierce(x, y, f, ang, big, col) { const DKI = col ? col[0] : '22,26,58', STL = col ? col[1] : '168,196,236', WHT = col ? col[2] : '255,255,255', k = KF().K(y), N = 8, S2 = []; for (let i = 0; i < N; i++) S2.push([rnd(-0.38, 0.38), rnd(0.5, 1.25), rnd(0.6, 1.1)]);
     KF().add(10, 'o', (ctx, u) => { const q = cl(u / 10, 0, 1), e = eo5(q), al = 1 - ei2(q); ctx.translate(x, y); ctx.scale(f, 1); ctx.rotate(ang);
       if (u < 5) { const L = (0.45 + 0.75 * e) * k * big, w = 0.22 * k * big, a = 1 - u / 5; const gr = ctx.createLinearGradient(0, 0, L, 0); gr.addColorStop(0, rgba(WHT, 0.95 * a)); gr.addColorStop(0.45, rgba(STL, 0.65 * a)); gr.addColorStop(1, rgba(STL, 0)); ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(-0.06 * k, 0); ctx.lineTo(L, -w); ctx.lineTo(L, w); ctx.closePath(); ctx.fill(); }
       for (const p of S2) { const d = p[1] * k * big * e, L = 0.2 * k * big * p[2] * (1 - q * 0.6), w = Math.max(0.8, L * 0.1); ctx.save(); ctx.rotate(p[0]); ctx.translate(d, 0);   /* 細長碎光：沿噴出方向 */
         ctx.fillStyle = rgba(DKI, 0.6 * al); ctx.beginPath(); ctx.moveTo(L * 1.15, 0); ctx.lineTo(0, -w * 1.9); ctx.lineTo(-L * 0.5, 0); ctx.lineTo(0, w * 1.9); ctx.closePath(); ctx.fill();
         ctx.fillStyle = rgba(WHT, al); ctx.beginPath(); ctx.moveTo(L, 0); ctx.lineTo(0, -w); ctx.lineTo(-L * 0.4, 0); ctx.lineTo(0, w); ctx.closePath(); ctx.fill(); ctx.restore(); }
     });
-    KF().use('lance', () => KF().motes(x, y + 0.02 * k, 0, 4, { ang: f > 0 ? 0 : Math.PI, spread: 0.5, sp: 2.2, life: 14 })); }
+    KF().use(col ? 'holy' : 'lance', () => KF().motes(x, y + 0.02 * k, 0, 4, { ang: f > 0 ? 0 : Math.PI, spread: 0.5, sp: 2.2, life: 14 })); }
   function spear(o) { const f = o.face || o.f || 1, y = o.y, k = KF().K(y), big = o.big || 1, dur = Math.max(2, o.ext || o.dur || 2), quick = (o.life || 10) <= 7, hold = o.hold !== undefined ? o.hold + 1 : 3, rel = quick ? 3 : 6, life = dur + hold + rel;
     const reach = (o.len || 1.8) * k * 0.95, HL = 0.4 * k * big, HW = 0.036 * k * big * (o.wd || 1), cy = o.cy || 0.55, ang = o.ang || 0, x0 = 0.08 * reach, hx = o.x + f * 0.1 * k, heavy = big >= 1.1 || !!o.shock, hy = y - cy * k, SW0 = 0.05 * k * big;
     KF().add(life + 1, 'o', (ctx, u) => { let tx, al = 1, xs = x0;

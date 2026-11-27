@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.154.0  (2026-11-27)　r3.154.0：夥伴特效（spr）可加發光層 glow
+ * Version : r3.190.0  (2026-11-28)　追蹤飛行物轉彎維持原速
+ * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：夥伴特效（spr）可加發光層 glow
  * 舊版    : r3.151.0  (2026-11-27)　r3.151.0：劇情人物靜態圖站著時加呼吸起伏
  * 舊版    : r3.148.0  (2026-11-27)　r3.148.0：衝刺 Lv5 穿過的敵人停頓 0.5 秒
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：「此鍵尚未設定」提示加前往按鈕
@@ -229,7 +230,7 @@ G.ONI_RATIO = 1.38;
     if (!G.PROJ.length) return;
     for (const p of G.PROJ) {
       if (p.home) { let best = null, bd = 1e9; for (const e of G.E) { if (e.st === 'dead' || e.delay > 0 || p.hits.includes(e)) continue; const d = Math.hypot(e.x - p.x, e.y - p.y); if (d < bd) { bd = d; best = e; } }
-        if (best) { const sp = Math.hypot(p.vx, p.vy), dx = best.x - p.x, dy = best.y - p.y, d = Math.hypot(dx, dy) || 1; p.vx += (dx / d * sp - p.vx) * 0.15; p.vy += (dy / d * sp - p.vy) * 0.15; p.face = Math.sign(p.vx) || p.face; } }
+        if (best) { const sp = p.sp0 || (p.sp0 = Math.hypot(p.vx, p.vy)) || 1, dx = best.x - p.x, dy = best.y - p.y, d = Math.hypot(dx, dy) || 1; p.vx += (dx / d * sp - p.vx) * 0.15; p.vy += (dy / d * sp - p.vy) * 0.15; const v = Math.hypot(p.vx, p.vy); if (v > 0.001) { p.vx *= sp / v; p.vy *= sp / v; } p.face = Math.sign(p.vx) || p.face; } }   /* r3.190.0：轉彎維持原速 */
       p.x += p.vx; p.y += p.vy; p.left -= Math.hypot(p.vx, p.vy);
       if (p.lob) p.arc = Math.sin(Math.max(0, 1 - p.left / p.d0) * Math.PI) * 40;
       if (p.x < 0 || p.x > SC.def.w) p.left = 0;
