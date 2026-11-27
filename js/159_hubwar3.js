@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 159_hubwar3.js
- * Version : r3.162.0  (2026-11-27)　r3.162.0：幻影血量＝本體、75%／25% 藏進影子召一波強妖（打完才打得到）、援軍打幻影再降；鬼女支線完成＝鬼族友好、孩子台詞、鬼女路過台詞 6 句
+ * Version : r3.163.0  (2026-11-27)　r3.163.0：城被封期間，潮汐祭（找花澄）、面具、亡者的口信改在神社避難所；黃泉的亡者回報改在神社；第 11 章「黑暗的城」改名「避難所的夜」
+ * 舊版    : r3.162.0  (2026-11-27)　r3.162.0：幻影血量＝本體、75%／25% 藏進影子召一波強妖（打完才打得到）、援軍打幻影再降；鬼女支線完成＝鬼族友好、孩子台詞、鬼女路過台詞 6 句
  * 舊版    : r3.161.0  (2026-11-27)
  * 變更    : r3.161.0 新增。兩岸城攻防篇 第三批（劇本 2026-11-27_1840_HUB_WAR_SCRIPT_v1 第十一、十二、十六、十七節）：
  *           ・W8 奪回兩岸城：出陣前（本陣，深夜）→ 城門前廣場被妖氣牆圍住（四個路口封住）→ 5 波強妖（每波有援軍喊話；
@@ -167,5 +168,16 @@
         ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(e.x, e.y, r * 0.1, e.x, e.y, r * 1.3); g.addColorStop(0, `rgba(130,40,190,${0.45 * pu})`); g.addColorStop(1, 'rgba(50,10,80,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(e.x, e.y, r * 1.3, r * 0.45, 0, 0, 6.283); ctx.fill(); ctx.restore(); }
       return d0.apply(this, arguments); }; })();
   setTimeout(() => G.ASSET && G.ASSET.img && G.ASSET.img('hw_wall_miasma', 'a/war/wall_miasma.webp').catch(() => 0), 4500);
+  /* ======================= 六、一致性修正（2026-11-27_2045_STORY_AUDIT_v1 A 級） ======================= */
+  /* 城被封期間（封鎖～城內爭奪），原本要「回兩岸城找人」的第 10～11 章任務改在神社避難所 */
+  const WARP = () => { const p = HW.phase(); return p === 'sealed' || p === 'w6' || p === 'base' || p === 'battle'; };
+  function dyn(o) { if (!o || o._dyn) return; o._dyn = 1; const m0 = o.map; Object.defineProperty(o, 'map', { get: () => (m0 === ID && WARP() ? 'hub_shrine' : m0), set() {}, configurable: true, enumerable: true }); }
+  function preLines(o, pre) { if (!o || o._pre) return; o._pre = 1; let v = o.lines; Object.defineProperty(o, 'lines', { get: () => () => { const L = typeof v === 'function' ? v() : (v || []); return WARP() ? [pre].concat(L) : L; }, set(x) { v = x; }, configurable: true, enumerable: true }); }
+  function fixes() { const B = Q.by;
+    if (B.c10_b_fest) { const s = B.c10_b_fest.steps[0]; dyn(s); preLines(s, nar('（神社的避難所裡，花澄在帳篷之間練舞步。城裡的舞台燒了。）')); }
+    for (const id of ['c10_s2_b', 'c11_s2_b']) { const q = B[id]; if (!q) continue; dyn(q.giver); dyn(q.after2); q.steps.forEach(dyn); preLines(q.giver, nar('（城被封住了。委託人跟著大家逃到了神社的避難所。）')); }
+    if (B.c11_s2_a && B.c11_s2_a.steps[1]) B.c11_s2_a.steps[1].map = 'hub_shrine';   /* 冬乃逃難到神社，不在黃泉石室回報 */
+    if (B.c11_m1) B.c11_m1.title = '避難所的夜'; }
+  { const bt0 = G.ASSET.boot.bind(G.ASSET); G.ASSET.boot = () => bt0().then(r => { try { fixes(); } catch (e) { console.warn('hwfix', e); } return r; }); }
   HW.W8 = { w8a, w8b, w9, startBoss, readNames, winBoss, stopAll, spawnRes };
 })();

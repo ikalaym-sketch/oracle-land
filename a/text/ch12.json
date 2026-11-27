@@ -222,14 +222,30 @@
           "who": "河童長者",
           "text": "……哼。看在河的份上，幫你一次。",
           "cond": {
-            "noflag": "kappaFriend"
+            "noflag": "kappaFriend",
+            "notdone": "hw7"
           }
         },
         {
           "who": "河童長者",
           "text": "只這一次。往後的事，往後再說。",
           "cond": {
-            "noflag": "kappaFriend"
+            "noflag": "kappaFriend",
+            "notdone": "hw7"
+          }
+        },
+        {
+          "who": "河童長者",
+          "text": "河童大將在城裡打過一仗了。回來的時候，皿都裂了一半，還在笑。",
+          "cond": {
+            "done": "hw7"
+          }
+        },
+        {
+          "who": "河童長者",
+          "text": "……河童一族，不會在這種時候縮回河裡。",
+          "cond": {
+            "done": "hw7"
           }
         },
         {
@@ -463,7 +479,15 @@
         },
         {
           "who": "鬼鍛冶權六",
-          "text": "鬼族……還在猶豫。我一個人跟你去。",
+          "text": "城裡那一仗，鬼族的刀跟人類的槍站在同一條街上。這一次，不用誰再猶豫。",
+          "cond": {
+            "flag": "oniFriend",
+            "done": "hw7"
+          }
+        },
+        {
+          "who": "鬼鍛冶權六",
+          "text": "鬼族……還在猶豫。城裡那一仗，他們只敢遠遠看著。我一個人跟你去。",
           "cond": {
             "noflag": "oniFriend"
           }
