@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.190.0  (2026-11-28)　追蹤飛行物轉彎維持原速
+ * Version : r3.195.0  (2026-11-28)　會心傷害數字重做（大字、橘紅金黃漸層、斬痕、驚嘆號），跟一般數字拉開
+ * 舊版    : r3.190.0  (2026-11-28)　追蹤飛行物轉彎維持原速
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：夥伴特效（spr）可加發光層 glow
  * 舊版    : r3.151.0  (2026-11-27)　r3.151.0：劇情人物靜態圖站著時加呼吸起伏
  * 舊版    : r3.148.0  (2026-11-27)　r3.148.0：衝刺 Lv5 穿過的敵人停頓 0.5 秒
@@ -456,10 +457,18 @@ G.ONI_RATIO = 1.38;
       else if (f.k === 'bite') { ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = 2.5; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(f.x - 10, f.y + i * 6); ctx.lineTo(f.x + 10, f.y + i * 6 - 4); ctx.stroke(); } }
       else if (f.k === 'wind') { ctx.strokeStyle = `rgba(220,240,235,${a * 0.5})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.quadraticCurveTo(f.x + 40, f.y - 8, f.x + 90, f.y); ctx.stroke(); f.x += f.vx; }
     }
-    for (const n of G.NUMS) { const a = 1 - n.t / 50, pt = n.pop != null ? G.t - n.pop : n.t, pp = Math.max(0, 1 - pt / 8), s = 1 / Z * (1 + (n.crit ? 0.6 : 0.35) * pp), by = n.crit ? -Math.sin(Math.min(1, n.t / 10) * Math.PI) * 6 : 0;   // r3.145.0：出現／合併時彈一下，暴擊多跳一下
-      ctx.save(); ctx.translate(n.x, n.y + by); ctx.scale(s, s); ctx.globalAlpha = a;
-      ctx.font = `900 ${n.crit ? 28 : n.gold ? 13 : 19}px ${G.FONT_S}`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(20,10,8,.85)'; const nv = G.fmtN(n.v); ctx.strokeText(nv, 0, 0);
-      ctx.fillStyle = n.gold ? '#f3d36a' : n.hurt ? '#ff8a7a' : n.crit ? '#ffd76a' : '#fff4e0'; ctx.fillText(nv, 0, 0); ctx.restore(); }
+    /* r3.195.0：會心數字跟一般數字拉開——一般＝米白小字直直往上；會心＝大字、橘紅到金黃的漸層、深紅描邊、略斜、
+     * 出現時從 1.9 倍「砸」下來回彈，背後一道橫向的金色斬痕與碎光，尾端加「！」；停留久一點再淡出 */
+    for (const n of G.NUMS) { const cr = !!n.crit && !n.hurt && !n.gold, a = cr ? Math.min(1, (50 - n.t) / 12) : 1 - n.t / 50, pt = n.pop != null ? G.t - n.pop : n.t, pp = Math.max(0, 1 - pt / 8);
+      const s = 1 / Z * (cr ? (pt < 5 ? 1.9 - 0.9 * (pt / 5) : 1 + 0.12 * Math.max(0, 1 - (pt - 5) / 5)) : 1 + 0.35 * pp), by = cr ? n.t * 0.35 : 0;   /* 會心上升得慢（留在原地讓人看清楚） */
+      ctx.save(); ctx.translate(n.x, n.y + by); ctx.scale(s, s); ctx.globalAlpha = Math.max(0, a); ctx.textAlign = 'center'; const nv = G.fmtN(n.v) + (cr ? '！' : '');
+      if (cr) { ctx.rotate(-0.1); ctx.font = `900 30px ${G.FONT_S}`; const w = ctx.measureText(nv).width;
+        if (pt < 10) { const q = pt / 10, L = (w * 0.5 + 26) * (0.5 + 0.5 * Math.min(1, pt / 3)), g = ctx.createLinearGradient(-L, 0, L, 0); g.addColorStop(0, 'rgba(255,210,110,0)'); g.addColorStop(0.5, 'rgba(255,236,170,' + 0.95 * (1 - q) + ')'); g.addColorStop(1, 'rgba(255,210,110,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-L, -11); ctx.quadraticCurveTo(0, -11 - 7 * (1 - q), L, -11); ctx.quadraticCurveTo(0, -11 + 7 * (1 - q), -L, -11); ctx.fill();
+          ctx.fillStyle = 'rgba(255,240,190,' + (1 - q) + ')'; for (let i = 0; i < 6; i++) { const an = i * 1.05 + (n.x % 7), d = 18 + q * 26; ctx.fillRect(Math.cos(an) * d * 1.5, -11 + Math.sin(an) * d * 0.7, 2.5, 2.5); } }
+        ctx.lineJoin = 'round'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(70,10,6,.92)'; ctx.strokeText(nv, 0, 0); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,240,200,.9)'; ctx.strokeText(nv, 0, 0);
+        const g2 = ctx.createLinearGradient(0, -26, 0, 2); g2.addColorStop(0, '#fff2b0'); g2.addColorStop(0.45, '#ffc23a'); g2.addColorStop(1, '#ff5a2a'); ctx.fillStyle = g2; ctx.fillText(nv, 0, 0); }
+      else { ctx.font = `900 ${n.gold ? 13 : 18}px ${G.FONT_S}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(20,10,8,.85)'; ctx.strokeText(nv, 0, 0); ctx.fillStyle = n.gold ? '#f3d36a' : n.hurt ? '#ff8a7a' : '#fff4e0'; ctx.fillText(nv, 0, 0); }
+      ctx.restore(); }
   };
 
   /* ---------- 小工具 ---------- */

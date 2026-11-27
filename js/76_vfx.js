@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 76_vfx.js
- * Version : r3.190.0  (2026-11-28)　追蹤飛行物：轉彎維持原速、越飛轉越急、目標死亡改追最近的（修正追蹤箭停在半空）
+ * Version : r3.195.0  (2026-11-28)　擴散環（VX.ring）改柔邊衝擊波
+ * 舊版    : r3.190.0  (2026-11-28)　追蹤飛行物：轉彎維持原速、越飛轉越急、目標死亡改追最近的（修正追蹤箭停在半空）
  * 舊版    : r3.49.0  (2026-11-18)  r3.49.0：範圍判定加大型妖怪身體寬度
  * 舊版    : r3.37.0  (2026-11-17)  r3.37.0：箭與焙烙玉改用第二代素材（86_fx2）；r3.36.0：箭改用素材箭、尺寸縮小（0.62→0.42、重箭 0.95→0.6 身高）
  * 變更    : r3.34.0 新增。程式繪製特效元件（規格 VFX_SPEC v2.1 第一節），全部以世界座標＋景深縮放繪製。
@@ -127,9 +128,10 @@
       const rg = ctx.createRadialGradient(L, 0, 0, L, 0, w * 2.2); rg.addColorStop(0, rgba(o.tip || o.edge, a)); rg.addColorStop(1, rgba(o.col, 0)); ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(L, 0, w * 2.2, 0, TAU); ctx.fill();
       ctx.strokeStyle = rgba(o.edge, 0.7 * a); ctx.lineWidth = 1.2 * s; for (let i = 0; i < o.lines; i++) { const yy = (i - (o.lines - 1) / 2) * w * 1.3, x0 = L * (0.15 + 0.2 * ((i * 37) % 3) / 3) + q * L * 0.3; ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x0 + L * 0.35, yy); ctx.stroke(); }
       ctx.restore(); },
-    ring(o) { const s = S(o.y), q = o.t / o.life, e = 1 - Math.pow(1 - q, 2.2), r = (o.r0 + (o.r1 - o.r0) * e) * HH() * s; ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = rgba(o.col, (1 - q) * 0.9); ctx.lineWidth = Math.max(1, o.lw * HH() * s * (1 - q * 0.7)); ctx.beginPath(); ctx.ellipse(o.x, o.y - (o.z || 0) * HH() * s, r, r * (o.sq || 0.38), 0, 0, TAU); ctx.stroke();
-      ctx.strokeStyle = rgba(o.col, (1 - q) * 0.25); ctx.lineWidth = Math.max(1, o.lw * HH() * s * 3 * (1 - q)); ctx.stroke(); ctx.restore(); },
+    ring(o) { const s = S(o.y), q = o.t / o.life, e = 1 - Math.pow(1 - q, 2.2), r = Math.max(2, (o.r0 + (o.r1 - o.r0) * e) * HH() * s), a = 1 - q, bw = Math.min(0.5, Math.max(0.16, (o.lw || 0.1) * 2.2 * HH() * s / r + 0.12));   /* r3.195.0：擴散環改成柔邊衝擊波（外緣亮、往內淡出、底下一層淡暗影），不再是等寬實線橢圓 */
+      ctx.save(); ctx.translate(o.x, o.y - (o.z || 0) * HH() * s); ctx.scale(1, o.sq || 0.38);
+      const band = (col, al, i0) => { const g = ctx.createRadialGradient(0, 0, r * Math.max(0, 1 - bw * i0), 0, 0, r); g.addColorStop(0, rgba(col, 0)); g.addColorStop(0.7, rgba(col, al * 0.35)); g.addColorStop(0.93, rgba(col, al)); g.addColorStop(1, rgba(col, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill(); };
+      band('24,16,12', 0.22 * a, 1.3); ctx.globalCompositeOperation = 'lighter'; band(o.col, 0.8 * a, 1); band('255,255,255', 0.35 * a * a, 0.45); ctx.restore(); },
     crack(o) { const s = S(o.y), q = o.t / o.life, grow = clamp(o.t / 6, 0, 1), a = q < 0.6 ? 1 : 1 - (q - 0.6) / 0.4; let sd = o.seed; const R = () => { sd = (sd * 9301 + 49297) % 233280; return sd / 233280; };
       ctx.save(); ctx.lineCap = 'round';
       for (let i = 0; i < o.n; i++) { let ang = (i / o.n) * TAU + R() * 0.5, x = o.x, y = o.y; const L = o.r * HH() * s * (0.5 + R() * 0.5) * grow, segs = 4;

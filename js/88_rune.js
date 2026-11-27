@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 88_rune.js
- * Version : r3.166.0  (2026-11-27)　r3.166.0：冰緩狀態不再畫整片白色橢圓 → 身邊飄冰晶＋腳下淡藍霜圈
+ * Version : r3.195.0  (2026-11-28)　r3.195.0：霜結腳下的藍色實線圈改成霜霧
+ * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：冰緩狀態不再畫整片白色橢圓 → 身邊飄冰晶＋腳下淡藍霜圈
  * 舊版    : r3.107.2  (2026-11-26)　r3.107.2：吸魂特效改成「被吸過來」：12 縷柔光粒子錯開、螺旋加速吸進胸口＋拖尾，取代一整顆圓球
  * 舊版    : r3.94.0  (2026-11-26)　r3.94.0：觸發改每次出手 1 次＋內部冷卻（雷鳴 1 秒、燃燒／冰霜同目標 0.5 秒）
  * 舊版    : r3.82.0  (2026-11-25)　r3.82.0：燃燒畫法改走 G.FLAMES（117 換成火星）　r3.63.0：強化 +20 的裝備靈紋 +1 級　r3.59.0：r3.59.0：燃燒改成身上火苗（原本是地面火圈）　r3.57.0：RUNE.lines 給物品卡折疊區
@@ -127,7 +128,7 @@
     ctx.restore(); }
   G.FLAMES = flames;
   function frostMotes(e, k, n) { const sc = S(e.y), h = HH() * (e.ratio || 1) * sc, t = G.t, seed = e._fs || (e._fs = Math.random()), m = Math.min(5, 2 + n);
-    ctx.save(); ctx.strokeStyle = 'rgba(120,190,255,.55)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(e.x, e.y, h * 0.32 * k, h * 0.09 * k, 0, 0, TAU); ctx.stroke();
+    ctx.save(); { const rx = h * 0.42 * k; ctx.save(); ctx.translate(e.x, e.y); ctx.scale(1, 0.3); const gg = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); gg.addColorStop(0, 'rgba(225,245,255,' + (0.3 + 0.08 * n) + ')'); gg.addColorStop(0.6, 'rgba(170,220,255,' + (0.16 + 0.05 * n) + ')'); gg.addColorStop(1, 'rgba(170,220,255,0)'); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, rx, 0, TAU); ctx.fill(); ctx.restore(); }   /* r3.195.0：腳下不畫藍色實線圈，改一小片霜霧（層數越多越濃） */
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < m; i++) { const a = t * 0.035 + i * TAU / m + seed * 6, ph = (t * 0.012 + i * 0.29 + seed) % 1, x = e.x + Math.cos(a) * h * 0.28 * k, y = e.y - h * (0.15 + 0.7 * ph), r = (2.2 + (i % 2)) * Math.max(0.7, sc), al = Math.sin(ph * Math.PI) * 0.9;
       ctx.strokeStyle = 'rgba(150,215,255,' + al + ')'; ctx.lineWidth = 1; ctx.beginPath();

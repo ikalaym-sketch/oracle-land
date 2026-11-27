@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 06_story_ch1.js
- * Version : r3.166.0  (2026-11-27)  r3.166.0：鐵心改成先聊天，「鍛冶」放在對話選項
+ * Version : r3.195.0  (2026-11-28)　互動標記：支線改米白、地面柔邊光暈（不畫實線圈）、光柱柔邊
+ * 舊版    : r3.166.0  (2026-11-27)  r3.166.0：鐵心改成先聊天，「鍛冶」放在對話選項
  * 舊版    : r3.39.0  (2026-11-17)  r3.39.0：打完鎌鼬不再直接對話／章節完成；改設 kamaBeat，由 87 的戰後定點（巢邊三兄弟）走近觸發 kamaWin
  * 舊版    : r3.18.2  （r3.18.2：神社升級改找小雪奉納）
  * 舊版    : r3.18.1  （鐵心開放鍛冶：強化／勾玉／打造）
@@ -329,10 +330,9 @@ function again(who) { const L = AGAIN[who]; const i = AGAIN_I[who] = ((AGAIN_I[w
     /* 互動標記：地面光圈＋光柱＋名牌（名牌固定螢幕大小）；主線＝金色，支線＝淡青 */
     drawMarks() { const ctx = G.ctx, Z = G.SC.zoom();
       for (const m of marks) { if (!m.when() || (G.QST && G.QST.busy && G.QST.busy(N(m.node)[0] + (m.dx || 0), N(m.node)[1]))) continue; const [nx, y] = N(m.node), x = nx + (m.dx || 0), a = 0.55 + 0.45 * Math.sin(G.t * 0.1), near = G.UI.near === m;
-        const col = m.main ? '255,214,120' : '190,230,240', hgt = G.HERO_H * 1.35;
-        ctx.fillStyle = `rgba(${col},${0.16 + 0.2 * a})`; ctx.beginPath(); ctx.ellipse(x, y, 20 + a * 6, 6 + a * 2, 0, 0, 6.283); ctx.fill();
-        ctx.strokeStyle = `rgba(${col},${0.5 + 0.4 * a})`; ctx.lineWidth = 1.5 / Z * 2; ctx.beginPath(); ctx.ellipse(x, y, 24, 7.5, 0, 0, 6.283); ctx.stroke();
-        const g = ctx.createLinearGradient(0, y - hgt, 0, y); g.addColorStop(0, `rgba(${col},0)`); g.addColorStop(1, `rgba(${col},${0.22 + 0.18 * a})`); ctx.fillStyle = g; ctx.fillRect(x - 7, y - hgt, 14, hgt);
+        const col = m.main ? '255,214,120' : '236,226,206', hgt = G.HERO_H * 1.35;   /* r3.195.0：支線由淡青改米白；地面不再畫實線圈，改柔邊光暈；光柱左右淡出 */
+        { const rx = 26 + a * 5; ctx.save(); ctx.translate(x, y); ctx.scale(1, 0.3); const gg = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); gg.addColorStop(0, `rgba(${col},${0.3 + 0.2 * a})`); gg.addColorStop(0.6, `rgba(${col},${0.14 + 0.1 * a})`); gg.addColorStop(1, `rgba(${col},0)`); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, rx, 0, 6.283); ctx.fill(); ctx.restore(); }
+        { const al = 0.2 + 0.16 * a; for (let i = 0; i < 4; i++) { const w = 3 + i * 3, g = ctx.createLinearGradient(0, y - hgt, 0, y); g.addColorStop(0, `rgba(${col},0)`); g.addColorStop(1, `rgba(${col},${al * (1 - i * 0.22) * 0.5})`); ctx.fillStyle = g; ctx.fillRect(x - w, y - hgt, w * 2, hgt); } }
         const ly = y - G.HERO_H * 1.15 - Math.sin(G.t * 0.08) * 3; ctx.save(); ctx.translate(x, ly); ctx.scale(1 / Z, 1 / Z);
         const lab = (m.kind === 'look' ? '◇ ' : '◆ ') + m.label, fs = 12 * G.FS(); ctx.font = `900 ${fs}px ${G.FONT_S}`; const w = ctx.measureText(lab).width + 16;
         ctx.fillStyle = near ? 'rgba(150,92,36,.95)' : 'rgba(12,8,10,.78)'; G.rr(-w / 2, -fs, w, fs * 2, fs); ctx.fill(); ctx.strokeStyle = `rgba(${col},.9)`; ctx.lineWidth = 1; G.rr(-w / 2 + .5, -fs + .5, w - 1, fs * 2 - 1, fs); ctx.stroke();
