@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 112_nodachi.js
- * Version : r3.181.0  (2026-11-28)　r3.181.0：五招秘傳演出重做（落日、躍空急降、地裂線、岩柱、全黑蓄力、一文字瞬斬）＋運鏡；奧義天地一刀蓄力演出
+ * Version : r3.182.0  (2026-11-28)　r3.182.0：長刃離陣補特效（拖刀火星、焦痕、反手月牙刀氣）；出刀起點亮光與拖光
+ * 舊版    : r3.181.0  (2026-11-28)　r3.181.0：五招秘傳演出重做（落日、躍空急降、地裂線、岩柱、全黑蓄力、一文字瞬斬）＋運鏡；奧義天地一刀蓄力演出
  * 舊版    : r3.77.0  (2026-11-24)
  * 變更    : r3.77.0 擊退放大只套收招／技／秘傳／普攻，起手與連接招不放大（修正秘傳「天斷」第 2 段打不到、湊不出來）。
  *           r3.76.0 天地一刀的天裂降到 4.6 身高以內（原本在畫面外）。
@@ -24,7 +25,10 @@
   if (!MV2 || !VX) return;
   const KF = () => G.KF, E = fn => G.KF.use('ember', fn), NC = '255,185,100';
   const ST = c => (G.KT && G.KT.ST ? G.KT.ST(c) : Math.round(c.a.T * 0.5)), LV = c => c.a.mvx.lv || 1, stop = n => { G.hitstop = Math.max(G.hitstop || 0, n); }, shake = n => { SC.shake = Math.max(SC.shake || 0, n); };
-  const sm = (c, o) => E(() => KF().smear(Object.assign({ x: c.x, y: c.y, f: c.f, cy: 0.55, r: 1.45, sq: 0.6, rot: 0, a0: -2.2, a1: 0.95, w: 0.65, dur: 3, life: 26, tier: 1 }, o)));   // 慢－快－慢：掃過 3 格、殘留久
+  /* r3.182.0：出刀前半拍，刀的起點先亮一下並留一小段拖光（重量感） */
+  const pre = (c, o) => E(() => { const k = c.hh, a = o.a0 === undefined ? -2.2 : o.a0, r = (o.r || 1.45) * k, x = (o.x === undefined ? c.x : o.x) + Math.cos(a) * r * c.f, z = (o.cy === undefined ? 0.55 : o.cy) - Math.sin(a) * (o.r || 1.45) * (o.sq === undefined ? 0.6 : o.sq); KF().glint(x, c.y, Math.max(0.1, z), 0.3, 6); KF().embers(x, c.y, Math.max(0.1, z), 2, { up: 0.3, sp: 0.3, life: 12 }); });
+  const sm = (c, o) => { pre(c, o || {}); return sm0(c, o); };
+  const sm0 = (c, o) => E(() => KF().smear(Object.assign({ x: c.x, y: c.y, f: c.f, cy: 0.55, r: 1.45, sq: 0.6, rot: 0, a0: -2.2, a1: 0.95, w: 0.65, dur: 3, life: 26, tier: 1 }, o)));   // 慢－快－慢：掃過 3 格、殘留久
   const smash = (x, y, pw) => { VX.dim(5, 0.55); if (G.CAM && G.CAM.vis) G.CAM.vis *= 1 - 0.03 * pw; shake(6 + pw * 2); stop(6 + pw * 3); };   // 衝擊格：背景瞬間壓暗、鏡頭推近、重停頓
   const hit = (c, o) => c.hit(Object.assign({ shape: 'sector', r: 1.5, arc: 2.4, m: 1.0, lv: 'mid', kind: 'cut', col: NC }, o)) || [];
   const lift = (e, h) => G.KT && G.KT.lift && G.KT.lift(e, h);
@@ -59,6 +63,12 @@
           c.hit({ shape: 'line', x: x0, y: y0, len: D + 0.4, w: 0.45, m: 1.6, lv: 'heavy', kind: 'cut', col: NC }); };
         c.later(60, go); if (lv >= 5) c.later(76, go); } }
   };
+  /* r3.182.0 長刃離陣：原本幾乎沒有特效 → 大斬後拖刀後撤（刀尖在地上拉出火星與焦痕），落地時反手甩出一道月牙刀氣（Lv5 落地震波照舊） */
+  DU.special_leave = { run(c, t) { const lv = LV(c), D = lv >= 3 ? 1.4 : 1.0, F = Math.max(4, Math.round(c.a.T * 0.2)), k = c.hh;
+      if (t === F) { sm(c, { a0: -2.3, a1: 1.1, sq: 0.7, rot: -0.3, r: 1.6, w: 0.6, tier: 1 }); hit(c, { m: 1.4 }); shake(3); }
+      if (t > F && t <= F + 12) { c.move(-D / 12, 0); H.hop = Math.sin((t - F) / 12 * Math.PI) * 0.3 * k; E(() => { KF().embers(c.x + c.f * 0.9 * k, c.y, 0.02, 2, { up: 0.9, sp: 0.5, life: 18 }); if (t % 3 === 0) KF().scar && KF().scar(c.x + c.f * 0.9 * k, c.y, c.f, 1); }); }
+      if (t === F + 13) { H.hop = 0; E(() => KF().puff(c.x, c.y, 0.8)); sm(c, { a0: 1.0, a1: -1.6, sq: 0.5, r: 1.4, w: 0.45 }); flyMoon(c, 0, false, 1.0);
+        if (lv >= 5) { E(() => { KF().puff(c.x, c.y, 1.6); KF().rocks(c.x, c.y, 6, 1.4); }); c.hit({ shape: 'circle', r: 1.2, m: 0.8, lv: 'heavy', kind: 'blunt', kb: 1.5, col: NC }); shake(5); } } } };
   /* ---------- 秘傳（三段演出；機制、傷害同原版） ---------- */
   const DH = {
     n_tendan(c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh, m = c.a.mvx;
