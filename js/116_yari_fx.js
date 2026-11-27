@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 116_yari_fx.js
- * Version : r3.80.0  (2026-11-25)
+ * Version : r3.185.0  (2026-11-28)　r3.185.0：五招秘傳加演出層（暗場、運鏡、速度線、貫穿畫面的巨槍、地面十字、衝天光柱、透體槍尖）；所有槍氣加深色襯底，白天地面也看得清楚
+ * 舊版    : r3.80.0  (2026-11-25)
  * 變更    : r3.80.0 長槍全部招式／技／特技／奧義／秘傳改用槍頭槍氣＋槍擺（重新命名）：身法 12 式、技 4、特技 4、奧義天沼矛、秘傳 5（蜻蛉切／日本號／御手杵／十文字／人間無骨）。
  *                   新元件：flyQi 飛行槍氣（可帶槍柄）、heldQi 衝刺跟手槍氣、riseTip 地面竄出槍頭、wings 蜻蛉翅、cross 十字、guardFan 槍陣、pullQi 拉回；swing 加 sq（水平迴旋）且殘光只留一段（不畫整圈橢圓）。
  *           r3.79.3 普攻改：短刺／長刺／上挑（槍擺由下往上）／三連刺（三道槍頭槍氣快速連出）；槍頭槍氣加流線（刃肩往後流出的細氣）。
@@ -39,11 +40,14 @@
   /* 針狀槍氣：前端瞬間射出，尾端隨後追上而消失（不留一條死線） */
   function needle(ctx, x0, x1, w, al) { const C = P(), L = x1 - x0; if (L < 2 || al <= 0) return; ctx.globalCompositeOperation = 'screen'; for (const t of [0.25, 0.6, 0.95]) KF().spr(ctx, C.T.gd, x0 + L * t, 0, Math.min(L, w * 14), w * 5, 0.4 * al);
     ctx.globalCompositeOperation = 'source-over'; const lens = (ww, col, a) => { ctx.fillStyle = rgba(col, a); ctx.beginPath(); ctx.moveTo(x0, 0); ctx.quadraticCurveTo(x0 + L * 0.22, -ww, x1, 0); ctx.quadraticCurveTo(x0 + L * 0.22, ww, x0, 0); ctx.closePath(); ctx.fill(); };
-    lens(w, C.deep, 0.7 * al); lens(w * 0.62, C.mid, 0.95 * al); lens(w * 0.22, C.lite, al); }
+    lens(w * 1.6, '44,32,14', 0.45 * al); lens(w, C.deep, 0.7 * al); lens(w * 0.62, C.mid, 0.95 * al); lens(w * 0.22, C.lite, al); }
   function star(ctx, x, s, al, rot) { const C = P(); ctx.save(); ctx.translate(x, 0); ctx.globalCompositeOperation = 'screen'; KF().spr(ctx, C.T.gl, 0, 0, s * 2.2, s * 2.2, 0.7 * al); ctx.globalCompositeOperation = 'source-over'; ctx.rotate(rot || 0); ctx.fillStyle = rgba(C.lite, al);
     for (const [L, W] of [[s, s * 0.1], [s * 0.55, s * 0.08]]) { ctx.beginPath(); ctx.moveTo(-L, 0); ctx.quadraticCurveTo(0, -W, L, 0); ctx.quadraticCurveTo(0, W, -L, 0); ctx.fill(); ctx.rotate(Math.PI / 2); ctx.beginPath(); ctx.moveTo(-L, 0); ctx.quadraticCurveTo(0, -W, L, 0); ctx.quadraticCurveTo(0, W, -L, 0); ctx.fill(); ctx.rotate(-Math.PI / 2); ctx.rotate(Math.PI / 4); } ctx.restore(); }
   /* ---------- 槍頭槍氣（素槍菱刃：直線刃、刃根內收、尖端銳利；後拖漸細氣尾；深金細邊壓輪廓） ---------- */
   function tipQi(ctx, tx, al, HL, HW, TL) { const C = P(), b = tx - HL, sh = tx - HL * 0.6; if (al <= 0.01) return;
+    /* r3.185.0：深色襯底（白天的沙地上也看得清楚）——槍頭外擴一圈＋氣尾的暗影 */
+    { const DK = '44,32,14'; ctx.globalCompositeOperation = 'source-over'; if (TL > 2) { const g0 = ctx.createLinearGradient(b - TL, 0, b, 0); g0.addColorStop(0, rgba(DK, 0)); g0.addColorStop(1, rgba(DK, 0.5 * al)); ctx.fillStyle = g0; ctx.beginPath(); ctx.moveTo(b + 1, -HW * 1.15); ctx.quadraticCurveTo(b - TL * 0.4, -HW * 0.7, b - TL, 0); ctx.quadraticCurveTo(b - TL * 0.4, HW * 0.7, b + 1, HW * 1.15); ctx.closePath(); ctx.fill(); }
+      ctx.fillStyle = rgba(DK, 0.6 * al); ctx.beginPath(); ctx.moveTo(tx + HL * 0.08, 0); ctx.lineTo(sh, -HW * 1.6); ctx.lineTo(b - HL * 0.06, -HW * 1.0); ctx.lineTo(b - HL * 0.06, HW * 1.0); ctx.lineTo(sh, HW * 1.6); ctx.closePath(); ctx.fill(); }
     ctx.globalCompositeOperation = 'screen'; KF().spr(ctx, C.T.gd, tx - HL * 0.5, 0, HL * 2.2, HW * 9, 0.55 * al); KF().spr(ctx, C.T.gm, tx - HL * 0.35, 0, HL * 1.1, HW * 4, 0.5 * al);
     /* 氣尾：從刃根往後漸細、漸淡 */
     if (TL > 2) { const g = ctx.createLinearGradient(b - TL, 0, b, 0); g.addColorStop(0, rgba(C.mid, 0)); g.addColorStop(1, rgba(C.mid, 0.75 * al)); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(b + 1, -HW * 0.5); ctx.quadraticCurveTo(b - TL * 0.4, -HW * 0.3, b - TL, 0); ctx.quadraticCurveTo(b - TL * 0.4, HW * 0.3, b + 1, HW * 0.5); ctx.closePath(); ctx.fill();
@@ -237,6 +241,74 @@
       if (t === r3) { const x = c.x + c.f * 1.0 * c.hh; T(c, { len: 2.2, m: 0.4, big: 1.5, hold: 4, life: 14, shock: 1 }); shatter(x, c.y - 0.55 * c.hh, 0, c.f, 0, 0.9 * c.hh, 0.1 * c.hh, 10, 2); KF().use('lance', () => KF().puff(x, c.y, 0.7)); G.SC.shake = Math.max(G.SC.shake || 0, 6);
         c.hit({ shape: 'circle', x, y: c.y, r: 1.3, m: 2.4, lv: 'hiden', kind: 'pierce', kb: 2.0, stun: 40 }); } } }
   };
+  /* ====================== r3.185.0 秘傳演出層（判定照舊，外加暗場、運鏡、主視覺） ======================
+   * 長槍＝直線、穿透、速度：畫面沉入夜色，一條貫穿畫面的槍線當主視覺；鏡頭先貼近、出手瞬間橫向拉開。 */
+  const SCN = G.SC, HHk = () => G.HERO_H;
+  const shot = (c, x, y, up, zoom, Tn) => { G.CAMFOCUS = { x, y: y - up * c.hh, until: G.t + Tn }; G.CAMZOOM = { k: zoom, until: G.t + Tn }; };
+  const cinit = (c, Tn, dim) => { const m = c.a.mvx; if (m.cin) return false; m.cin = 1; VX.dim(Tn, dim); KF().use('lance', () => KF().light(c.x, c.y, 3, Tn, 0.25)); return true; };
+  const liftE = (e, h) => G.KT && G.KT.lift && G.KT.lift(e, h);
+  const foesAt = (x, y, R) => G.E.filter(e => e.st !== 'dead' && e.delay <= 0 && Math.hypot(e.x - x, (e.y - y) * 1.5) < R);
+  const shk = n => { SCN.shake = Math.max(SCN.shake || 0, n); }, hstop = n => { G.hitstop = Math.max(G.hitstop || 0, n); };
+  /* 速度線：整個畫面的橫向流線（畫面空間） */
+  function speedLines(life, f, n) { const L = []; for (let i = 0; i < (n || 26); i++) L.push([Math.random(), Math.random(), 0.5 + Math.random()]); const C = P();
+    KF().add(life, 'g', (ctx, u) => { const a = Math.min(1, u / 4) * Math.min(1, (life - u) / 6); ctx.setTransform(1, 0, 0, 1, 0, 0); const W = ctx.canvas.width, Hh = ctx.canvas.height; ctx.lineCap = 'round';
+      for (const l of L) { const x = (((l[0] - f * u * 0.07 * l[2]) % 1) + 1) % 1 * W, y = (0.12 + l[1] * 0.76) * Hh, len = W * 0.16 * l[2]; ctx.strokeStyle = rgba(l[2] > 1.1 ? C.lite : C.mid, 0.5 * a * l[2] / 1.5); ctx.lineWidth = Math.max(1, Hh * 0.004 * l[2]); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke(); } }); }
+  /* 地面十字：以主角為中心，橫貫戰場的十字光（縱向依透視壓扁） */
+  function groundCross(x, y, R, life) { const C = P(); KF().add(life, 'g', (ctx, u) => { const k = KF().K(y), g = eo5(cl(u / 8, 0, 1)), a = Math.min(1, (life - u) / 10), pu = 1 + 0.12 * Math.sin(u * 0.35); ctx.translate(x, y);
+      const bar = (L, w) => { for (const [ww, col, al] of [[w * 3.2, C.deep, 0.35], [w * 1.5, C.mid, 0.8], [w * 0.5, C.hot, 1]]) { const gr = ctx.createLinearGradient(-L, 0, L, 0); gr.addColorStop(0, rgba(col, 0)); gr.addColorStop(0.5, rgba(col, al * a)); gr.addColorStop(1, rgba(col, 0)); ctx.fillStyle = gr; ctx.beginPath(); ctx.ellipse(0, 0, L, ww * pu, 0, 0, TAU); ctx.fill(); } };
+      bar(R * k * g, 0.07 * k); ctx.save(); ctx.rotate(Math.PI / 2); ctx.scale(1, 1); bar(R * k * g * 0.42, 0.11 * k); ctx.restore(); });
+    KF().use('lance', () => KF().light(x, y, 2.4, life, 0.5)); }
+  /* 光柱：衝天的槍光 */
+  function skyBeam(x, y, w, life) { const C = P(); KF().add(life, 'o', (ctx, u) => { const k = KF().K(y), g = eo5(cl(u / 4, 0, 1)), a = Math.min(1, (life - u) / 10), Hh = 7 * k; ctx.globalCompositeOperation = 'screen';
+      for (const [ww, col, al] of [[w * 2.6, C.deep, 0.35], [w * 1.3, C.mid, 0.6], [w * 0.5, C.hot, 0.95]]) { const gr = ctx.createLinearGradient(x - ww * k, 0, x + ww * k, 0); gr.addColorStop(0, rgba(col, 0)); gr.addColorStop(0.5, rgba(col, al * a)); gr.addColorStop(1, rgba(col, 0)); ctx.fillStyle = gr; ctx.fillRect(x - ww * k, y - Hh * g, ww * k * 2, Hh * g); } }); }
+  const HY0 = {}; for (const id in HY3) HY0[id] = HY3[id].f;
+  /* 蜻蛉切：貼近連刺（速度線）→ 一瞬停頓 → 鏡頭橫向拉開，一槍貫穿整個畫面，盡頭展開巨大蜻蛉翅 */
+  HY3.y_hyakusen.f = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh, f = c.f, Tn = c.a.T;
+    if (cinit(c, Tn + 34, 0.9)) shot(c, c.x + f * 1.3 * k, c.y, 0.55, 1.18, r3);
+    if (t === r2) speedLines(r3 - r2 + 4, f, 30);
+    if (t === r3 - 9) { shot(c, c.x + f * 3.4 * k, c.y, 0.7, 2.1, 60); charge(c, c.x + f * 0.9 * k, 9); }   /* 出手前鏡頭先橫向拉開 */
+    if (t > r2 + 5 && t < r3 - 2 && (t - r2) % 2 === 1) T(c, { len: rnd(1.9, 2.5), ang: rnd(-0.22, 0.22), cy: 0.55 + rnd(-0.18, 0.18), m: 0.1, lv: 'light', hold: 0, life: 5, big: 0.9 });   /* 連刺加密 */
+    HY0.y_hyakusen(c, t, C);
+    if (t === r3) { c.a.T = Math.max(c.a.T, r3 + 26); const sk = []; speedLines(20, f, 40);
+      flyQi({ x: c.x - f * 0.6 * k, y: c.y, z: 0.55, f, dist: 10, dur: 7, hold: 6, big: 2.9, shaft: 1, shock: 1, step: (px, py) => c.hit({ shape: 'circle', x: px, y: py, r: 1.0, m: 0.9, lv: 'hiden', kind: 'pierce', kb: 2.2, skip: sk }) });
+      c.later(6, () => { wings(c.x + f * 6.2 * k, c.y, 0.55, 3.4, 0); KF().use('lance', () => KF().light(c.x + f * 6 * k, c.y, 3, 22, 0.6, 0.6)); shk(10); }); } };
+  /* 日本號：挑飛（鏡頭上抬）→ 空中雙刺 → 地面竄出一整片巨槍與衝天光柱，把妖怪頂上天 */
+  HY3.y_shoryu.f = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh, f = c.f, Tn = c.a.T;
+    if (cinit(c, Tn + 44, 0.9)) shot(c, c.x + f * 1.2 * k, c.y, 0.7, 1.35, r1);
+    HY0.y_shoryu(c, t, C);
+    if (t === r1) { shot(c, c.x + f * 1.2 * k, c.y, 1.7, 1.6, r3 - r1); for (const e of foesAt(c.x + f * 1.2 * k, c.y, 2.2 * k)) liftE(e, 2.0); }
+    if (t === r3) { c.a.T = Math.max(c.a.T, r3 + 34); const x = c.x + f * 1.2 * k, y = c.y; shot(c, x, y, 2.5, 2.1, 44); skyBeam(x, y, 0.5, 34); hstop(4);
+      for (let i = 0; i < 9; i++) { const dx = (i - 4) * 0.42 * k, s = 3.4 - Math.abs(i - 4) * 0.5; riseTip(x + dx, y + ((i % 2) - 0.5) * 0.16 * k, Math.abs(i - 4) * 2, s); }
+      for (const e of foesAt(x, y, 2.4 * k)) liftE(e, 3.2);
+      c.later(8, () => { for (const e of foesAt(x, y, 2.6 * k)) G.damageOni(e, 0.9 * c.mul, true); shk(12); KF().use('lance', () => { KF().puff(x, y, 2.4); KF().rocks && KF().rocks(x, y, 12, 2.2); }); }); } };
+  /* 御手杵：長驅（速度線）→ 蓄力，鏡頭橫向拉到最遠 → 投出巨槍，把一路上的妖怪串起來帶到盡頭炸開 */
+  HY3.y_ryusei.f = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh, f = c.f, Tn = c.a.T;
+    if (cinit(c, Tn + 40, 0.9)) { shot(c, c.x + f * 2.2 * k, c.y, 0.6, 1.4, r2); speedLines(r1 + 4, f, 26); }
+    if (t === r2 + 2) shot(c, c.x + f * 4.4 * k, c.y, 0.7, 2.3, r3 - r2 + 50);
+    if (t !== r3) { HY0.y_ryusei(c, t, C); return; }
+    c.a.T = Math.max(c.a.T, r3 + 30); const sk = [], got = [], x0 = c.x - f * 0.6 * k, D = 7.6, dur = 10; dust(c, 0.3, 1.2); speedLines(24, f, 40); shk(9);
+    flyQi({ x: x0, y: c.y, z: 0.55, f, dist: D, dur, hold: 6, big: 3.3, shaft: 1, shock: 1, step: (px, py) => { const hs = c.hit({ shape: 'circle', x: px, y: py, r: 1.0, m: 2.4, lv: 'hiden', kind: 'pierce', skip: sk }) || []; for (const e of hs) if (!e.boss && !e.bb && got.indexOf(e) < 0) got.push(e);
+        for (const e of got) { if (e.st === 'dead') continue; const nx = px + f * 0.3 * k; if ((nx - e.x) * f > 0 && SCN.walkable(nx, e.y)) e.x = nx; e.stun = Math.max(e.stun || 0, 20); e.kb = 0; } } });   /* 串在槍上一路帶走 */
+    c.later(dur + 3, () => { const ex = x0 + f * D * k; for (const e of got) if (e.st !== 'dead') { G.damageOni(e, 0.9 * c.mul, true); liftE(e, 1.2); } shatter(ex, c.y - 0.55 * k, 0, f, 0, 1.6 * k, 0.16 * k, 14, 0); KF().use('lance', () => { KF().puff(ex, c.y, 2.2); KF().light(ex, c.y, 3, 24, 0.7, 0.6); KF().burst(ex, c.y, 0.55, 3); }); shk(13); hstop(8); }); };
+  /* 十文字：薙地 → 腳下展開橫貫戰場的十字光，定住妖怪 → 大迴旋，四道槍氣沿十字四個方向射出 */
+  HY3.y_kaiten.f = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh, f = c.f, Tn = c.a.T;
+    if (cinit(c, Tn + 36, 0.9)) shot(c, c.x, c.y, 0.9, 1.4, r2);
+    HY0.y_kaiten(c, t, C);
+    if (t === r2) { shot(c, c.x, c.y, 1.2, 1.85, r3 - r2 + 40); groundCross(c.x, c.y, 5.2, r3 - r2 + 26); for (const e of foesAt(c.x, c.y, 3.4 * k)) if (!e.boss) e.stun = Math.max(e.stun || 0, r3 - r2 + 20); shk(5); }
+    if (t === r3) { c.a.T = Math.max(c.a.T, r3 + 24); hstop(4); c.later(5, () => { const sk = []; for (const [ff, ang, dist] of [[1, 0, 5.4], [-1, 0, 5.4], [1, -Math.PI / 2, 2.6], [1, Math.PI / 2, 2.0]])
+          flyQi({ x: c.x, y: c.y, z: ang ? 0.1 : 0.5, f: ff, ang, dist, dur: 7, hold: 4, big: ang ? 1.5 : 2.3, shaft: ang ? 0 : 1, shock: 1, step: (px, py) => c.hit({ shape: 'circle', x: px, y: py, r: 1.0, m: 0.8, lv: 'hiden', kind: 'pierce', kb: 1.6, kbDir: ang ? f : ff, skip: sk }) });
+        KF().use('lance', () => { KF().puff(c.x, c.y, 2.6); KF().light(c.x, c.y, 3.4, 22, 0.7); }); shk(12); }); } };
+  /* 人間無骨：攔刺 → 把大範圍的妖怪鉤成一串拖到面前（鏡頭貼近）→ 一槍刺穿，槍尖從每隻妖怪身上向四面透出 */
+  HY3.y_bakuryu.f = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh, f = c.f, Tn = c.a.T;
+    if (cinit(c, Tn + 36, 0.9)) shot(c, c.x + f * 1.6 * k, c.y, 0.6, 1.5, r2);
+    HY0.y_bakuryu(c, t, C);
+    if (t === r2) { pullQi({ x: c.x, y: c.y, f, len: 4.4 }); const es = front(c, 4.8, 1.3); es.forEach((e, i) => { if (e.boss) return; const to = 1.0 + i * 0.5; for (let j = 1; j <= 10; j++) c.later(j, () => { if (e.st === 'dead') return; e.x += (c.x + f * to * k - e.x) * 0.35; e.y += (c.y - e.y) * 0.3; }); e.stun = Math.max(e.stun || 0, r3 - r2 + 24); });
+      shot(c, c.x + f * 1.1 * k, c.y, 0.55, 1.12, r3 - r2 - 4); speedLines(12, -f, 18); }
+    if (t === r3 - 4) shot(c, c.x + f * 1.6 * k, c.y, 0.9, 1.9, 50);
+    if (t === r3) { c.a.T = Math.max(c.a.T, r3 + 26); const es = front(c, 4.4, 1.3);
+      flyQi({ x: c.x - f * 0.4 * k, y: c.y, z: 0.55, f, dist: 5.4, dur: 5, hold: 12, big: 2.0, shaft: 1, end: false });
+      es.forEach((e, i) => { const z = 0.55 * (e.ratio || 1); for (let j = 0; j < 8; j++) c.later(5 + i * 2 + (j % 3), () => flyQi({ x: e.x, y: e.y, z, f: 1, ang: j * TAU / 8 + 0.2, dist: 1.5 + (j % 2) * 0.5, dur: 5, hold: 3, big: 0.85, end: false })); });
+      c.later(13, () => { for (const e of es) if (e.st !== 'dead') { G.damageOni(e, 0.9 * c.mul, true); KF().use('lance', () => KF().burst(e.x, e.y, 0.55 * (e.ratio || 1), 2.2)); } shk(12); hstop(8); }); } };
   /* ---- 名稱與說明 ---- */
   const SKN = { skill_ryusei: ['一番槍', '突進 4H，槍頭在前一路貫穿，終點重刺', '突進距離 +50%', '終點槍氣再往前飛 4H'], skill_senso: ['槍花繚亂', '槍擺三下接扇形快速連刺', '連刺 +4', '最後一刺穿透 3.6H'],
     skill_shoryu: ['挑月', '由下往上大擺，挑飛前方敵人', '追加斜刺', '再追加前刺擊退'], skill_sorin: ['針山', '前方地面依序竄出槍頭', '變兩排', '槍頭殘留 2 秒持續傷害'],
