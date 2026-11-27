@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 116_yari_fx.js
- * Version : r3.187.0  (2026-11-28)　r3.187.0：槍頭瘦小、黑邊變細、移動痕跡（光的拖痕、速度線、槍擺弧光）加大；飛行槍頭與巨槍換成同一套鋼色；不再參考角色動作圖
+ * Version : r3.188.0  (2026-11-28)　r3.188.0：針山兩排時後排錯開半格、略小
+ * 舊版    : r3.187.0  (2026-11-28)　r3.187.0：槍頭瘦小、黑邊變細、移動痕跡（光的拖痕、速度線、槍擺弧光）加大；飛行槍頭與巨槍換成同一套鋼色；不再參考角色動作圖
  * 舊版    : r3.186.0  (2026-11-28)　r3.186.0：突刺重做成「從手上的槍延伸出去的光槍」（鋼色、深色收邊、氣環、速度線、停頓再收）＋命中刺穿碎光；槍擺弧光同步改鋼色
  * 舊版    : r3.185.0  (2026-11-28)　r3.185.0：五招秘傳加演出層（暗場、運鏡、速度線、貫穿畫面的巨槍、地面十字、衝天光柱、透體槍尖）；所有槍氣加深色襯底，白天地面也看得清楚
  * 舊版    : r3.80.0  (2026-11-25)
@@ -197,7 +198,7 @@
         if (lv >= 3 && t === 20) T(c, { len: 2.0, ang: -0.5, m: 0.9, lv: 'heavy', big: 1.1 });
         if (lv >= 5 && t === 28) T(c, { len: 2.2, ang: 0.1, m: 1.0, lv: 'heavy', kb: 1.5, big: 1.2, shock: 1 }); } },
     skill_sorin: { n: '針山', run(c, t) { const lv = LV(c), rows = lv >= 3 ? [-0.35, 0.35] : [0]; if (t !== 8) return; const x0 = c.x, y0 = c.y, f = c.f, k = c.hh, sk = [];
-        for (const dy of rows) for (let i = 0; i < 8; i++) { const x = x0 + f * (0.6 + i * 0.45) * k, y = y0 + dy * k; riseTip(x, y, i * 2, i === 7 ? 1.35 : 1);
+        for (const dy of rows) for (let i = 0; i < 8; i++) { const back = rows.length > 1 && dy < 0, x = x0 + f * (0.6 + i * 0.45 + (back ? 0.225 : 0)) * k, y = y0 + dy * k; riseTip(x, y, i * 2 + (back ? 1 : 0), (i === 7 ? 1.35 : 1) * (back ? 0.86 : 1));   /* r3.188.0：後排錯開半格、略小，前後排不再上下相接 */
           c.later(i * 2, () => { c.hit({ shape: 'circle', x, y, r: 0.45, m: 1.2 / rows.length * 0.7, lv: i === 7 ? 'heavy' : 'mid', kind: 'pierce', launch: 30, skip: sk }).forEach(e => sk.push(e)); if (lv >= 5 && i % 3 === 0) { const s2 = []; for (let j = 1; j <= 6; j++) c.later(j * 20, () => c.hit({ shape: 'circle', x, y, r: 0.5, m: 0.15, lv: 'light', kind: 'pierce', skip: s2 })); } }); } } },
     special_backpierce: { n: '回身刺', run(c, t) { const lv = LV(c); if (t <= 8) { c.move(-0.08, 0); if (t % 3 === 0) c.ghost(10); } if (t === 9) { H.face = -H.face; c.a.face0 = H.face; dust(c, -0.2, 0.4); }
         if (t === 12) T(c, { len: 2.1, w: 0.24, m: 1.6 * (lv >= 3 ? 1.3 : 1), lv: 'heavy', crit: lv >= 5, big: 1.2, hold: 3, shock: 1 }); } },
