@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 77_moves.js
- * Version : r3.194.0  (2026-11-28)　偏低的招式傷害補到分級標準（野太刀 2、薙刀 2、長槍 4、和弓 2 招）；高的不動
+ * Version : r3.202.0  (2026-11-28)　r3.202.0：秘傳書：已參悟的秘傳可直接整組放到連招鍵 1／2／3
+ * 舊版    : r3.194.0  (2026-11-28)　偏低的招式傷害補到分級標準（野太刀 2、薙刀 2、長槍 4、和弓 2 招）；高的不動
  * 舊版    : r3.193.0  (2026-11-28)　鐵砲凝射傷害補到「連」的標準（1.66 → 1.99）
  * 舊版    : r3.184.0  (2026-11-28)　秘傳另外標記 mvx.hd（技能、特技不算秘傳演出）
  * 舊版    : r3.176.0  (2026-11-28)　r3.176.0：野太刀／薙刀／長槍／和弓／鐵砲的招式傷害分級補正（MV2.BAL）
@@ -104,13 +105,16 @@
   /* ---------- 秘傳書（選單 武器 › 秘傳書） ---------- */
   const M = G.MENU;
   (function wait3() { if (!M || !M.PAGE || !M.ui) return setTimeout(wait3, 20);
-    M.PAGE['秘傳書'] = function (x, y, w, h) { const { box, scrollArea, clip } = M.ui, ctx = G.ctx, C = G.C, fs = G.FS(), wid = W.curId(), L = MV2.HD[wid] || [], d = rd(), hd = d.hiden || {}, hh = d.hhint || {};
+    M.PAGE['秘傳書'] = function (x, y, w, h) { const { box, scrollArea, clip, button } = M.ui, ctx = G.ctx, C = G.C, fs = G.FS(), wid = W.curId(), L = MV2.HD[wid] || [], d = rd(), hd = d.hiden || {}, hh = d.hhint || {};
       box(x, y, w, h); G.txt('秘傳書　' + W.cur().n, x + 16, y + 24, 16, C.gold, 'left', G.FONT_S, 900); G.txt('參悟 ' + L.filter(q => hd[q.id]).length + '／' + L.length, x + w - 16, y + 24, 12, C.sub, 'right', G.FONT, 700);
       const RH = 54 * fs; const off = scrollArea('hiden', x, y + 40, w, h - 46, L.length * RH + 40); clip(x, y + 40, w, h - 46);
       L.forEach((q, i) => { const yy = y + 44 + i * RH + off, got = hd[q.id], hint = hh[q.id]; ctx.fillStyle = got ? 'rgba(150,40,30,.25)' : 'rgba(255,255,255,.04)'; G.rr(x + 10, yy, w - 20, RH - 6, 6); ctx.fill();
         G.txt((got ? '秘傳・' : '未參悟・') + q.n, x + 22, yy + RH * 0.32, 15, got ? '#ffd2c0' : '#f3d98a', 'left', G.FONT_S, 900);
         const nm = id => (W.cur().MV[id] || {}).n || id, at = id => { for (let k = 0; k < 3; k++) { const c = W.chain(k) || []; const j = c.indexOf(id); if (j >= 0) return '〔鍵' + (k + 1) + '・第' + (j + 1) + '段〕'; } return '〔未裝〕'; };
-        G.txt(q.seq.map(id => nm(id) + at(id)).join(' → '), x + 22, yy + RH * 0.68, 12, got ? C.ink : '#efe4cc', 'left', G.FONT, 600); });
+        G.txt(q.seq.map(id => nm(id) + at(id)).join(' → '), x + 22, yy + RH * 0.68, 12, got ? C.ink : '#efe4cc', 'left', G.FONT, 600);
+        /* r3.202.0：已參悟的秘傳可直接整組放到連招鍵（三招依序放進該鍵的第 1～3 段），不用到「按鍵」頁一段一段選 */
+        if (got && yy > y + 30 && yy + RH < y + h + 10) { const okAll = q.seq.every(id => { const m = W.cur().MV[id]; return m && (!W.mvOk || W.mvOk(m)); }), bw = 50, bh = Math.min(26, RH - 16), bx = x + w - 22 - 3 * (bw + 6) + 6, by = yy + (RH - 6 - bh) / 2;
+          for (let k = 0; k < 3; k++) { const c = W.chain(k) || [], same = q.seq.every((id, j) => c[j] === id); button(bx + k * (bw + 6), by, bw, bh, '鍵 ' + (k + 1), okAll && !same ? () => { q.seq.forEach((id, j) => W.setChain(k, j, id)); if (H.chainSt) H.chainSt = null; G.UI.toast('「' + q.n + '」已放到鍵 ' + (k + 1)); } : null, same ? 'main' : okAll ? '' : 'off'); } } });
       G.txt('照順序打中這三招（可跨鍵，間隔 1 秒內），最後那顆招式鍵會發光——再按一下出秘傳。', x + 16, y + 44 + L.length * RH + off + 14, 11, C.sub, 'left', G.FONT, 500); ctx.restore(); };
     if (M.TABS && Array.isArray(M.TABS) && !M.TABS.includes('秘傳書')) M.TABS.push('秘傳書');
     if (M.GROUPS) for (const g of M.GROUPS) if (g[0] === '武器' && !g[1].some(s => s[1] === '秘傳書')) g[1].push(['秘傳書', '秘傳書']); })();

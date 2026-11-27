@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 24_nav.js
- * Version : r3.169.0  (2026-11-27)　r3.169.0：兩岸城不畫舊像素立牌
+ * Version : r3.202.0  (2026-11-28)　r3.202.0：場景可標記不放祈願石
+ * 舊版    : r3.169.0  (2026-11-27)　r3.169.0：兩岸城不畫舊像素立牌
  * 舊版    : r3.168.0  (2026-11-27)　r3.168.0：畫面邊緣出口箭頭改由右上面板的出口列顯示
  * 舊版    : r3.108.0  (2026-11-26)　r3.108.0：雜物打破時呼叫 G.BRKFX（特殊效果）；探索區最多 3 個
  * 舊版    : r3.107.1  (2026-11-26)　r3.107.1：城鎮不放可打破雜物；野外每張圖最多 2 個、分開擺放
@@ -93,7 +94,7 @@
   const pray = () => { G.H.hp = G.H.hpMax; const S = G.SAVE.data; S.scene = SC.id; S.x = G.H.x; S.y = G.H.y; S.hp = G.H.hp; G.SAVE.markDirty();
     G.UI.toast(G.SAVE.flush() ? '祈願：生命全滿，已存檔' : '生命全滿（瀏覽器不允許存檔）'); };
   const homeHere = () => !!(G.HUB && G.HUB.stoneHere && G.HUB.stoneHere(SC.id));
-  function saveStone(u, k, x, y) { add({ nav: 1, u, k, x, y, save: 1, get label() { return homeHere() ? '祈願石・歸城' : '祈願石（回復＋存檔）'; },
+  function saveStone(u, k, x, y) { if (G.D.scenes[SC.id] && G.D.scenes[SC.id].noSave) return;   /* r3.202.0：場景可標記不放祈願石（神社內殿） */ add({ nav: 1, u, k, x, y, save: 1, get label() { return homeHere() ? '祈願石・歸城' : '祈願石（回復＋存檔）'; },
     run: () => { if (!homeHere()) return pray();
       G.DLG.start([{ choice: [{ label: '祈願（回復＋存檔）', then: [{ do: pray }] }, { label: '回兩岸城', then: [{ do: () => G.HUB.goCity() }] }].concat(G.FORGE ? G.FORGE.stoneCh() : [], [{ label: '離開', then: [] }]) }]); } }); }
   // 固定位置：依地圖 id 取種子；從入口附近往內找「路邊」點，避開出口、NPC 站位與主角

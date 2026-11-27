@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 58_forge.js
- * Version : r3.106.0  (2026-11-26)　r3.106.0：強化按鈕顯示並檢查難度素材（134_econ）
+ * Version : r3.202.0  (2026-11-28)　r3.202.0：里歐外型時誘敵分身用里歐的圖
+ * 舊版    : r3.106.0  (2026-11-26)　r3.106.0：強化按鈕顯示並檢查難度素材（134_econ）
  * 舊版    : r3.102.0  (2026-11-26)　r3.102.0：勾玉改由 129_magatama（舊掉落停用、鍛冶舖勾玉分頁移除、鑲嵌改新清單）
  * 舊版    : r3.101.0  (2026-11-26)　r3.101.0：強化上限改依通關難度；孔數 +30 再一孔、上限 6
  * 舊版    : r3.94.0  (2026-11-26)　r3.94.0：武器熟練、神社改攻擊% 相加；踏跳、同伴強化改增傷區
@@ -258,7 +259,7 @@
     G.spawnFx && G.spawnFx('feedback_guard_a', 0, d.x, d.y - G.HERO_H * s * 0.5, 1, s * 2); G.SC.shake = Math.max(G.SC.shake, 5); };
   const kill = () => { if (!decoy) return; boom(decoy); decoy = null; };
   const od0 = GR.onDodge.bind(GR); GR.onDodge = function () { od0(); const n = lv('decoy');
-    if (n) { kill(); const u = G.WPN.unit(); decoy = { x: H.x, y: H.y, st: 'decoy', life: 90 + 18 * n, t: 0, face: H.face, u: u && u.key, fr: G.heroFrame() }; }
+    if (n) { kill(); const u = G.WPN.unit(); decoy = { x: H.x, y: H.y, st: 'decoy', life: 90 + 18 * n, t: 0, face: H.face, u: u && u.key, fr: G.heroFrame(), lv: (G.LEON && G.LEON.ghost && G.LEON.ghost({ y: H.y, face: H.face })) || null }; }   /* r3.202.0：里歐外型時，誘敵分身也用里歐的圖 */
     if (Fl().lightRun && G.BUFF) G.BUFF.add('spd', 30, 30);
     if (H.lastBody === 'backstep' && Fl().leapHit) GR.st.leapT = G.t + 60 + 20; };
   /* 敵人選目標：分身在附近時改打分身 */
@@ -276,7 +277,7 @@
     if (Fl().reviveGuard && lastHp < H.hpMax * 0.05 && H.hp >= H.hpMax * 0.99 && G.SAVE.data.flags.downs) { H.inv = Math.max(H.inv, 180); for (const e of G.E) if (e.st !== 'dead' && Math.hypot(e.x - H.x, e.y - H.y) < 200) e.kb = Math.sign(e.x - H.x || 1) * 12; }
     lastHp = H.hp; };
   /* 分身繪製（半透明主角影） */
-  const fx0 = G.drawFx; G.drawFx = function (Z) { fx0(Z); if (!decoy || !decoy.u) return; const u = G.ANIM.get(decoy.u); if (!u || !decoy.fr) return; const s = G.SC.depth(decoy.y);
+  const fx0 = G.drawFx; G.drawFx = function (Z) { fx0(Z); if (decoy && decoy.lv) { G.ANIM.draw(decoy.lv.u, decoy.lv.fr, decoy.x, decoy.y, decoy.lv.k, decoy.lv.flip, 0.45 + 0.15 * Math.sin(decoy.t * 0.3)); return; } if (!decoy || !decoy.u) return; const u = G.ANIM.get(decoy.u); if (!u || !decoy.fr) return; const s = G.SC.depth(decoy.y);
     G.ANIM.draw(u, decoy.fr, decoy.x, decoy.y, G.HERO_H * s / (u.refH || 130) * G.WPN.actK('idle'), decoy.face < 0, 0.45 + 0.15 * Math.sin(decoy.t * 0.3)); };
   const en0 = G.STORY.onEnter.bind(G.STORY); G.STORY.onEnter = function (id) { decoy = null; en0(id); };
 })();

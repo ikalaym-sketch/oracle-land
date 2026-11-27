@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 144_rebirth.js
- * Version : r3.201.0  (2026-11-28)　r3.201.0：內殿人物放大約 2 倍、鏡頭拉近
+ * Version : r3.202.0  (2026-11-28)　r3.202.0：內殿拿掉祈願石；伊邪那美縮小、固定站姿不再抖
+ * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：內殿人物放大約 2 倍、鏡頭拉近
  * 舊版    : r3.169.0  (2026-11-27)　r3.169.0：內殿換 ChatGPT 新圖，可走範圍／伊邪那美／出口位置重定，人物比例同野外
  * 舊版    : r3.121.0  (2026-11-26)　r3.121.0：轉生保留里歐外觀（等級、招式、按鍵）
  * 舊版    : r3.119.1  (2026-11-26)　r3.119.1：內殿鏡頭往上偏（祭壇入鏡）
@@ -27,7 +28,7 @@
   (function hkP() { const PY = G.PARTY; if (!PY || !PY.earned) return setTimeout(hkP, 80); const e0 = PY.earned; PY.earned = id => e0(id) + (((S().rb || {}).pb || {})[id] || 0); })();
   /* ---------- 內殿場景 ---------- */
   const OUT = [[0, 499], [1672, 499], [1672, 743], [0, 743]];   // r3.169.0：ChatGPT 新內殿圖（地板 50% 起；只取上半段）
-  function reg() { if (!G.D || !G.D.scenes || G.D.scenes[ID]) return; G.D.scenes[ID] = { name: '神社・內殿', w: 1672, h: 941, outer: OUT, obstacles: [], start: [120, 580], nodes: { west_arrival: [120, 580], center: [836, 600], altar: [836, 520] }, portals: [], safe: true, region: 'wind', lv: 1, foes: [], depth: [2.0, 2.4] };   /* r3.201.0：內殿的圖畫得比野外大（祭壇、燭台都是近景比例），人物放大約 2 倍才對得上 */   /* r3.169.0：新圖比例同野外圖 */
+  function reg() { if (!G.D || !G.D.scenes || G.D.scenes[ID]) return; G.D.scenes[ID] = { name: '神社・內殿', w: 1672, h: 941, outer: OUT, obstacles: [], start: [120, 580], nodes: { west_arrival: [120, 580], center: [836, 600], altar: [836, 520] }, portals: [], safe: true, region: 'wind', lv: 1, foes: [], depth: [2.0, 2.4], noSave: true };   /* r3.201.0：內殿的圖畫得比野外大（祭壇、燭台都是近景比例），人物放大約 2 倍才對得上 */   /* r3.169.0：新圖比例同野外圖 */
     if (G.WORLD && G.WORLD.meta) G.WORLD.meta[ID] = { safe: true, town: true, lv: 1, spawn: [0, 0], foes: [], mats: [] }; }
   const img0 = G.ASSET.img.bind(G.ASSET); G.ASSET.img = (k, src) => img0(k, k === ID ? 'a/m/N_EXSH.webp' : src);
   const boot0 = G.ASSET.boot.bind(G.ASSET); G.ASSET.boot = () => boot0().then(r => { try { reg(); } catch (e) { console.warn('rebirth reg', e); } return r; });
@@ -36,7 +37,7 @@
   function placeIz() { G.NPC = G.NPC.filter(n => !n._iz); IZ = null; if (SC.id !== ID) return; const n = { _iz: 1, name: '', x: 836, y: 530, t: 0 }; IZ = n; G.NPC.push(n);
     Promise.resolve(G.BOSS && G.BOSS.load && G.BOSS.load('izanami')).catch(() => 0); }
   (function hkD() { if (!G.drawNpc) return setTimeout(hkD, 60); const d0 = G.drawNpc; G.drawNpc = function (n) { if (!n || !n._iz) return d0.apply(this, arguments);
-      const u = G.ANIM.get('b_izanami'), r = u && u.act.izanami_idle_right3q; if (!r) return; n.t++; const f = r.f[Math.floor(n.t / 6) % r.f.length], L = r.f.map(q => q[5]).sort((a, b) => a - b), vh = L[L.length >> 1] || 200, s = SC.depth(n.y), sc = G.HERO_H * 1.3 * s / vh, c = G.ctx;
+      const u = G.ANIM.get('b_izanami'), r = u && u.act.izanami_idle_right3q; if (!r) return; n.t++; const f = r.f[0], L = r.f.map(q => q[5]).sort((a, b) => a - b), vh = L[L.length >> 1] || 200, s = SC.depth(n.y), sc = G.HERO_H * 1.05 * s / vh, c = G.ctx;   /* r3.202.0：伊邪那美固定站姿（原本各格對位不齊，看起來一直抖）、縮到跟主角差不多高 */
       c.save(); c.fillStyle = 'rgba(20,14,8,.25)'; c.beginPath(); c.ellipse(n.x, n.y, G.HERO_H * s * 0.35, G.HERO_H * s * 0.08, 0, 0, 6.283); c.fill(); c.restore();
       G.ANIM.draw(u, f, n.x, n.y, sc, true, Math.min(1, n.t / 30)); }; })();
   /* ---------- 入口／出口／伊邪那美互動點 ---------- */
