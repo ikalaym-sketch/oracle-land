@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 111_katana_fx.js
- * Version : r3.173.0  (2026-11-28)　r3.173.0：雷光加粗、墨邊、白熱芯（打刀）
+ * Version : r3.175.0  (2026-11-28)　r3.175.0：野太刀也套特效第三版（墨邊、亮芯、筆觸、受擊染色與壓扁、地面刀痕）
+ * 舊版    : r3.173.0  (2026-11-28)　r3.173.0：雷光加粗、墨邊、白熱芯（打刀）
  * 舊版    : r3.172.0  (2026-11-28)　r3.172.0：技／秘傳刀光多停留 50%、突刺光加粗、「架」字加墨底圓牌（打刀）
  * 舊版    : r3.170.0  (2026-11-27)　r3.170.0：特效第三版（打刀樣板）：襯底暗影、墨邊、白熱亮芯、筆觸紋理、火花描墨邊、受擊染色與壓扁、地面刀痕；新增櫻色盤
  * 舊版    : r3.79.0  (2026-11-25)
@@ -48,7 +49,7 @@
   const T = PAL.moon.T; let cur = PAL.moon;
   /* 用某把武器的色盤畫：KF.use('ember', () => KF.smear(...))；畫面函式在建立時記住色盤 */
   const use = (name, fn) => { const p = cur; cur = PAL[name] || PAL.moon; try { return fn(); } finally { cur = p; } };
-  const X3 = () => cur === PAL.moon || cur === PAL.sakura;   /* r3.170.0：特效第三版（襯底暗影＋墨邊＋白熱亮芯＋筆觸），先套打刀當樣板 */
+  const X3 = () => cur === PAL.moon || cur === PAL.sakura || cur === PAL.ember;   /* r3.175.0：野太刀也套第三版 */   /* r3.170.0：特效第三版（襯底暗影＋墨邊＋白熱亮芯＋筆觸），先套打刀當樣板 */
   const under = (ctx, C, x, y, w, h, a) => { const g = ctx.globalCompositeOperation; ctx.globalCompositeOperation = 'source-over'; spr(ctx, C.T.sh, x, y, w, h, a); ctx.globalCompositeOperation = g; };
   const spr = (ctx, im, x, y, w, h, a) => { if (a <= 0.004 || w < 0.5) return; ctx.globalAlpha = Math.min(1, a); ctx.drawImage(im, x - w / 2, y - (h || w) / 2, w, h || w); ctx.globalAlpha = 1; };
   /* ---------- 時鐘：命中停頓時 0.35 倍速 ---------- */
@@ -227,7 +228,7 @@
     else if (norm) { G.hitstop = Math.max(G.hitstop || 0, HSN[lv] || 1); if (lv === 'heavy') SC.shake = Math.max(SC.shake || 0, 1); }   // 打刀普攻：沿用原本的輕停頓，只換色
     else { const f = HSF[lv] || HSF.mid; G.hitstop = Math.max(G.hitstop || 0, f[0]); if (f[1]) SC.shake = Math.max(SC.shake || 0, f[1]); }
     const pw = (HSF[lv] || HSF.mid)[2] * (norm ? 0.7 : 1) + (nod ? 0.6 : 0);
-    e.flash = (e._vxf && G.playT - e._vxf < 8) ? 1 : 2; e._vxf = G.playT; if (pn === 'moon') { e._hf = { t: G.t, c: PAL.moon.mid, pw: Math.min(3, pw), d: H.face }; if (!norm && kind === 'cut') use('moon', () => scar(e.x, e.y, H.face, pw)); }   /* r3.170.0：受擊反應（染色閃光＋壓扁回彈）＋地面刀痕 */
+    e.flash = (e._vxf && G.playT - e._vxf < 8) ? 1 : 2; e._vxf = G.playT; if (pn === 'moon' || pn === 'ember') { e._hf = { t: G.t, c: PAL[pn].mid, pw: Math.min(3, pw), d: H.face }; if (!norm && kind === 'cut') use(pn, () => scar(e.x, e.y, H.face, pw)); }   /* r3.170.0：受擊反應（染色閃光＋壓扁回彈）＋地面刀痕 */
     use(pn, () => { burst(e.x, e.y, z, pw, kind === 'pierce' ? (H.face > 0 ? 0 : Math.PI) : (H.face > 0 ? -0.4 : Math.PI + 0.4)); if (pn === 'lance' && kind === 'pierce') { const f = H.face; motes(e.x + f * 0.25 * K(e.y), e.y, z, norm ? 3 : 6, { ang: f > 0 ? 0 : Math.PI, spread: 0.35, sp: 1.8, life: 18 }); }   // 貫穿：碎光從敵人背後噴出
     if (pn === 'holy') { glint(e.x, e.y, z, norm ? 0.28 : 0.42, 12); leaves(e.x, e.y, z, norm ? 1 : 3, { sp: 0.6, life: 40 }); }   // 神聖：命中處十字星光＋金羽
     if (pn === 'gale') { leaves(e.x, e.y, z, norm ? 2 : 4, { sp: 0.8, life: 34 }); if (lv === 'heavy' || lv === 'hiden') puff(e.x, e.y, 0.5, 24); } if (nod) { embers(e.x, e.y, z * 0.6, norm ? 3 : 6); if (lv === 'heavy' || lv === 'hiden' || kind === 'blunt') { rocks(e.x, e.y, norm ? 3 : 6, 1.2); puff(e.x, e.y, 0.6, 24); } } }); };
