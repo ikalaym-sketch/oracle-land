@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 77_moves.js
- * Version : r3.176.0  (2026-11-28)　r3.176.0：野太刀／薙刀／長槍／和弓／鐵砲的招式傷害分級補正（MV2.BAL）
+ * Version : r3.184.0  (2026-11-28)　秘傳另外標記 mvx.hd（技能、特技不算秘傳演出）
+ * 舊版    : r3.176.0  (2026-11-28)　r3.176.0：野太刀／薙刀／長槍／和弓／鐵砲的招式傷害分級補正（MV2.BAL）
  * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：槍普攻直刺最多 3 個（由近到遠）；薙刀指定擊退也 ×1.3
  * 舊版    : r3.53.0  (2026-11-23)  r3.53.0：秘傳書一律顯示完整順序＋所在鍵位；取消店舖／神社升級給提示　r3.37.0：鐵砲槍口改用第二代素材；r3.35.0：U 定義可指定 kind；r3.36.0：射擊／槍口火光改從逐格錨點（W.muzzle）出現
  * 變更    : r3.34.0 新增。招式（組合技）新引擎＋秘傳連技（規格 VFX_SPEC v2.1 第二、三節）。
@@ -94,7 +95,7 @@
   /* ---------- 秘傳發動 ---------- */
   function startHiden(R) { const hd = (MV2.HD[R.wid] || []).find(x => x.id === R.id); H.hidenRdy = null; if (!hd) return;
     H.act = null; H.st = 'idle'; if (!G.heroStartAct(hd.clip, 'ult', { mult: 1 })) G.heroStartAct(W.cur().combo[0], 'ult', { mult: 1 });
-    const a = H.act; a.chainK = R.k; begin(a, hd, true); a.mvx.mul = (G.GROW ? G.GROW.mvMul() : 1);
+    const a = H.act; a.chainK = R.k; begin(a, hd, true); a.mvx.hd = 1; a.mvx.mul = (G.GROW ? G.GROW.mvMul() : 1);
     H.inv = Math.max(H.inv, hd.T + 6); MV2.hist = [];
     if (R.test) { G.UI.banner('秘傳・' + hd.n, '（測試施放）'); return; }
     const d = rd(); d.hiden = d.hiden || {}; const first = !d.hiden[hd.id]; d.hiden[hd.id] = 1; if (first) { G.SAVE.markDirty(); G.UI.banner('秘傳・' + hd.n, '參悟了新的秘傳連技'); } else G.UI.banner('秘傳・' + hd.n, ''); }

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 56_camera.js
- * Version : r3.177.0  (2026-11-28)　r3.177.0：秘傳時鏡頭拉遠 22%
+ * Version : r3.184.0  (2026-11-28)　秘傳鏡頭（拉遠、對焦）只套用在秘傳，一般技能與特技不套用
+ * 舊版    : r3.177.0  (2026-11-28)　r3.177.0：秘傳時鏡頭拉遠 22%
  * 舊版    : r3.176.0  (2026-11-28)　r3.176.0：秘傳通用演出鏡頭（主角與敵人群中間、挑飛時上移）
  * 舊版    : r3.173.0  (2026-11-28)　r3.173.0：G.CAMFOCUS 演出鏡頭（期間內鏡頭對準指定點）
  * 舊版    : r3.56.0  (2026-11-24)　r3.56.0：G.CAMLOOK 時拉遠
@@ -22,7 +23,7 @@
   /* 目標可視高度：基準 × 情境係數 */
   function targetVis() { const b = baseVis();
     if (G.CAMZOOM && G.t < G.CAMZOOM.until && H.act && H.act.mvx && H.act.mvx.hiden) return b * G.CAMZOOM.k;   /* r3.179.0：個別秘傳指定鏡頭距離 */
-    if (H.act && H.act.mvx && H.act.mvx.hiden) return b * 1.22;   /* r3.177.0：秘傳時鏡頭拉遠，演出放得下 */
+    if (H.act && H.act.mvx && H.act.mvx.hd) return b * 1.22;   /* r3.177.0：秘傳時鏡頭拉遠，演出放得下 */
     if (G.CAMLOOK) return b * 1.3;   // r3.56.0：看向指定點（封印石）時拉遠，人和石頭都入鏡
     if (G.STORY && G.STORY.cut) return b;
     if (G.DLG && G.DLG.active()) return b * TALK;
@@ -35,7 +36,7 @@
   const ct0 = SC.camTarget.bind(SC);
   SC.camTarget = function () { const { vw, vh } = SC.view(), d = SC.def; if (!d) return ct0();
     let F = G.CAMFOCUS && G.t < G.CAMFOCUS.until && G.mode === 'play' ? G.CAMFOCUS : null;   /* r3.173.0：演出鏡頭（秘傳） */
-    if (!F && G.mode === 'play' && H.act && H.act.mvx && H.act.mvx.hiden) {   /* r3.176.0：各武器秘傳通用演出鏡頭——對準主角與附近敵人群的中間，有人被挑飛就往上帶 */
+    if (!F && G.mode === 'play' && H.act && H.act.mvx && H.act.mvx.hd) {   /* r3.176.0：各武器秘傳通用演出鏡頭——對準主角與附近敵人群的中間，有人被挑飛就往上帶 */
       const k = G.HERO_H * SC.depth(H.y); let n = 0, sx = 0, sy = 0, up = 0; for (const e of G.E || []) { if (e.st === 'dead' || e.delay > 0 || Math.hypot(e.x - H.x, (e.y - H.y) * 1.5) > 6 * k) continue; n++; sx += e.x; sy += e.y; up = Math.max(up, e.lz || 0); }
       if (n) { const fx = H.x * 0.4 + sx / n * 0.6, fy = H.y * 0.4 + sy / n * 0.6 - 0.45 * k - Math.min(1.2 * k, up * 0.6); st.fx = st.fx === undefined ? fx : st.fx + (fx - st.fx) * 0.08; st.fy = st.fy === undefined ? fy : st.fy + (fy - st.fy) * 0.08; F = { x: st.fx, y: st.fy }; } } else if (!F) { st.fx = st.fy = undefined; }
     const x = F ? F.x : H.x + st.lead * vw, y = F ? F.y : H.y - 40 + st.leadY * vh;

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 112_nodachi.js
- * Version : r3.182.0  (2026-11-28)　r3.182.0：長刃離陣補特效（拖刀火星、焦痕、反手月牙刀氣）；出刀起點亮光與拖光
+ * Version : r3.184.0  (2026-11-28)　鬼斬車最後一圈真的把妖怪甩飛（原本擊退量太小又被拉回）
+ * 舊版    : r3.182.0  (2026-11-28)　r3.182.0：長刃離陣補特效（拖刀火星、焦痕、反手月牙刀氣）；出刀起點亮光與拖光
  * 舊版    : r3.181.0  (2026-11-28)　r3.181.0：五招秘傳演出重做（落日、躍空急降、地裂線、岩柱、全黑蓄力、一文字瞬斬）＋運鏡；奧義天地一刀蓄力演出
  * 舊版    : r3.77.0  (2026-11-24)
  * 變更    : r3.77.0 擊退放大只套收招／技／秘傳／普攻，起手與連接招不放大（修正秘傳「天斷」第 2 段打不到、湊不出來）。
@@ -135,12 +136,12 @@
     if (t === r3 - 3) shot(c, c.x + c.f * 2.4 * k, c.y, 0.5, 1.5, 44);
     if (t === r3) { rift(c, c.x + c.f * 1.2 * k, c.y, c.f, 6.5, 0.8); shake(12); } };
   DH.n_guruma = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh, T = c.a.T;
-    if (init(c, T + 10, 0.9)) shot(c, c.x + c.f * 1.2 * k, c.y, 0.6, 1.45, T);
+    if (init(c, T + 34, 0.9)) shot(c, c.x + c.f * 1.2 * k, c.y, 0.6, 1.45, T);
     if (t < r1 && t % 2 === 0) E(() => KF().embers(c.x - c.f * 0.9 * k, c.y, 0.02, 2, { up: 0.8, sp: 0.5, life: 16 }));   /* 拖刀火星 */
     DH0.n_guruma(c, t, C);
-    if (t >= r2 && t < r3 + 16) { c.move(0.035, 0); G.CAMFOCUS = { x: c.x + c.f * 0.8 * k, y: c.y - 0.6 * k, until: G.t + 20 }; for (const e of G.E) if (e.st !== 'dead' && !e.boss && !e.bb) { const d = Math.hypot(e.x - c.x, (e.y - c.y) * 1.5); if (d < 2.6 * k && d > 0.8 * k) { e.x += (c.x - e.x) * 0.07; e.y += (c.y - e.y) * 0.07; } } }   /* 一路往前推，把妖怪捲進來 */
+    if (t >= r2 && t < r3 + 12) { c.move(0.035, 0); G.CAMFOCUS = { x: c.x + c.f * 0.8 * k, y: c.y - 0.6 * k, until: G.t + 20 }; for (const e of G.E) if (e.st !== 'dead' && !e.boss && !e.bb) { const d = Math.hypot(e.x - c.x, (e.y - c.y) * 1.5); if (d < 2.6 * k && d > 0.8 * k) { e.x += (c.x - e.x) * 0.07; e.y += (c.y - e.y) * 0.07; } } }   /* 一路往前推，把妖怪捲進來 */
     if (t === r2 + 8) { E(() => KF().smear({ x: c.x, y: c.y, f: -c.f, cy: 0.5, r: 1.75, sq: 0.36, a0: Math.PI, a1: -Math.PI * 1.04, w: 0.5, dur: 6, life: 20, trail: 5.6, tier: 2 })); c.hit({ shape: 'circle', r: 1.7, m: 0.6, lv: 'heavy', kind: 'cut', col: NC }); shake(4); }
-    if (t === r3 + 12) { shot(c, c.x, c.y, 0.5, 1.15, 30); for (const e of G.E) if (e.st !== 'dead' && !e.boss && Math.hypot(e.x - c.x, (e.y - c.y) * 1.5) < 2.2 * k) { e.kb = (e.x >= c.x ? 1 : -1) * 3.2; lift(e, 0.7); } E(() => { KF().puff(c.x, c.y, 3); KF().rocks(c.x, c.y, 14, 2.4); }); shake(11); } };   /* 最後一圈：全部甩飛 */
+    if (t === r3 + 12) { shot(c, c.x, c.y, 0.5, 1.15, 30); for (const e of G.E) if (e.st !== 'dead' && !e.boss && Math.hypot(e.x - c.x, (e.y - c.y) * 1.5) < 2.2 * k) { const sd = e.x >= c.x ? 1 : -1; e.kb = sd * 0.62 * k / (e.ratio || 1); lift(e, 1.5); G.damageOni(e, 0.5 * c.mul, true); e.kb = sd * 0.62 * k / (e.ratio || 1); } E(() => { KF().puff(c.x, c.y, 3); KF().rocks(c.x, c.y, 14, 2.4); }); shake(11); } };   /* 最後一圈：全部甩飛 */
   DH.n_dangaku = function (c, t, C) { const [r1, , r3] = C.rel, k = c.hh, m = c.a.mvx, T = c.a.T;
     if (init(c, T + 30, 0.9)) shot(c, c.x + c.f * 1.6 * k, c.y, 0.7, 1.4, r3);
     DH0.n_dangaku(c, t, C);
