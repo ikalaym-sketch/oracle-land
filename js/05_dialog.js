@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 05_dialog.js
- * Version : r3.90.0  (2026-11-26)　r3.90.0：選項框加寬（440→560）；選項文字太長先縮字、再分兩行，不再超出框
+ * Version : r3.145.0  (2026-11-27)　r3.145.0：對話改成半身頭像：框外上方站人，位置在一段對話內固定（蒼真右、對方左），講話的人亮、其他人暗；名字牌移到講話者那側；有底色的頭像自動去背
+ * 舊版    : r3.90.0  (2026-11-26)　r3.90.0：選項框加寬（440→560）；選項文字太長先縮字、再分兩行，不再超出框
  * 舊版    : r2.0.0  (2026-11-10)
  * 變更    : r2.0.0 對話框高度、行距、換行寬度隨字體大小縮放；新增鐵心頭像。
  * 變更    : r1.1.0 新增小雪／阿松／勘婆／權爺／小太頭像；G.DLG.who＝目前說話者（NPC 切說話格）。
@@ -60,12 +61,12 @@
         ctx.strokeStyle = G.C.gold; ctx.lineWidth = 1.2; G.rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 8); ctx.stroke(); choiceLabel(c.label, b); });
       return; }
     const { x, y, w, h } = box();
+    busts(this, L, x, y, w);   // r3.145.0：半身頭像（框外上方）
     const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, 'rgba(20,14,18,.93)'); g.addColorStop(1, 'rgba(10,7,10,.97)');
     ctx.fillStyle = g; G.rr(x, y, w, h, 10); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.55)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, w - 1, h - 1, 10); ctx.stroke();
-    let tx = x + 22; const face = FACE[L.who];
-    if (face) { ctx.save(); G.rr(x + 12, y + 14, 88, 88, 8); ctx.clip(); ctx.fillStyle = '#231a1e'; ctx.fillRect(x + 12, y + 14, 88, 88); ctx.drawImage(G.IMG[face], x + 12, y + 14, 88, 88); ctx.restore();
-      ctx.strokeStyle = 'rgba(227,194,122,.7)'; G.rr(x + 12.5, y + 14.5, 87, 87, 8); ctx.stroke(); tx = x + 114; }
-    if (L.who) { ctx.font = `900 15px ${G.FONT_S}`; const nw = ctx.measureText(L.who).width + 22; ctx.fillStyle = G.C.gold; G.rr(tx - 4, y - 13, nw, 26, 13); ctx.fill(); G.txt(L.who, tx - 4 + nw / 2, y, 15, '#1a1014', 'center', G.FONT_S, 900); }
+    let tx = x + 22; const side = stage(this, L), P = bustP();
+    if (L.who) { ctx.font = `900 15px ${G.FONT_S}`; const nw = ctx.measureText(L.who).width + 22, nx = side === 'R' ? x + w - P * 1.05 : side === 'L' ? x + P * 0.5 : tx - 4;   /* 右側名字牌避開「跳過／記錄／快進」 */   // r3.145.0：名字牌在講話的人那一側
+      ctx.fillStyle = G.C.gold; G.rr(nx, y - 13, nw, 26, 13); ctx.fill(); G.txt(L.who, nx + nw / 2, y, 15, '#1a1014', 'center', G.FONT_S, 900); }
     const narr = !L.who || L.text[0] === '（';
     const fs = G.FS(); ctx.font = `${narr ? 500 : 700} ${16 * fs}px ${G.FONT}`; const lines = G.wrap(L.text.slice(0, Math.floor(this.shown)), x + w - tx - 26);
     lines.slice(0, 3).forEach((ln, i) => G.txt(ln, tx, y + 34 + i * 25 * fs, 16, narr ? '#d6c9b2' : '#f6eddb', 'left', G.FONT, narr ? 500 : 700));
@@ -73,6 +74,24 @@
     const B = this.B; B.log = { x: x + w - 128, y: y - 30, w: 56, h: 24 }; B.skip = { x: x + w - 64, y: y - 30, w: 56, h: 24 };
     G.UI.pill(B.log, '記錄'); G.UI.pill(B.skip, this.skip ? '快進中' : '快進', this.skip);
   };
+  /* ---------- r3.145.0：半身頭像——位置在一段對話內固定（蒼真右、其他人左；第三人接替最久沒講話的一側），講話的人亮、其他人暗 ---------- */
+  const faceOf = n => { if (!n) return null; if (FACE[n]) return FACE[n]; const PD = G.PARTY && G.PARTY.DEF; if (PD) for (const id in PD) if (PD[id].name === n && PD[id].face) return PD[id].face; return null; };
+  const BUST = {}; let castL = null, cast = { L: null, R: null };
+  function bustImg(k, dim) { const im = G.IMG[k]; if (!im) return null; const c0 = BUST[k]; if (c0 && c0.src === im) return dim ? c0.d : c0.c;   /* 有底色的頭像去背一次後快取 */
+    let c = im; try { const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const x = cv.getContext('2d'); x.drawImage(im, 0, 0); const d = x.getImageData(0, 0, cv.width, cv.height), a = d.data;
+      if (a[3] > 200) { const r0 = a[0], g0 = a[1], b0 = a[2]; for (let i = 0; i < a.length; i += 4) { const dd = Math.abs(a[i] - r0) + Math.abs(a[i + 1] - g0) + Math.abs(a[i + 2] - b0); if (dd < 30) a[i + 3] = 0; else if (dd < 60) a[i + 3] = Math.round((dd - 30) / 30 * 255); } x.putImageData(d, 0, 0); c = cv; } } catch (e) {}
+    let dc = c; try { const cv = document.createElement('canvas'); cv.width = c.width; cv.height = c.height; const x = cv.getContext('2d'); x.drawImage(c, 0, 0); const d = x.getImageData(0, 0, cv.width, cv.height), a = d.data;   /* 變暗版（不用 ctx.filter，iOS Safari 也能用） */
+      for (let i = 0; i < a.length; i += 4) { const l = (a[i] + a[i + 1] + a[i + 2]) / 3; a[i] = (a[i] * 0.6 + l * 0.4) * 0.45; a[i + 1] = (a[i + 1] * 0.6 + l * 0.4) * 0.45; a[i + 2] = (a[i + 2] * 0.6 + l * 0.4) * 0.45; } x.putImageData(d, 0, 0); dc = cv; } catch (e) {}
+    BUST[k] = { src: im, c, d: dc }; return dim ? dc : c; }
+  const bustP = () => Math.round(Math.min(G.LH * 0.6, 300));
+  function stage(D, L) { if (D.list !== castL) { castL = D.list; cast = { L: null, R: null }; } const n = L.who, f = faceOf(n); if (!n || !f) return null;
+    for (const s of ['L', 'R']) if (cast[s] && cast[s].n === n) { cast[s].t = G.t; return s; }
+    const pf = n === '蒼真' ? 'R' : 'L', ot = pf === 'L' ? 'R' : 'L', s = !cast[pf] ? pf : !cast[ot] ? ot : (cast.L.t <= cast.R.t ? 'L' : 'R');
+    cast[s] = { n, f, t: G.t }; return s; }
+  function busts(D, L, x, y, w) { const P = bustP(), narr = !L.who || L.text[0] === '（';
+    for (const s of ['L', 'R']) { const c = cast[s]; if (!c) continue; const on = !narr && c.n === L.who, im = bustImg(c.f, !on); if (!im) continue; const k = on ? 1 : 0.94, sz = P * k, bx = s === 'L' ? x + 8 : x + w - sz - 8, by = y + 18 - sz;
+      ctx.save(); ctx.beginPath(); ctx.rect(bx - 4, by - 4, sz + 8, y + 18 - by + 4); ctx.clip();
+      if (s === 'R') { ctx.translate(bx * 2 + sz, 0); ctx.scale(-1, 1); } ctx.drawImage(im, bx, by, sz, sz); ctx.restore(); } }
   function drawLog() {
     G.veil(0.86); const x = Math.max(40, (G.LW - 700) / 2), top = 60 + G.SAFE.t, bot = G.LH - 34 - G.SAFE.b;
     G.txt('對話記錄', G.LW / 2, 28 + G.SAFE.t, 16, G.C.gold, 'center', G.FONT_S, 900);

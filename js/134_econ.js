@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 134_econ.js
- * Version : r3.106.0  (2026-11-26)
+ * Version : r3.145.0  (2026-11-27)　r3.145.0：掉落裝備只有稀品以上顯示名字
+ * 舊版    : r3.106.0  (2026-11-26)
  * 變更    : r3.106.0 新增。平衡第 10 步（經濟）＋掉落物改圖。
  *           ・收入：打怪錢不依等級差遞減（使用者決議）；頭目擊敗另掉「30 隻同級怪」的錢（分 6 堆）；巔峰每 1 級，打怪與頭目的錢 +0.5%。
  *           ・難度素材（rpg.dm）：
@@ -76,7 +77,7 @@
     const U = need(); if (!U) return false; const tier = tierOf(l), col = colOf(l), hk = HK[tier], r0 = HH() * s * hk;
     glow(l.x, y - r0 * 0.35, r0 * 1.05, col, 0.55 + 0.45 * a, tier !== 'normal');
     const w = chest(U, tier, 'closed', l.x, y, 1); if (!w) return false;
-    if (l.kind === 'item' || l.kind === 'key' || l.kind === 'dm') { const lab = l.kind === 'item' ? R.name(l.it) : l.kind === 'dm' ? DM[l.id][0] + ' ×' + l.n : l.name; ctx.save(); ctx.translate(l.x, y - r0 * 1.15 - 8); ctx.scale(1 / Z, 1 / Z);
+    if ((l.kind === 'item' && l.it.q >= 3) || l.kind === 'key' || l.kind === 'dm') { const lab =   /* r3.145.0：裝備只有稀品以上顯示名字（凡品～精品看寶箱顏色） */ l.kind === 'item' ? R.name(l.it) : l.kind === 'dm' ? DM[l.id][0] + ' ×' + l.n : l.name; ctx.save(); ctx.translate(l.x, y - r0 * 1.15 - 8); ctx.scale(1 / Z, 1 / Z);
       ctx.font = `700 ${11 * G.FS()}px ${G.FONT}`; const tw = ctx.measureText(lab).width + 12; ctx.fillStyle = 'rgba(12,8,10,.75)'; G.rr(-tw / 2, -10, tw, 20, 10); ctx.fill();
       ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, 0, 1); ctx.restore(); }
     return true; };

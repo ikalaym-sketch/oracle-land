@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 26_boss.js
- * Version : r3.117.0  (2026-11-26)　r3.117.0：友軍頭目模式：B.allyStart／allyEnd，用原本招式打敵人（目標＝最近敵人、傷害依主角攻擊、對頭目減半），友軍不畫預警、不推主角、召喚招式不生怪；敵方頭目範圍招也會打到友軍；九尾分身類招式友軍不用
+ * Version : r3.145.0  (2026-11-27)　r3.145.0：預警調淡（底色約減半、圖示平常 30%，出手前才亮）
+ * 舊版    : r3.117.0  (2026-11-26)　r3.117.0：友軍頭目模式：B.allyStart／allyEnd，用原本招式打敵人（目標＝最近敵人、傷害依主角攻擊、對頭目減半），友軍不畫預警、不推主角、召喚招式不生怪；敵方頭目範圍招也會打到友軍；九尾分身類招式友軍不用
  * 舊版    : r3.96.0  (2026-11-26)　r3.96.0：出招間隔倍率 enc.ck 小於 1 也生效（狂暴、第二型態）
  * 舊版    : r3.94.0  (2026-11-26)　r3.94.0：預兆改逐招計時（B.onBegin 設 m._k／m._W；預兆與命中同一計時，危險區同步放慢）；大招固定瞄準主角；破綻 ×1.5 改易傷區
  * 舊版    : r3.52.1  (2026-11-23)　r3.52.1：頭目戰開打清掉路人時，任務標記一起收起（打完自動重建）
@@ -352,11 +353,11 @@
     return (TINT[key] = [c, fr]); }
   B.tinted = tinted;
   function art(u, n, fi, col, x, y, sx, sy, rot, a) { const [c, fr] = tinted(u, n, fi, col); ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); if (rot) ctx.rotate(rot); ctx.scale(sx, sy); ctx.drawImage(c, -fr[4], -fr[5]); ctx.restore(); }
-  function drawWarn(t, u) { const q = t.t / t.life, pul = 0.75 + 0.25 * Math.sin(t.t * 0.35);
+  function drawWarn(t, u) { const q = t.t / t.life, pul = (0.3 + 0.5 * Math.max(0, (q - 0.65) / 0.35)) * (0.85 + 0.15 * Math.sin(t.t * 0.35));   /* r3.145.0：預警調淡，出手前 35% 才變亮 */
     if (t.k === 'lane') { const ang = Math.atan2(t.y1 - t.y0, t.x1 - t.x0), L = Math.hypot(t.x1 - t.x0, t.y1 - t.y0), bh = t.w * 0.6;
-      ctx.save(); ctx.translate(t.x0, t.y0); ctx.rotate(ang); ctx.fillStyle = `rgba(${t.col},${0.16 + 0.3 * q})`; ctx.fillRect(0, -bh / 2, L * q, bh); ctx.restore();
+      ctx.save(); ctx.translate(t.x0, t.y0); ctx.rotate(ang); ctx.fillStyle = `rgba(${t.col},${0.07 + 0.17 * q})`; ctx.fillRect(0, -bh / 2, L * q, bh); ctx.restore();
       art(u, 'fx_warn_line', 0, t.col, (t.x0 + t.x1) / 2, (t.y0 + t.y1) / 2, L / 610, bh / 88, ang, pul); return; }
-    ctx.save(); ctx.fillStyle = `rgba(${t.col},${0.12 + 0.28 * q})`; ctx.beginPath(); ctx.ellipse(t.x, t.y, t.r * q, t.r * 0.42 * q, 0, 0, 6.283); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.fillStyle = `rgba(${t.col},${0.05 + 0.15 * q})`; ctx.beginPath(); ctx.ellipse(t.x, t.y, t.r * q, t.r * 0.42 * q, 0, 0, 6.283); ctx.fill(); ctx.restore();
     if (t.r <= HH() * 0.8) { const fi = Math.min(3, Math.floor(q / 0.35 * 4)), k = 2 * t.r / 80; art(u, 'fx_warn_target', fi, t.col, t.x, t.y, k, k * 0.42, 0, pul); }
     else { const k = 2 * t.r / 300; art(u, 'fx_warn_circle', 0, t.col, t.x, t.y, k, k * 0.42, 0, pul); } }
   function drawGround() {   // 危險區（在角色之下）

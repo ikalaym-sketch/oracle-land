@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 21_shop.js
- * Version : r3.108.1  (2026-11-26)　r3.108.1：殺價後價格取整數（不再出現小數點）
+ * Version : r3.145.0  (2026-11-27)　r3.145.0：鍛冶鋪、行商最多賣到精品（藍）
+ * 舊版    : r3.108.1  (2026-11-26)　r3.108.1：殺價後價格取整數（不再出現小數點）
  * 舊版    : r3.93.0  （r3.93.0：藥水冷卻 1.5 秒→5 秒（S.QCD），冷卻圈依 S.QCD 畫）
  * 舊版    : r3.63.0  （r3.63.0：鍛冶舖改賣精品～傳說、行商可到傳說、價格乘 S.disc）　r3.61.0：（r3.61.0：茶屋改由 S.teaList 提供、商品列表可加 S.xrows、名物價格 ×3）　r3.24.0：（r3.24.0：頁籤依空間縮寬不壓錢數；茶食攤升級頁修正；賣價加成；藥鍵數量移到上方）
  * 舊版    : r3.19.3  (2026-11-14)
@@ -43,7 +44,7 @@
   function gen(id, ty, day) {
     let h = 2166136261; for (const ch of id + day) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
     const rnd = () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909)) >>> 0) / 4294967296;
-    const mr = Math.random, out = [], lv = rd().lv, n = { curio: 3, peddler: 3, yg: 4 }[ty] || 6, Q = { smith: [2, 4], curio: [3, 5], peddler: [2, 4], yg: [3, 4] }[ty], SETK = Object.keys(R().SETS);
+    const mr = Math.random, out = [], lv = rd().lv, n = { curio: 3, peddler: 3, yg: 4 }[ty] || 6, Q = { smith: [2, 2], curio: [3, 5], peddler: [2, 2], yg: [3, 4] }[ty]   /* r3.145.0：鍛冶鋪／行商只賣精品（藍）；珍品鋪、妖市照舊 */, SETK = Object.keys(R().SETS);
     Math.random = rnd;
     try { for (let i = 0; i < n; i++) { let it = null;
         const want = ty === 'yg' ? (i < 2 ? 4 : 3) : 0;

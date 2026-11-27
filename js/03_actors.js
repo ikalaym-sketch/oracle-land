@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.143.0  (2026-11-27)　r3.143.0：和弓特性：普攻出箭中可移動（不轉身，速度 ×0.6）
+ * Version : r3.145.0  (2026-11-27)　掉落物：稀品以上才顯示名字，光柱高度依品質拉開；r3.145.0：傷害數字放大（一般 19、暴擊 28），出現與合併時彈一下，暴擊上跳
+ * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：和弓特性：普攻出箭中可移動（不轉身，速度 ×0.6）
  * 舊版    : r3.126.0  (2026-11-27)　r3.126.0：里歐出招中本體步進直接略過（讓外層各模組的每格處理照常執行）
  * 舊版    : r3.111.0  (2026-11-26)　r3.111.0：近戰外框橢圓預警停用（改由 139_foeai 畫頭目同款預警）
  * 舊版    : r3.107.0  (2026-11-26)　r3.107.0：暫時攻擊%（茶屋糰子、名物、招式增益 G.BUFF atk）併入攻擊區，與裝備／修練的攻擊% 同區相加
@@ -412,11 +413,11 @@ G.ONI_RATIO = 1.38;
     for (const l of G.LOOT) { if (G.LOOTDRAW && G.LOOTDRAW(l, Z)) continue; const c = LCOL(l), b = Math.max(0, 1 - l.t / 20), y = l.y - 5 - Math.abs(Math.sin(l.t * 0.08 + l.x)) * 3 - b * 26, a = 0.55 + 0.45 * Math.sin(G.t * 0.12 + l.x);
       ctx.fillStyle = 'rgba(30,20,10,.3)'; ctx.beginPath(); ctx.ellipse(l.x, l.y, 7, 2.5, 0, 0, 6.283); ctx.fill();
       if (l.kind === 'gold') { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(l.x, y, 4, 4 * Math.abs(Math.cos(G.t * 0.1 + l.x)) + 0.6, 0, 0, 6.283); ctx.fill(); continue; }
-      const big = l.kind === 'item' ? 34 + l.it.q * 16 : 30, g = ctx.createLinearGradient(0, y - big, 0, y);
+      const big = l.kind === 'item' ? [16, 24, 40, 60, 80, 100][l.it.q] || 40 : 30,   /* r3.145.0：光柱依品質拉開差距 */ g = ctx.createLinearGradient(0, y - big, 0, y);
       g.addColorStop(0, c + '00'); g.addColorStop(1, c + 'aa'); ctx.globalAlpha = 0.6 + 0.4 * a; ctx.fillStyle = g; ctx.fillRect(l.x - 4, y - big, 8, big); ctx.globalAlpha = 1;
       /* r3.87.0：拿掉掉落物腳下的品質色圈（綠色品質掉一地時變成一堆綠圈）；品質色改由光柱＋菱形表示 */
       ctx.fillStyle = c; ctx.save(); ctx.translate(l.x, y); ctx.rotate(0.785); ctx.fillRect(-4, -4, 8, 8); ctx.restore();
-      if (l.kind === 'item' || l.kind === 'key') { const lab = l.kind === 'item' ? G.RPG.name(l.it) : l.name; ctx.save(); ctx.translate(l.x, y - big - 6); ctx.scale(1 / Z, 1 / Z);
+      if ((l.kind === 'item' && l.it.q >= 3) || l.kind === 'key') { const lab =   /* r3.145.0：只有稀品以上顯示名字 */ l.kind === 'item' ? G.RPG.name(l.it) : l.name; ctx.save(); ctx.translate(l.x, y - big - 6); ctx.scale(1 / Z, 1 / Z);
         ctx.font = `700 ${11 * G.FS()}px ${G.FONT}`; const w = ctx.measureText(lab).width + 12; ctx.fillStyle = 'rgba(12,8,10,.75)'; G.rr(-w / 2, -10, w, 20, 10); ctx.fill();
         ctx.fillStyle = c; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, 0, 1); ctx.restore(); } }
   };
@@ -448,8 +449,9 @@ G.ONI_RATIO = 1.38;
       else if (f.k === 'bite') { ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = 2.5; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(f.x - 10, f.y + i * 6); ctx.lineTo(f.x + 10, f.y + i * 6 - 4); ctx.stroke(); } }
       else if (f.k === 'wind') { ctx.strokeStyle = `rgba(220,240,235,${a * 0.5})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.quadraticCurveTo(f.x + 40, f.y - 8, f.x + 90, f.y); ctx.stroke(); f.x += f.vx; }
     }
-    for (const n of G.NUMS) { const a = 1 - n.t / 50, s = 1 / Z; ctx.save(); ctx.translate(n.x, n.y); ctx.scale(s, s); ctx.globalAlpha = a;
-      ctx.font = `900 ${n.crit ? 22 : n.gold ? 13 : 17}px ${G.FONT_S}`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(20,10,8,.85)'; const nv = G.fmtN(n.v); ctx.strokeText(nv, 0, 0);
+    for (const n of G.NUMS) { const a = 1 - n.t / 50, pt = n.pop != null ? G.t - n.pop : n.t, pp = Math.max(0, 1 - pt / 8), s = 1 / Z * (1 + (n.crit ? 0.6 : 0.35) * pp), by = n.crit ? -Math.sin(Math.min(1, n.t / 10) * Math.PI) * 6 : 0;   // r3.145.0：出現／合併時彈一下，暴擊多跳一下
+      ctx.save(); ctx.translate(n.x, n.y + by); ctx.scale(s, s); ctx.globalAlpha = a;
+      ctx.font = `900 ${n.crit ? 28 : n.gold ? 13 : 19}px ${G.FONT_S}`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(20,10,8,.85)'; const nv = G.fmtN(n.v); ctx.strokeText(nv, 0, 0);
       ctx.fillStyle = n.gold ? '#f3d36a' : n.hurt ? '#ff8a7a' : n.crit ? '#ffd76a' : '#fff4e0'; ctx.fillText(nv, 0, 0); ctx.restore(); }
   };
 

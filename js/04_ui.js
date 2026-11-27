@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 04_ui.js
- * Version : r3.110.0  (2026-11-26)　r3.110.0：藥鍵左邊加「鎌鼬之羽」召喚鍵（擁有後才出現）；r3.111.0：左上「敵 Lv」顯示實際等級（困難以上含主角等級）；r3.113.0：點世界事件提醒＝直接傳送到該地圖開始
+ * Version : r3.145.0  (2026-11-27)　r3.145.0：訊息排隊（橫幅、提示各一次一個，其餘排隊）
+ * 舊版    : r3.110.0  (2026-11-26)　r3.110.0：藥鍵左邊加「鎌鼬之羽」召喚鍵（擁有後才出現）；r3.111.0：左上「敵 Lv」顯示實際等級（困難以上含主角等級）；r3.113.0：點世界事件提醒＝直接傳送到該地圖開始
  * 舊版    : r3.100.0  (2026-11-26)　r3.100.0：右上「談／調查」鈕取消：附近有互動對象且沒有敵人時，「斬」鍵變成「談／查」，上方顯示對象名稱
  * 舊版    : r3.64.0  （r3.64.0：血條加粗、血量數字放大、低血量閃爍）
  * 舊版    : r3.54.0  （r3.54.0：巔峰等級顯示　r3.32.0：HUD 顯示全遊戲難度＋副本難度）
@@ -45,9 +46,14 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
       B.potion = { x: B.m1.x - 58, y: B.m1.y, r: B.m1.r };
       B.feather = { x: B.potion.x - 54, y: B.potion.y, r: B.m1.r };   /* r3.110.0：鎌鼬之羽（138_feather） */   // r3.24.0：與「閃」同大小、同高度   // r3.19.3：藥鍵改圓形，放在「閃」左邊
     },
-    toast(t) { if (!this.tst || this.tst.text !== t || this.tst.t < 60) this.tst = { text: t, t: 110 }; },
-    banner(t, sub) { this.ban = { text: t, sub, t: 170 }; },
-    step() { if (this.tst && --this.tst.t <= 0) this.tst = null; if (this.ban && --this.ban.t <= 0) this.ban = null;
+    /* r3.145.0：訊息排隊——同一時間 1 個橫幅＋1 個提示；後來的排隊（同文字不重複），排隊中顯示時間縮短 */
+    bq: [], tq: [],
+    toast(t) { const c = this.tst; if (!c || c.t < 30) { this.tst = { text: t, t: 110 }; return; } if (c.text === t) { c.t = Math.max(c.t, 80); return; }
+      if (!this.tq.includes(t)) { this.tq.push(t); if (this.tq.length > 3) this.tq.shift(); } if (c.t > 70) c.t = 70; },
+    banner(t, sub) { const c = this.ban; if (!c || c.t < 20) { this.ban = { text: t, sub, t: 170 }; return; } if (c.text === t) return;
+      if (!this.bq.some(b => b.text === t)) { this.bq.push({ text: t, sub }); if (this.bq.length > 4) this.bq.shift(); } if (c.t > 110) c.t = 110; },
+    step() { if (this.tst && --this.tst.t <= 0) { this.tst = null; if (this.tq.length) this.tst = { text: this.tq.shift(), t: this.tq.length ? 80 : 100 }; }
+      if (this.ban && --this.ban.t <= 0) { this.ban = null; const n = this.bq.shift(); if (n) this.ban = { text: n.text, sub: n.sub, t: this.bq.length ? 130 : 170 }; }
       let mx = 0, my = 0; if (IN.stick) { mx = (IN.stick.x - IN.stick.ox) / 46; my = (IN.stick.y - IN.stick.oy) / 46; }
       const K = IN.keys; if (K.has('a') || K.has('arrowleft')) mx -= 1; if (K.has('d') || K.has('arrowright')) mx += 1; if (K.has('w') || K.has('arrowup')) my -= 1; if (K.has('s') || K.has('arrowdown')) my += 1;
       IN.mx = mx; IN.my = my; if (mx || my) IN.lastAct = G.t; }

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 10_banter.js
- * Version : r3.27.7  （r3.27.7：只有目前出戰位上的夥伴會說話（原本已加入但沒帶出門的也會跳台詞）　r3.19.1：夥伴閒聊改成夥伴頭頂泡泡；不在場時才用左上框）
+ * Version : r3.145.0  (2026-11-27)　r3.145.0：有橫幅時閒聊延後開始
+ * 舊版    : r3.27.7  （r3.27.7：只有目前出戰位上的夥伴會說話（原本已加入但沒帶出門的也會跳台詞）　r3.19.1：夥伴閒聊改成夥伴頭頂泡泡；不在場時才用左上框）
  * 舊版    : r3.9.0  (2026-11-13)
  * 變更    : r3.9.0 名冊可擴充（B.extra：隱藏夥伴）；閒聊依劇情進度（前／中／後期／通關後）與所在區域（place）換台詞；新增 boss 觸發。
  * 說明    : 夥伴閒聊——待機太久、進入地圖、開戰、低血量、升級、清場、撿到稀有裝備、回到神社時，
@@ -66,6 +67,7 @@
   };
   B.step = function () {
     if (B.cd > 0) B.cd--;
+    if (B.cur && G.UI.ban && B.cur.t < 10) return;   // r3.145.0：有橫幅時，閒聊等橫幅結束再開始
     if (B.cur && ++B.cur.t >= B.cur.life) { B.cur = null; if (B.queue && B.queue.length) { const [id, t] = B.queue.shift(); B.say(id, t, true); } }
     if (G.DLG.active() || G.MENU.open) return;
     if (B.pendingEnter > 0 && --B.pendingEnter === 0) { B.trigger('enter'); if (G.SC.id === 'hub_shrine' && !B.cur && G.SAVE.data.flags.matsu) B.trigger('home', true); }

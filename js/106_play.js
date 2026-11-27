@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 106_play.js
- * Version : r3.143.0  (2026-11-27)　r3.143.0：戰鬥中淡化路人時，跳過援軍、支援角色、鎌鼬三兄弟
+ * Version : r3.145.0  (2026-11-27)　r3.145.0：合併傷害數字時記下時間（03 畫彈跳）
+ * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：戰鬥中淡化路人時，跳過援軍、支援角色、鎌鼬三兄弟
  * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：救援士兵、小雪不套「靠近敵人變半透明」
  * 舊版    : r3.105.0  (2026-11-26)　r3.105.0：合併傷害數字也用「萬」
  * 舊版    : r3.64.0  (2026-11-24)
@@ -53,7 +54,7 @@
   const do0 = G.damageOni; G.damageOni = function (e) { const n0 = G.NUMS.length, r = do0.apply(this, arguments); if (G.NUMS.length !== n0 + 1) return r;
     const n = G.NUMS[n0]; if (typeof n.v !== 'number' || n.hurt || n.gold) return r;
     const p = G.NUMS.find(m => m !== n && m.e === e && m.t < 20 && m.sum != null);
-    if (p) { p.sum += n.v; p.k++; p.v = G.fmtN(p.sum) + ' ×' + p.k; p.t = Math.min(p.t, 6); if (n.crit) p.crit = true; G.NUMS.pop(); }
+    if (p) { p.sum += n.v; p.k++; p.v = G.fmtN(p.sum) + ' ×' + p.k; p.t = Math.min(p.t, 6); p.pop = G.t; if (n.crit) p.crit = true; G.NUMS.pop(); }
     else { n.e = e; n.sum = n.v; n.k = 1; n.x += (Math.random() - 0.5) * 28; for (let k = 0; k < 4 && G.NUMS.some(m => m !== n && m.t < 12 && Math.abs(m.x - n.x) < 34 && Math.abs(m.y - n.y) < 13); k++) n.y -= 14; } return r; };   /* 與附近新數字重疊就往上錯開 */
   /* 受傷邊緣紅 */
   const hh0 = G.hurtHero; G.hurtHero = function () { const r = hh0.apply(this, arguments); if (r) SK.hurt = 24; return r; };

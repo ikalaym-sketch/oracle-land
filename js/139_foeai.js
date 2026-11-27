@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 139_foeai.js
- * Version : r3.127.2  (2026-11-27)　r3.127.2：突進（踏步斬）、群撲、盾擊改約主角跑速 1.1 倍，巨體衝撞 1.3 倍（原本 3～5 倍）
+ * Version : r3.145.0  (2026-11-27)　r3.145.0：預警調淡（底色約減半、圖示平常 30%，出手前才亮）
+ * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：突進（踏步斬）、群撲、盾擊改約主角跑速 1.1 倍，巨體衝撞 1.3 倍（原本 3～5 倍）
  * 舊版    : r3.126.1  (2026-11-27)　r3.126.1：突擊衝刺降速＝主角跑步 1.2 倍（原本約 6.5 倍）、距離上限 2.5 身高、起手 0.73 秒、回身再衝 25%（精英照舊）、同圖最多 2 隻同時衝刺
  * 舊版    : r3.126.0  (2026-11-27)　r3.126.0：一般攻擊預警在敵人被打斷（不在出手狀態）時立刻消失
  * 舊版    : r3.119.0  (2026-11-26)　r3.119.0：敵人等級加上轉生輪次加成（+20／+50／+75／+100），轉生後任何難度敵人都不低於主角
@@ -60,11 +61,11 @@
   const lane = (e, x0, y0, x1, y1, w, life, col) => { const t = { k: 'lane', e, x0, y0, x1, y1, w, t: 0, life, col: col || RED }; W.push(t); return t; };
   const circ = (e, x, y, r, life, col) => { const t = { k: 'circle', e, x, y, r, t: 0, life, col: col || RED }; W.push(t); return t; };
   function art(u, n, fi, col, x, y, sx, sy, rot, a) { const T = G.BOSS && G.BOSS.tinted; if (!T) return; const [c, fr] = T(u, n, fi, col), ctx = G.ctx; ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); if (rot) ctx.rotate(rot); ctx.scale(sx, sy); ctx.drawImage(c, -fr[4], -fr[5]); ctx.restore(); }
-  function drawWarn(t, u) { const ctx = G.ctx, q = Math.min(1, t.t / t.life), pul = 0.75 + 0.25 * Math.sin(t.t * 0.35);
+  function drawWarn(t, u) { const ctx = G.ctx, q = Math.min(1, t.t / t.life), pul = (0.3 + 0.5 * Math.max(0, (q - 0.65) / 0.35)) * (0.85 + 0.15 * Math.sin(t.t * 0.35));   /* r3.145.0：預警調淡，出手前 35% 才變亮 */
     if (t.k === 'lane') { const ang = Math.atan2(t.y1 - t.y0, t.x1 - t.x0), L = Math.hypot(t.x1 - t.x0, t.y1 - t.y0), bh = t.w * 0.6;
-      ctx.save(); ctx.translate(t.x0, t.y0); ctx.rotate(ang); ctx.fillStyle = `rgba(${t.col},${0.16 + 0.3 * q})`; ctx.fillRect(0, -bh / 2, L * q, bh); ctx.restore();
+      ctx.save(); ctx.translate(t.x0, t.y0); ctx.rotate(ang); ctx.fillStyle = `rgba(${t.col},${0.07 + 0.17 * q})`; ctx.fillRect(0, -bh / 2, L * q, bh); ctx.restore();
       if (u) art(u, 'fx_warn_line', 0, t.col, (t.x0 + t.x1) / 2, (t.y0 + t.y1) / 2, L / 610, bh / 88, ang, pul); return; }
-    ctx.save(); ctx.fillStyle = `rgba(${t.col},${0.12 + 0.28 * q})`; ctx.beginPath(); ctx.ellipse(t.x, t.y, t.r * q, t.r * 0.42 * q, 0, 0, 6.283); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.fillStyle = `rgba(${t.col},${0.05 + 0.15 * q})`; ctx.beginPath(); ctx.ellipse(t.x, t.y, t.r * q, t.r * 0.42 * q, 0, 0, 6.283); ctx.fill(); ctx.restore();
     if (!u) return; if (t.r <= HH() * 0.8) { const fi = Math.min(3, Math.floor(q / 0.35 * 4)), k = 2 * t.r / 80; art(u, 'fx_warn_target', fi, t.col, t.x, t.y, k, k * 0.42, 0, pul); }
     else { const k = 2 * t.r / 300; art(u, 'fx_warn_circle', 0, t.col, t.x, t.y, k, k * 0.42, 0, pul); } }
   /* ======================= 4. 招式 ======================= */
