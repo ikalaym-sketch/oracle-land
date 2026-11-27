@@ -2,7 +2,7 @@
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d0b10"><link rel="icon" href="icon-192.png">
 <script>
 /* 版本檢查：ver.json 不走快取；與本頁載入的版本不同就換網址重新載入（避免手機用到舊版快取）。每次開啟檢查一次，同一版本最多重載一次。 */
-(function () { var cur = 'r3.152.0';
+(function () { var cur = 'r3.152.1';
   fetch('ver.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
     if (!j || !j.v || j.v === cur) return; var k = 'reload_' + j.v; try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, 1); } catch (e) {}
     location.replace(location.pathname + '?v=' + j.v); }).catch(function () {}); })();
@@ -87,7 +87,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/58_forge.js?v=r3.106.0"></script>
 <script src="js/59_stage.js?v=r3.141.0"></script>
 <script src="js/60_pkit2.js?v=r3.28.0"></script>
-<script src="js/61_qwave.js?v=r3.52.1"></script>
+<script src="js/61_qwave.js?v=r3.152.1"></script>
 <script src="js/62_doma.js?v=r3.28.0"></script>
 <script src="js/63_text.js?v=r3.56.0"></script>
 <script src="js/64_fix.js?v=r3.28.0"></script>

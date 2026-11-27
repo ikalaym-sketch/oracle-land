@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 61_qwave.js
- * Version : r3.52.1  (2026-11-23)　r3.52.1：一般對話標記沒有人也補人（傘妖、無名武士用妖怪圖，仙鶴這類非人用靈光）
+ * Version : r3.152.1  (2026-11-27)　r3.152.1：有居民的任務安全區，打完波次才算安全區、居民才出現
+ * 舊版    : r3.52.1  (2026-11-23)　r3.52.1：一般對話標記沒有人也補人（傘妖、無名武士用妖怪圖，仙鶴這類非人用靈光）
  * 舊版    : r3.52.0  (2026-11-23)　r3.52.0：調查點站位的人標記 qp（事件期間不退場）；站位的人被合併掉時重新找人
  * 舊版    : r3.30.0  (2026-11-16)　r3.30.0：調查點借用村民改走委託選單，不再藏起同一人的其他委託；名字以別名比對
  * 舊版    : r3.27.4  (2026-11-16)　r3.27.4：調查點借用的村民若同時是別的委託人，先藏起那個委託標記（第 11 章梅乃婆婆對話被第 1 章委託搶走）
@@ -47,6 +48,11 @@
   const W = G.QWAVE = { on: null, N: 3 };
   const needWave = q => { const step = cur(q); if (!step || step.map !== SC.id || !/^(Q_|D_)/.test(SC.id) || !/talk|look|gather|choice/.test(step.t)) return false;
     const s = qs()[q.id]; return s.wv !== s.s; };
+  /* r3.152.1：任務安全區（有居民的 Q_ 圖）要打波次時，先不算安全區、居民不出來；清完才變安全區、居民才出現 */
+  const needAt = id => { const sv = SC.id; SC.id = id; try { return Q.L.some(needWave); } finally { SC.id = sv; } };
+  if (G.AMB) { const ae0 = G.AMB.enter; G.AMB.enter = function (id) { const d = G.D.scenes[id], m = G.WORLD && G.WORLD.meta && G.WORLD.meta[id]; W.held = null;
+    if (d && m && m.safe && /^Q_/.test(id)) { d.safe = true; if (needAt(id)) { d.safe = false; W.held = id; const A = G.AMB; A.list = []; A.bubs = []; A.conv = null; A.sid = id; return; } }
+    return ae0.apply(this, arguments); }; }
   function hideQ(q) { if (G.HUB && G.HUB.marks) G.HUB.marks = G.HUB.marks.filter(m => m.q !== q); for (const m of Q.marks) if (m.q === q && m.n) { m.n.x = -9999; m.n.wvHide = 1; } }
   function wave() { const w = W.on, types = SC.def.foes && SC.def.foes.length ? SC.def.foes : ['akaoni'], lv = Math.max(SC.def.lv || 1, (G.RPG.d().lv || 1) - 2), n = 3 + (w.i % 2);
     const go = () => { if (W.on !== w || SC.id !== w.sid) return; for (let i = 0; i < n; i++) { const side = i % 2 ? 1 : -1, e = G.spawnOni(H.x + side * (240 + i * 30), H.y + (i % 3 - 1) * 40, 10 + i * 12, lv, types[i % types.length]);
@@ -57,7 +63,7 @@
     W.on = { q, i: 0, sid: SC.id, t: 0 }; hideQ(q); G.UI.banner('有妖怪擋路', '擊退 ' + W.N + ' 波，委託對象才會現身'); G.STORY.later(60, wave); }
   function endWave() { const w = W.on; W.on = null; const s = qs()[w.q.id]; if (s) { s.wv = s.s; G.SAVE.markDirty(); }
     Q.build(); for (const m of Q.marks) if (m.q === w.q) { const n = m.n; if (n) { const tx = m.x, ty = m.y, side = tx > H.x ? 1 : -1, { vw } = SC.view(); n.wvHide = 0; n.x = Math.max(30, Math.min(SC.def.w - 30, H.x + side * vw * 0.55)); n.y = ty; n.st = 'walk'; n.tx = tx; n.ty = ty; n.hold = false; n.onArrive = k => { k.hold = true; k.st = 'idle'; }; } }
-    G.UI.banner('妖怪退散了', '委託對象出現了'); }
+    G.UI.banner('妖怪退散了', '委託對象出現了'); if (W.held && W.held === SC.id) { SC.def.safe = true; W.held = null; G.AMB.enter(SC.id); } }
   function waveStep() { const w = W.on; if (!w) return; if (SC.id !== w.sid) { W.on = null; return; } hideQ(w.q);
     if (!w.spawned || G.DLG.active()) return; if (G.E.some(e => e.wv && alive(e))) return; if (++w.i >= W.N) endWave(); else wave(); }
   const ob0 = G.STORY.objective.bind(G.STORY);
