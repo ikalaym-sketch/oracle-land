@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 68_xue.js
- * Version : r3.127.4  (2026-11-27)　r3.127.4：戰鬥時小雪跑回進圖的入口隱身等待（不再跟著主角跑），打完 1.5 秒回到主角身後
+ * Version : r3.191.0  (2026-11-28)　秘傳／奧義演出時不顯示夥伴頭上的小盾牌
+ * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：戰鬥時小雪跑回進圖的入口隱身等待（不再跟著主角跑），打完 1.5 秒回到主角身後
  * 舊版    : r3.60.0  (2026-11-24)　r3.60.0：合戰地圖不跟隨　r3.56.0：r3.56.0：小雪縮小到主角的 0.88；封印石旁小雪也套劇情動作
  * 舊版    : r3.53.0  (2026-11-23)　r3.53.0：小雪改用動作包（待機／走／跑／轉身／施法／提燈／坐下）
  * 舊版    : r3.31.2  (2026-11-17)　r3.31.2：神社小雪的奉納開場對話只在第一次完整播放
@@ -63,7 +64,7 @@
     en0(id); };
   let tk = 0; const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0(); try { step(); if (++tk % 20 === 0) shrine(); } catch (e) { console.warn('xue', e); } };
   /* 戰鬥中頭上小盾牌 */
-  const ud0 = G.UI.draw; G.UI.draw = function () { ud0(); const o = X.o; if (!o || !o.safe || G.mode !== 'play') return; const s = SC.depth(o.y), p = SC.toScreen(o.x, o.y - G.HERO_H * s * 1.12), c = G.ctx;
+  const ud0 = G.UI.draw; G.UI.draw = function () { ud0(); const o = X.o; if (!o || !o.safe || G.mode !== 'play' || (G.VX && G.VX.dimT > 0)) return;   /* r3.191.0：秘傳／奧義演出（畫面壓暗）時不顯示小盾牌 */ const s = SC.depth(o.y), p = SC.toScreen(o.x, o.y - G.HERO_H * s * 1.12), c = G.ctx;
     if (p.x < 0 || p.x > G.LW || p.y < 0) return; const r = 8 * G.FS(); c.save(); c.globalAlpha = 0.85 + 0.15 * Math.sin(G.t * 0.12); c.fillStyle = '#6fb0f0'; c.strokeStyle = '#e8f4ff'; c.lineWidth = 1.5;
     c.beginPath(); c.moveTo(p.x, p.y - r); c.lineTo(p.x + r * 0.85, p.y - r * 0.55); c.lineTo(p.x + r * 0.7, p.y + r * 0.3); c.lineTo(p.x, p.y + r); c.lineTo(p.x - r * 0.7, p.y + r * 0.3); c.lineTo(p.x - r * 0.85, p.y - r * 0.55); c.closePath(); c.fill(); c.stroke(); c.restore(); };
 })();
