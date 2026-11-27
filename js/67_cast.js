@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 67_cast.js
- * Version : r3.141.0  (2026-11-27)　r3.141.0：補劇情角色指定圖（新劇情 14 人＋小河童／人魚）；任務加人時同圖已有劇情專用人物（鐵心、小雪…）→ 不另生，任務記號移到他身上（原 156_castfix 併入）
+ * Version : r3.151.3  (2026-11-27)　r3.151.3：借用同名路人當任務 NPC 時也開啟原地小走動（阿德這類後續對話 NPC 原本聊完就站著）
+ * 舊版    : r3.141.0  (2026-11-27)　r3.141.0：補劇情角色指定圖（新劇情 14 人＋小河童／人魚）；任務加人時同圖已有劇情專用人物（鐵心、小雪…）→ 不另生，任務記號移到他身上（原 156_castfix 併入）
  * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：戰鬥類事件（入侵、據點、伏擊…）在章節地圖的村莊也讓村民退場
  * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：同名合併跳過 noMerge（救援事件的 4 名士兵）
  * 舊版    : r3.52.0  (2026-11-23)　r3.52.0：世界／隨機事件期間，任務要找的人不退場（原本整村的人藏起來，任務只剩地上的框）
@@ -33,7 +34,7 @@
     const k = SC.id + '|' + core(name), prev = pend[k] || Promise.resolve();
     const p = prev.then(() => { const ex = findHere(name); if (ex) { attach(ex, o); return ex; } return add0(u, x, y, o).then(n => { if (n) { n.qnew = 1; if (o.onTalk) n.onTalk = () => talk(n); } return n; }); });
     pend[k] = p.catch(() => 0); return p; };
-  function attach(n, o) { n.hold = true; if (n.st === 'walk' && !o.onArrive) n.st = 'idle'; if (o.onTalk) n.onTalk = () => talk(n); if (o.onArrive) n.onArrive = o.onArrive; n.borrowed = (n.borrowed || 0) + 1; }
+  function attach(n, o) { n.hold = true; if (o.pace && !n.pace) { n.pace = 1; n.px = n.x; n.py = n.y; }   /* r3.151.3：借用的路人也在原地附近小走動 */ if (n.st === 'walk' && !o.onArrive) n.st = 'idle'; if (o.onTalk) n.onTalk = () => talk(n); if (o.onArrive) n.onArrive = o.onArrive; n.borrowed = (n.borrowed || 0) + 1; }
   AM.remove = function (n) { if (n && n.keep) return; if (n && !n.qnew && n.amb) { n.borrowed = Math.max(0, (n.borrowed || 1) - 1); return; } return rm0(n); };   // 借來的路人不收掉
   /* ---------- 2. 委託選單 ---------- */
   const marksOf = n => { const out = []; for (const m of Q.marks) { if (!m.q || !(m.x > -999) || !m.run) continue; if (m.n === n || (same(m.label, n.name) && Math.hypot(m.x - n.x, m.y - n.y) < 140)) if (!out.some(o => o.q === m.q)) out.push(m); } return out; };
@@ -55,7 +56,7 @@
     for (const n of H) { const k = seen.find(o => same(o.name, n.name)); if (!k) { seen.push(n); continue; }
       const keep = k.qnew && !n.qnew ? n : k, dup = keep === k ? n : k; if (dup.qnew && !keep.qnew) { keep.x = dup.x; keep.y = dup.y; }   // 留下原本的路人，站到任務位置
       for (const m of Q.marks) if (m.n === dup) m.n = keep; if (G.STAGE) for (const o of G.STAGE.on) if (o.a === dup) o.a = keep;
-      if (dup.onTalk) { keep.onTalk = () => talk(keep); keep.hold = true; } if (dup.onArrive && !keep.onArrive) keep.onArrive = dup.onArrive;
+      if (dup.onTalk) { keep.onTalk = () => talk(keep); keep.hold = true; } if (dup.pace && !keep.pace) { keep.pace = 1; keep.px = keep.x; keep.py = keep.y; }   /* r3.151.3：合併後保留原地小走動 */ if (dup.onArrive && !keep.onArrive) keep.onArrive = dup.onArrive;
       rm0(dup); if (keep !== k) seen[seen.indexOf(k)] = keep; }
     // 立繪／劇情演員（不在路人名單裡的）同名重複
     const S = G.NPC.filter(o => o.anim && !o.amb && o.x > -999 && !(G.PARTY && G.PARTY.list.includes(o))), ss = [];
