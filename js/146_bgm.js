@@ -1,6 +1,6 @@
 /* =====================================================================
  * 146_bgm.js
- * 版本    : r3.127.0  (2026-11-27)
+ * 版本    : r3.152.0  (2026-11-27)
  * 說明    : 背景音樂改用交接清單 music_catalog（42 首／44 檔，a/bgm/*.ogg）。
  *           ‧ 城鎮固定主曲；探索每區 3 首輪播（播完換下一首、換圖續播）；
  *           ‧ 普通戰鬥依章節；頭目依頭目指定（大禍津日、九尾等先播前奏再循環）；
@@ -13,7 +13,7 @@
   const AU = G.AU; if (!AU) return;
   const SRC = t => t === 'title' ? 'a/au/bgm_title.mp3' : 'a/bgm/bgm_' + t + '.ogg';
   const INTRO = { demise: 1, gothic_dark: 1 };
-  const TOWN = { hub_city: 'windmill_village', T_ashihomura: 'harvest2', T_kayamori: 'soft_day', T_akebi: 'gentle_theme2', T_yokai: 'harvest6' };
+  const TOWN = { hub_city: 'windmill_village', T_ashihomura: 'harvest2', T_kayamori: 'soft_day', W_R05_05: 'soft_day', T_akebi: 'gentle_theme2', T_yokai: 'harvest6' };
   const EXP = { 1: ['breeze', 'breeze3', 'breeze4'], 2: ['winds_embrace', 'limpid_water', 'overworld_folk'], 3: ['otogi4', 'hanagoyomi2', 'awayuki'],
     4: ['ancient_gust', 'twilight_gallop', 'zephyr_fields'], 5: ['overworld_folk', 'otogi4', 'twilight_gallop'], 6: ['dungeon_tower', 'time_and_pray', 'dual_illusions'],
     7: ['winds_embrace', 'hanagoyomi2', 'breeze3'], 8: ['overworld_folk', 'breeze3', 'forest_sage'], 9: ['cryptic_canvas', 'silent_shadows', 'dual_illusions'],

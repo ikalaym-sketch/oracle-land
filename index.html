@@ -2,7 +2,7 @@
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d0b10"><link rel="icon" href="icon-192.png">
 <script>
 /* 版本檢查：ver.json 不走快取；與本頁載入的版本不同就換網址重新載入（避免手機用到舊版快取）。每次開啟檢查一次，同一版本最多重載一次。 */
-(function () { var cur = 'r3.151.3';
+(function () { var cur = 'r3.152.0';
   fetch('ver.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
     if (!j || !j.v || j.v === cur) return; var k = 'reload_' + j.v; try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, 1); } catch (e) {}
     location.replace(location.pathname + '?v=' + j.v); }).catch(function () {}); })();
@@ -43,7 +43,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/19_ui8.js?v=r3.28.0"></script>
 <script src="js/10_banter.js?v=r3.146.0"></script>
 <script src="js/11_npclife.js?v=r3.28.0"></script>
-<script src="js/20_npcdata.js?v=r3.88.0"></script>
+<script src="js/20_npcdata.js?v=r3.152.0"></script>
 <script src="js/20_npc.js?v=r3.151.2"></script>
 <script src="js/21_shop.js?v=r3.145.0"></script>
 <script src="js/22_event.js?v=r3.146.0"></script>
@@ -172,7 +172,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/143_yaff.js?v=r3.117.0"></script>
 <script src="js/144_rebirth.js?v=r3.121.0"></script>
 <script src="js/145_leon.js?v=r3.150.0"></script>
-<script src="js/146_bgm.js?v=r3.127.0"></script>
+<script src="js/146_bgm.js?v=r3.152.0"></script>
 <script src="js/147_hubview.js?v=r3.129.0"></script>
 <script src="js/148_link.js?v=r3.130.0"></script>
 <script src="js/149_main1.js?v=r3.132.0"></script>

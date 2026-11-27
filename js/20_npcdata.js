@@ -1,6 +1,6 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 20_npcdata.js
- * Version : r3.88.0  （r3.88.0：妖玉交換（狐族長者）搬到妖怪村）
+ * Version : r3.152.0  （r3.88.0：妖玉交換（狐族長者）搬到妖怪村）
  * 舊版    : r3.28.0  （r3.28.0：炭里居民搬到「炭里長屋」　r3.19.3：台詞中的「行腳抄錄人」改為流浪劍客）
  * 舊版    : r3.18.2  （r3.18.2：移除各地傳送役，只留兩岸城渡口時雨）
  * 舊版    : r3.11.1  (2026-11-14)
@@ -38,6 +38,9 @@ G.NPCD = {
       a: ['n_a_hen', 'n_a_chick', 'n_a_rooster', 'n_a_cow', 'n_a_dog'] },
     W_R05_05: { h: ['n_sakubei', 'n_p_heihachi', 'n_t_human_carrier', 'n_chikage', 'n_renta', 'n_handcart_porter'], s: [['n_p_iwakura', 'smith_kaya'], ['n_suzuo', 'goods_kaya']],
       a: ['n_a_dog', 'n_a_crow', 'n_a_cat'] },
+    Q_post_seki: { h: ['n_jinzo', 'n_handcart_porter', 'n_yuiha', 'n_jinpei'], a: ['n_a_packhorse', 'n_a_dog'] },   // r3.152.0：任務安全區也放居民
+    Q_post_hakone: { h: ['n_stall_vendor', 'n_hayano', 'n_kozueha', 'n_chogaku'], a: ['n_a_cat', 'n_a_sparrow'] },
+    Q_coast_supply_camp: { h: ['n_toma', 'n_makinosuke', 'n_sohachi', 'n_sagitsune'], a: ['n_a_crow', 'n_a_crow'] },
     hub_city: { h: ['n_kagetsuna', 'n_hanasumi', 'n_sasane', 'n_toma', 'n_t_human_guard', 'n_fumiya', 'n_yuiha', 'n_jinpei', 'n_haruhisa', 'n_p_kinu', 'n_p_sayuri', 'n_p_otoku', 'n_t_human_townswoman', 'n_yuzukichi'],
       s: [['n_t_oni_veteran', 'smith_city'], ['n_hoan', 'med_city'], ['n_suzuo', 'goods_city'], ['n_stall_vendor', 'tea_city'], ['n_sagitsune', 'curio_city'], ['n_t_human_clerk', 'warp_city']],
       a: ['n_a_cat', 'n_a_dog', 'n_a_packhorse', 'n_a_sparrow'] },
@@ -120,6 +123,9 @@ G.NPCD = {
       [3, 13, '水閘修好了！大家說要在閘口立一塊碑，上面刻著修閘人的名字。'], [3, 13, '今年的米收成了一半。一半也好，總比沒有強。'], [5, 13, '聽說蒼真大人在東邊又打倒了一隻大妖怪？我們村裡都在傳。']],
     W_R05_05: [[5, 5, '雙井爐殿的火要是熄了，整個炭里都要挨凍。'], [5, 5, '燒炭的老師傅說，爐裡的火在叫一個人的名字。可是沒人聽得懂。'],
       [6, 13, '爐殿的火恢復正常了，炭也燒得特別好。這一批，我們不收你錢！……開玩笑的，還是要收。'], [6, 13, '炭里的人都說，是一個帶著石狗的旅人救了大家。']],
+    Q_post_seki: [[1, 13, '本陣今晚住滿了，晚到的只能睡馬棚。'], [1, 13, '東海道的驛馬一天換三次，馬比人還累。'], [1, 13, '最近夜路不太平，大家都等天亮才出發。']],
+    Q_post_hakone: [[1, 13, '甘酒趁熱喝，爬山路才有力氣。'], [1, 13, '從這裡往上走就是箱根的關所了。'], [1, 13, '霧大的時候別走山路，會迷路的。']],
+    Q_coast_supply_camp: [[1, 13, '補給船晚了兩天，大家都在等。'], [1, 13, '海風一吹，帳篷又得重新綁一次。'], [1, 13, '貨要點清楚，少一箱都要挨罵。']],
     hub_city: [[7, 7, '潮綾兩岸城分成東岸跟西岸，兩邊的人吵了一百年了。'], [7, 7, '千扇紙閣最近不讓人進去。說是在整理契約，可是整理什麼要整理半年？'],
       [7, 8, '雨廊下的攤子最熱鬧。下雨天反而客人多，因為大家都躲進來了。'], [8, 12, '東岸跟西岸的人，最近居然一起喝酒了。聽說是你幫的忙？'],
       [9, 12, '城裡傳說，八絃蛛窟的蜘蛛會織出死人的臉。誰敢去看？'], [11, 12, '最近有人在城門口看到已經死去的親人。大家都說，黃泉的門開了。'],
