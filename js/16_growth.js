@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 16_growth.js
- * Version : r3.148.0  (2026-11-27)　r3.148.0：奧義加速每級氣 +5% 生效；衝刺 Lv5 改成「穿過的敵人停頓 0.5 秒」
+ * Version : r3.149.0  (2026-11-27)　r3.149.0：里歐普攻加快 ×1.15（約 15 幀），每下傷害同打刀
+ * 舊版    : r3.148.0  (2026-11-27)　r3.148.0：奧義加速每級氣 +5% 生效；衝刺 Lv5 改成「穿過的敵人停頓 0.5 秒」
  * 舊版    : r3.147.0  (2026-11-27)　r3.147.0：修練頁改版（兩欄卡片＋右側說明與升級鈕，等級用圓點，鎖住的排後面）；職業頁拿掉開發用說明
  * 舊版    : r3.142.0  (2026-11-27)　r3.142.0：普攻連段加成（WPN.CMB）
  * 舊版    : r3.140.0  (2026-11-27)　r3.140.0：普攻節奏：武器倍率（WPN.RHY）×（1＋攻速%），可快可慢；慢下來的武器普攻傷害 ×1/倍率
@@ -118,7 +119,7 @@
     const j = r.job; j.ext = j.ext || [null, null, null, null]; r.train = r.train || {}; return j; }
   const need = L => 10 + 9 * L;
   const jlv = id => (jd().lv[id] || 0);
-  const total = () => { const j = jd(); let t = 0; for (const k in j.lv) t += j.lv[k]; return t; };
+  const total = () => { const j = jd(); let t = 0; for (const k in j.lv) if (k !== 'leon') t += j.lv[k]; return t; };   // r3.149.0：里歐外觀等級不算進職業總等級
   const learned = (job, a) => jlv(job.id) >= a[0];
   const reqOk = job => { if (!job.req) return true; const [pj, pl, ch] = job.req; return jlv(pj) >= pl && (G.GROW.chapter() >= ch); };
 
@@ -234,8 +235,8 @@
       if (F.fireaura && ++st.auraT >= 60) { st.auraT = 0; for (const e of G.E) if (e.st !== 'dead' && e.st !== 'hurt' && Math.abs(e.x - H.x) < G.HERO_H * 1.6 && Math.abs(e.y - H.y) < 30) { G.damageOni(e, 1.0, false); if (st.berserk > 0) { e.db = e.db || {}; e.db.def = Math.max(e.db.def || 0, 20); } } }
       /* 攻速：普攻動作多走一格（事件用 >= 判定，不會漏） */
       const as = Math.min(50, (R().S.aspd || 0) + G.BUFF.get('aspd') + st.stacks + (st.berserk > 0 ? 20 : 0));
-      if (H.act && H.act.kind === 'atk') { const rk = (G.WPN.RHY && G.WPN.RHY[G.WPN.curId()]) || 1;   // r3.140.0：武器普攻節奏
-        if (!H.act._rk) { H.act._rk = 1; if (rk < 1) H.act.mult = (H.act.mult || 1) / rk; const cb = G.WPN.CMB && G.WPN.CMB[G.WPN.curId()]; if (cb && cb[H.combo]) H.act.mult *= cb[H.combo]; }   // r3.142.0：連段加成 if (H.act.mvx && H.act.mvx.norm && !H.act.mvx._rk) { H.act.mvx._rk = 1; H.act.mvx.mul = H.act.mult || 1; }   // 85_normal 普攻用 mvx.mul（不論先後都對齊 act.mult）   // 變慢的武器補傷害（每秒輸出不變）
+      if (H.act && H.act.kind === 'atk') { const lo = G.LEON && G.LEON.on && G.LEON.on(), rk = lo ? 1.15 : (G.WPN.RHY && G.WPN.RHY[G.WPN.curId()]) || 1;   // r3.140.0：武器普攻節奏；r3.149.0：里歐普攻加快 ×1.15（約 15 幀一下，打刀約 19）
+        if (!H.act._rk) { H.act._rk = 1; const ck = lo ? 0.7 : rk; if (ck < 1) H.act.mult = (H.act.mult || 1) / ck;   /* 里歐每下傷害與打刀相同（×1.43） */ const cb = G.WPN.CMB && G.WPN.CMB[G.WPN.curId()]; if (cb && cb[H.combo]) H.act.mult *= cb[H.combo]; }   // r3.142.0：連段加成 if (H.act.mvx && H.act.mvx.norm && !H.act.mvx._rk) { H.act.mvx._rk = 1; H.act.mvx.mul = H.act.mult || 1; }   // 85_normal 普攻用 mvx.mul（不論先後都對齊 act.mult）   // 變慢的武器補傷害（每秒輸出不變）
         st.as += rk * (1 + as / 100) - 1; if (st.as >= 1) { st.as -= 1; H.t++; } else if (st.as <= -1) { st.as += 1; if (H.t > 1) H.t--; } } else st.as = 0;
       if (F.magnet) for (const l of G.LOOT) if (l.t >= 24) { l.x += (H.x - l.x) * 0.08; l.y += (H.y - l.y) * 0.08; } },
     spdBonus() { const F = GR.F, st = GR.st; let v = 0; if (F.sprint && st.combatT > 180) v += 20; if (F.qiFullSpd && d().qi >= 100) v += 10; if (F.touki && st.toukiT > 0) v += 20; return v; },

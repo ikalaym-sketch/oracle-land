@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 145_leon.js
- * Version : r3.146.0  (2026-11-27)　r3.146.0：未設定招式提示加前往按鈕
+ * Version : r3.149.0  (2026-11-27)　r3.149.0：里歐職業技能（特性＋Lv15～100 共 7 項）；職業頁右側改成職業格式（外觀切換、特性、職業技能）
+ * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：未設定招式提示加前往按鈕
  * 舊版    : r3.128.2  (2026-11-27)　r3.128.2：落下系晶術改成從約 2.6 身高處加速落下、落地才判定＋震動；擊飛的敵人在招式期間維持浮空、收招後暈 0.75 秒
  * 舊版    : r3.128.0  (2026-11-27)　r3.128.0：逐招修正（跳躍 ×1.6、飛燕連腳前進 ×1.8、雙牙劍氣 ×1.6、追刺地槍翻轉、落下系晶術加高縮小、投槍跳起、粉塵爆發、魔人闇加大停留、剎牙交叉、千裂虛光閃／翔破裂光閃擊飛、魔人千裂衝／魔神煉獄殺頂著打、義憐聖靈斬上移、英文秘奧義放大／以目標為中心／全畫面）；秘奧義加名稱與畫面壓暗
  * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：身體上下位移照原版（正＝往下、負＝往上），飛連斬／飛連雙閃等也有跳起
@@ -65,9 +66,10 @@
   function preload() { for (const c of used()) { LD('lv_' + c).catch(() => {}); if (c === 'majinken_souga') LD('lv_majinken').catch(() => {}); } if (!A.get('w_katana')) A.useWeapon('katana').catch(() => {}); }
   /* ---------- TP：取代冷卻。上限 100；普攻命中 +3、被打 +1、沒出招每秒 +2（×「氣力獲得」）；消耗 ×（1－冷卻縮減）。秘奧義改用「氣」100 ---------- */
   const qiMul = () => 1 + ((G.GROW && G.GROW.A || {}).qiP || 0) / 100;
-  const tpCost = c => Math.max(1, Math.round(META[c][7] * (1 - Math.min(40, (G.RPG.S && G.RPG.S.cdr) || 0) / 100)));
-  const tpGain = v => { const d = SAV(); d.tp = Math.min(TPMAX, d.tp + v * qiMul()); };
-  const freeTp = () => !!(G.CHEAT && G.CHEAT.on.nocd), fullQi = () => G.RPG.d().qi >= 100 || !!(G.CHEAT && G.CHEAT.on.qi);
+  const LS = { linkT: 0, ultFree: 0, chain: 0, lastFire: -999, pf: 0 }, jl = n => on() && SAV().lv >= n;   /* r3.147.0 里歐職業技能狀態 */
+  const tpCost = c => Math.max(1, Math.round(META[c][7] * (1 - Math.min(40, (G.RPG.S && G.RPG.S.cdr) || 0) / 100) * (jl(30) && META[c][2] === '晶術' && G.t < LS.linkT ? 0.5 : 1)));   // 連攜：特技打中後 1.5 秒內晶術 TP 減半
+  const tpGain = v => { const d = SAV(); d.tp = Math.min(TPMAX, d.tp + v * qiMul() * (on() ? 1.2 : 1)); };   // 特性：TP 回復 +20%
+  const freeTp = () => !!(G.CHEAT && G.CHEAT.on.nocd) || (jl(100) && G.t < LS.ultFree), fullQi = () => G.RPG.d().qi >= 100 || !!(G.CHEAT && G.CHEAT.on.qi);
   const tpOk = c => META[c][2] === '秘奧義' ? fullQi() : freeTp() || SAV().tp >= tpCost(c);
   function pay(c) { if (META[c][2] === '秘奧義') { if (!fullQi()) { G.UI.toast('「氣」尚未集滿'); return false; } G.RPG.d().qi = 0; return true; }
     if (freeTp()) return true; const d = SAV(), n = tpCost(c); if (d.tp < n) { G.UI.toast('TP 不足（' + META[c][1] + ' 需要 ' + n + '）'); return false; } d.tp -= n; return true; }
@@ -150,6 +152,7 @@
     const m = META[code], lv = SAV().sk[code] || 0; if (!lv) return false;
     if (code === 'majinken_souga' && !A.get('lv_majinken')) { LD('lv_majinken').catch(() => {}); G.UI.toast('招式載入中…'); return false; }
     if (!pay(code)) return false;
+    if (G.t - LS.lastFire < 120) LS.chain = Math.min(10, LS.chain + 1); else LS.chain = 0; LS.lastFire = G.t; if (m[2] === '秘奧義' && jl(100)) LS.ultFree = G.t + 300;   // 魔神降臨：連招計數、秘奧義後 5 秒 TP 0
     H.act = null; const s = SC.depth(H.y), K = kOf(s), R = 640 * K;
     let tg = null, bd = 1e9; for (const e of G.E) { if (e.st === 'dead' || e.delay > 0) continue; const dx = (e.x - H.x) * H.face; if (dx < -20 || dx > R || Math.abs(e.y - H.y) > 150) continue; const d = dx + Math.abs(e.y - H.y) * 2; if (d < bd) { bd = d; tg = e; } }
     const ty = m[2], gk = lv >= 5, tot = (m[5] + m[6] * (lv - 1)) * DMGK * (ty === '秘奧義' && gk ? 1.5 : 1), wv = hasWave(u), sg = code === 'majinken_souga';
@@ -193,7 +196,7 @@
     if (G.LEON.dbg) G.LEON.dbg.push([Math.round(c.t), Math.round((x - c.x0) * c.face), Math.round(rx), Math.round(gy - c.y0), G.E.filter(e => e.st !== 'dead').map(e => Math.round((e.x - c.x0) * c.face) + '/' + Math.round(e.y - gy)).join(' ')]);
     for (const e of G.E) { if (e.st === 'dead' || e.delay > 0 || once.has(e)) continue;
       if (Math.abs(e.x - x) > rx + (G.bodyX ? G.bodyX(e) : 0) || Math.abs(e.y - gy) > ry) continue;
-      once.add(e); n++; (c.got || (c.got = new Set())).add(e); G.damageOni(e, c.per * mul, last); e.stun = Math.max(e.stun || 0, c.tk === '晶術' && c.gk ? (e.bb || e.boss ? 15 : 45) : 8); G.hitstop = Math.max(G.hitstop || 0, 1); }
+      once.add(e); n++; (c.got || (c.got = new Set())).add(e); G.damageOni(e, c.per * mul * (c.tk === '晶術' && on() ? 1.1 : 1) * (jl(100) ? 1 + 0.05 * LS.chain : 1), last); if (c.tk === '特技') LS.linkT = G.t + 90; e.stun = Math.max(e.stun || 0, c.tk === '晶術' && c.gk ? (e.bb || e.boss ? 15 : 45) : 8); G.hitstop = Math.max(G.hitstop || 0, 1); }
     return n; }
   function stick(c, last) { const T = new Set(c.got || []); if (c.tg) T.add(c.tg); let n = 0; const R = 230 * c.K;
     for (const e of T) { if (e.st === 'dead' || e.delay > 0) continue; const near = ((Math.abs(e.x - H.x) < R || (c.tk !== '晶術' && c.got && c.got.has(e) && Math.abs(e.x - c.x0) < R * 2)) && Math.abs(e.y - H.y) < 70) || (c.tk === '晶術' && Math.abs(e.x - c.tx) < R && Math.abs(e.y - c.ty) < 70); if (!near) continue;
@@ -290,7 +293,7 @@
   /* ---------- 外觀經驗 ---------- */
   const ge0 = G.RPG.gainExp; G.RPG.gainExp = function (n) { const r = ge0.apply(this, arguments); if (on() && n > 0) { const d = SAV(); if (d.lv < CAP) { d.exp += n;
       while (d.lv < CAP && d.exp >= need(d.lv)) { d.exp -= need(d.lv); d.lv++; d.pt += 2; const nw = Object.keys(META).filter(c => META[c][3] === d.lv && open(c)).map(c => META[c][1]);
-        G.UI.banner('里歐外觀 Lv ' + d.lv, nw.length ? '可學會：' + nw.join('、') : '技能點 +2'); } G.SAVE.markDirty(); } } return r; };
+        if (G.RPG.recalc) G.RPG.recalc(); G.UI.banner('里歐外觀 Lv ' + d.lv, nw.length ? '可學會：' + nw.join('、') : '技能點 +2'); } G.SAVE.markDirty(); } } return r; };
 
   /* ---------- 選單：角色 › 職業 清單最下面一格（未解鎖「？？？」）；右側＝換此外觀＋招式管理 ---------- */
   const ST = { cat: 0, sel: null };
@@ -305,47 +308,20 @@
     else if (i < 5) { const k = i - 3; if (d.sp[1 - k] === c) d.sp[1 - k] = null; d.sp[k] = c; } else d.ult = c;
     G.SAVE.markDirty(); LD('lv_' + c).catch(() => {}); if (c === 'majinken_souga') LD('lv_majinken').catch(() => {}); }
   function unequip(i, j) { const d = SAV(); if (i < 3) { const ch = d.keys[i]; ch.splice(j, 1); ch.push(null); } else if (i < 5) d.sp[i - 3] = null; else d.ult = null; G.SAVE.markDirty(); }
-  function setOn(v) { const d = SAV(); d.on = v ? 1 : 0; G.SAVE.markDirty(); if (v) { preload(); G.UI.toast('外觀：里歐'); } }
+  function setOn(v) { const d = SAV(); d.on = v ? 1 : 0; G.SAVE.markDirty(); if (G.RPG.recalc) G.RPG.recalc(); if (v) { preload(); G.UI.toast('外觀：里歐'); } }
+  /* r3.147.0：職業頁右側改成跟其他職業一樣：等級、外觀切換、特性、職業技能（招式在 武器 › 技能／按鍵） */
+  const LJ = [[15, '基本', '劍晶同修', '攻擊 +5%'], [30, '特殊', '連攜', '特技打中後 1.5 秒內施放晶術，TP 消耗減半'], [45, '基本', '黑衣', '生命 +6%'], [60, '特殊', '剎那', '完美閃避後 TP +15'],
+    [75, '基本', '魔劍', '會心傷害 +15%'], [90, '特殊', '黑翼', '打倒敵人 TP +8'], [100, '極意', '魔神降臨', '連續出招每多一招傷害 +5%（最多 +50%）；放完秘奧義後 5 秒內 TP 消耗為 0']];
   function panel(x, y, w, h) { const U = M.ui, C = G.C; boot(); ctx.fillStyle = '#16100f'; ctx.fillRect(x, y, w, h); U.box(x, y, w, h); U.hit(x, y, w, h, () => {});   /* 先蓋住下層職業面板的按鈕 */
     if (!unlocked()) { T('？？？', x + w / 2, y + h * 0.35, 18, C.gold, 'center', 900); T('任一難度通關一次後解鎖（第二輪起一直開放）', x + w / 2, y + h * 0.35 + 34, 12, C.sub, 'center'); return; }
-    if (!META || !UIU) { T('載入中…', x + w / 2, y + h / 2, 13, C.sub, 'center'); return; }
-    const d = SAV();
-    T('里歐 Lv ' + d.lv + (d.lv < CAP ? '　經驗 ' + d.exp + '／' + need(d.lv) : '（滿級）') + '　點數 ' + d.pt, x + 12, y + 16, 12, C.gold, 'left', 800);
-    T('TP ' + Math.floor(d.tp) + '：特技 6／晶術 10／奧義 14・秘奧義用氣', x + 12, y + 34, 9, C.sub);
-    U.button(x + w - 104, y + 4, 94, 24, d.on ? '外觀使用中' : '換此外觀', () => setOn(!d.on), d.on ? 'main' : '');
-    const cw = Math.min(84, (w - 24 - 18) / 4); CATS.forEach((t, i) => U.button(x + 12 + i * (cw + 6), y + 46, cw, 24, t, () => { ST.cat = i; ST.sel = null; }, i === ST.cat ? 'main' : ''));
-    const cw3 = (w - 24) / 3, KS = Math.round(Math.min(28 * fs(), (cw3 - 36) / 3 - 5)), keyH = 16, top = y + 76, bodyH = h - (top - y) - keyH - 6, lw = Math.floor(w * 0.44), cat = CATS[ST.cat];
-    const list = Object.keys(META).filter(c => typ(c) === cat).sort((a, b) => META[a][0] - META[b][0]); if (!ST.sel || typ(ST.sel) !== cat) ST.sel = list[0];
-    const RH = Math.round(38 * fs()), off = U.scrollArea('lvList', x + 6, top, lw, bodyH, list.length * RH + 4); U.clip(x + 6, top, lw, bodyH);
-    list.forEach((c, i) => { const yy = top + off + i * RH; if (yy + RH < top || yy > top + bodyH) return; const lv = d.sk[c] || 0, lock = d.lv < META[c][3], sel = c === ST.sel;
-      ctx.fillStyle = sel ? 'rgba(150,92,36,.55)' : 'rgba(30,22,26,.7)'; G.rr(x + 8, yy + 2, lw - 10, RH - 4, 6); ctx.fill();
-      drawIc(c, x + 12, yy + 5, RH - 10, lock ? 0.35 : 1);
-      T(META[c][1], x + 18 + RH, yy + RH * 0.38, 12, lock ? C.dim : C.ink, 'left', 800);
-      T(lock ? '外觀 Lv ' + META[c][3] + ' 解鎖' : lv ? 'Lv ' + lv + (lv >= 5 ? '・極意' : '') : '未學會', x + 18 + RH, yy + RH * 0.72, 9, lock ? C.dim : lv ? C.gold : C.sub);
-      const kk = keyOf(c); if (kk >= 0) T(KN[kk], x + lw - 6, yy + RH / 2, 10, '#9ec8ff', 'right', 800);
-      U.hit(x + 8, Math.max(top, yy + 2), lw - 10, RH - 4, () => { ST.sel = c; }); });
-    ctx.restore();
-    /* 右：資訊卡 */
-    const rx = x + lw + 12, rw = w - lw - 20, c = ST.sel; if (c) { const m = META[c], lv = d.sk[c] || 0, lock = d.lv < m[3]; U.box(rx, top, rw, bodyH, 'rgba(30,22,26,.9)');
-      const S = Math.round(40 * fs()), LL = Math.round(16 * fs()); drawIc(c, rx + 8, top + 8, S, lock ? 0.4 : 1);
-      T(m[1], rx + 14 + S, top + 8 + S * 0.32, 14, C.gold, 'left', 900); T(m[2] + '・Lv ' + m[3] + ' 解鎖', rx + 14 + S, top + 8 + S * 0.78, 9, C.sub);
-      let yy = top + S + 14 + LL / 2; ctx.font = `600 ${10 * fs()}px ${G.FONT}`;
-      const line = (s, col) => { for (const l of G.wrap(s, rw - 20)) { if (yy > top + bodyH - 34 * fs()) return; T(l, rx + 10, yy, 10, col); yy += LL; } };
-      line('效果：' + m[4]);
-      line((lv ? 'Lv ' + lv + '/5' : '未學會') + '・' + (m[2] === '秘奧義' ? '需要「氣」100' : 'TP ' + tpCost(c)) + '・' + (c === 'heal' ? '全隊回復' : (c === 'majinken_souga' ? '1 斬＋2 道劍氣' : Math.max(1, m[10]) + ' 段')) + '・倍率 ' + (m[5] + m[6] * Math.max(0, lv - 1)).toFixed(2));
-      line('Lv5 極意：' + m[8], lv >= 5 ? C.gold : C.sub);
-      const bh = Math.round(24 * fs()), by2 = top + bodyH - bh - 8, ks = m[2] === '晶術' ? [3, 4] : m[2] === '秘奧義' ? [5] : [0, 1, 2], lb = lv ? Math.round((rw - 20) * 0.34) : rw - 20, by1 = by2;
-      U.button(rx + 10, by1, lb, bh, lv >= 5 ? '滿級' : (lv ? '升級 ' + lv + '點' : '學會 1點'), () => learn(c), lv >= 5 || lock ? 'off' : 'main');
-      if (lv) { const kx = rx + 16 + lb, kw = (rx + rw - 10 - kx - 5 * (ks.length - 1)) / ks.length;
-        ks.forEach((i, n) => U.button(kx + n * (kw + 5), by2, kw, bh, '裝' + KN[i], () => equip(c, i))); } }
-    T('按鍵設定：武器 › 按鍵（開里歐外觀時顯示里歐招式）', x + 12, y + h - 12, 9, C.dim, 'left'); }
-  const keyOf = c => { const d = SAV(), i = d.keys.findIndex(ch => ch.includes(c)); return i >= 0 ? i : d.sp[0] === c ? 3 : d.sp[1] === c ? 4 : d.ult === c ? 5 : -1; };
-  /* ---------- r3.126.0：開里歐外觀時，武器 › 技能／按鍵 用與武器相同的版面 ---------- */
-  const KD = { atk: ['斬', '普攻'], c1: ['招1', '招式鍵 1'], c2: ['招2', '招式鍵 2'], c3: ['招3', '招式鍵 3'], m1: ['身1', '身法 1'], m2: ['身2', '身法 2'], skA: ['技A', '技能 A（晶術）'], skB: ['技B', '技能 B（晶術）'], ult: ['奧', '奧義鍵（秘奧義）'] };
-  const KP = { atk: [0, 0, 40], c1: [180, 76, 22], c2: [135, 76, 22], c3: [90, 76, 22], m1: [196, 146, 23], m2: [168, 150, 23], skA: [132, 150, 24], skB: [104, 146, 24], ult: [72, 140, 24] };
-  const KT = { c1: ['特技', '奧義'], c2: ['特技', '奧義'], c3: ['特技', '奧義'], skA: ['晶術'], skB: ['晶術'], ult: ['秘奧義'] };
-  const learned = ts => Object.keys(META).filter(c => ts.includes(META[c][2]) && SAV().sk[c] > 0).sort((a, b) => META[a][0] - META[b][0]);
-  const sub = c => { const m = META[c], lv = SAV().sk[c] || 0; return m[2] + '・Lv ' + lv + '・' + (m[2] === '秘奧義' ? '氣 100' : 'TP ' + tpCost(c)); };
+    const d = SAV(); let yy = y + 20;
+    T('里歐（雙劍・晶術）', x + 14, yy, 16, C.gold, 'left', 900);
+    U.button(x + w - 104, yy - 12, 94, 26, d.on ? '外觀使用中' : '換此外觀', () => setOn(!d.on), d.on ? 'main' : ''); yy += 22;
+    T('Lv ' + d.lv + '／' + CAP + (d.lv < CAP ? '　經驗 ' + d.exp + '／' + need(d.lv) : '') + '　招式點數 ' + d.pt, x + 14, yy, 11, C.sub); yy += 18; T('招式在 武器 › 技能／按鍵 設定（開啟外觀後）', x + 14, yy, 10, C.dim); yy += 22;
+    ctx.font = `700 ${11 * fs()}px ${G.FONT}`; for (const l of G.wrap('特性【雙劍晶術】TP 回復 +20%、晶術傷害 +10%（開啟里歐外觀時生效）', w - 28)) { T(l, x + 14, yy, 11, C.ink, 'left', 700); yy += 18 * fs(); } yy += 6;
+    for (const a of LJ) { const ok = d.lv >= a[0]; T('Lv' + a[0] + '　' + a[1], x + 14, yy, 11, ok ? C.gold : C.dim, 'left', 700);
+      ctx.font = `500 ${11 * fs()}px ${G.FONT}`; const L = G.wrap('【' + a[2] + '】' + a[3], w - 104); L.forEach((l, k) => T(l, x + 90, yy + k * 15 * fs(), 11, ok ? C.ink : C.dim, 'left', 500)); yy += Math.max(20, L.length * 15 + 5) * fs(); }
+  }
   function keyOfName(k) { const d = SAV(), wp = W.cur(), sl = sl0.call(W);
     if (k[0] === 'c') { const c = d.keys[+k[1] - 1][0]; return c ? META[c][1] : null; }
     if (k === 'skA' || k === 'skB') { const c = d.sp[k === 'skA' ? 0 : 1]; return c ? META[c][1] : null; }
@@ -424,6 +400,13 @@
     for (const pg of ['技能', '按鍵']) { const p0 = M.PAGE[pg]; if (p0) M.PAGE[pg] = function (x, y, w, h) { if (!on()) return p0.apply(this, arguments); (pg === '技能' ? skillPage : keyPage)(x, y, w, h); }; }
     if (M.GROUPS) { const g = M.GROUPS.find(q => q[0] === '角色'); if (g) { const i = g[1].findIndex(q => q[1] === '里歐'); if (i >= 0) g[1].splice(i, 1); } }   /* 拿掉舊的「角色 › 里歐」分頁 */
   }
+  /* r3.147.0：里歐職業技能——數值（攻擊／生命／會心傷害）、剎那（完美閃避 TP）、黑翼（擊殺 TP） */
+  if (G.GROW && G.GROW.apply) { const ap0 = G.GROW.apply.bind(G.GROW); G.GROW.apply = function (s) { const r = ap0(s); if (on()) { const lv = SAV().lv;
+      if (lv >= 15) s._atkP = (s._atkP || 0) + 5; if (lv >= 45) s.hp *= 1.06; if (lv >= 75) s.critD += 15; } return r; }; }
+  { const dm1 = G.damageOni; G.damageOni = function (e, m, b, f, o) { const was = e && e.st !== 'dead' && e.hp > 0, r = dm1.apply(this, arguments);
+      if (was && (e.hp <= 0 || e.st === 'dead') && !(o && (o.party || o.rune)) && jl(90)) tpGain(8); return r; }; }
+  { const ls1 = G.lootStep; G.lootStep = function () { const r = ls1.apply(this, arguments); if (H._pfT && H._pfT !== LS.pf) { LS.pf = H._pfT; if (jl(60)) tpGain(15); }
+      if (G.t - LS.lastFire > 120) LS.chain = 0; return r; }; }
   const boot2 = () => { if (unlocked()) boot(); }; setTimeout(boot2, 2000); setInterval(boot2, 15000);
   G.LEON = { on, boot, start, SAV, need, LD, open: c => !!(META && META[c] && OPEN[META[c][2]]), get META() { return META; }, get CUR() { return CUR; }, get CASTS() { return CASTS; }, REFH: () => REFH, press, fire, equip, setOn, tpGain, tpCost, kOf, set SLK(v) { SLK = v; }, get SLK() { return SLK; } };
 })();
