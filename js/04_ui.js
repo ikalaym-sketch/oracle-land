@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 04_ui.js
- * Version : r3.153.0  (2026-11-27)　r3.153.0：小地圖點擊→行旅繪圖；方向提示不壓小地圖
+ * Version : r3.154.0  (2026-11-27)　r3.154.0：技能鍵冷卻改環狀（補滿閃一下）、按鈕間距加大，文字不變
+ * 舊版    : r3.153.0  (2026-11-27)　r3.153.0：小地圖點擊→行旅繪圖；方向提示不壓小地圖
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：提示可帶「前往設定」按鈕；對話中與結束後 2 秒內的橫幅延後；左上改「區域 Lv／難度」
  * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：訊息排隊（橫幅、提示各一次一個，其餘排隊）
  * 舊版    : r3.110.0  (2026-11-26)　r3.110.0：藥鍵左邊加「鎌鼬之羽」召喚鍵（擁有後才出現）；r3.111.0：左上「敵 Lv」顯示實際等級（困難以上含主角等級）；r3.113.0：點世界事件提醒＝直接傳送到該地圖開始
@@ -36,12 +37,12 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
       const R = G.LW - 16 - G.SAFE.r, Bt = G.LH - 14 - G.SAFE.b, T = 12 + G.SAFE.t;
       const cx = R - 50, cy = Bt - 50, ring = (an, d) => [cx + Math.cos(an * Math.PI / 180) * d, cy - Math.sin(an * Math.PI / 180) * d];
       B.atk = { x: cx, y: cy, r: 40, label: '斬' };
-      [[180, 'c1'], [135, 'c2'], [90, 'c3']].forEach(([an, k], i) => { const [x, y] = ring(an, 76); B[k] = { x, y, r: 22, label: '招' }; });   // 內圈：招式（組合技）
-      { const [x, y] = ring(196, 146); B.m1 = { x, y, r: 23, label: '閃' }; }   // 外圈下：身法
-      { const [x, y] = ring(168, 150); B.m2 = { x, y, r: 23, label: '身' }; }
-      { const [x, y] = ring(132, 150); B.skA = { x, y, r: 24, label: '技' }; }  // 外圈上：技
-      { const [x, y] = ring(104, 146); B.skB = { x, y, r: 24, label: '技' }; }
-      { const [x, y] = ring(72, 140); B.ult = { x: Math.min(x, R - 24), y, r: 24, label: '奧' }; }
+      [[180, 'c1'], [135, 'c2'], [90, 'c3']].forEach(([an, k], i) => { const [x, y] = ring(an, 80); B[k] = { x, y, r: 22, label: '招' }; });   // 內圈：招式（組合技）
+      { const [x, y] = ring(197, 156); B.m1 = { x, y, r: 23, label: '閃' }; }   // 外圈下：身法
+      { const [x, y] = ring(168, 160); B.m2 = { x, y, r: 23, label: '身' }; }
+      { const [x, y] = ring(133, 160); B.skA = { x, y, r: 24, label: '技' }; }  // 外圈上：技
+      { const [x, y] = ring(104, 156); B.skB = { x, y, r: 24, label: '技' }; }
+      { const [x, y] = ring(73, 150); B.ult = { x: Math.min(x, R - 24), y, r: 24, label: '奧' }; }
       B.talk = { x: R - 160, y: Bt - 300, w: 150, h: 32 };   // r3.27.0：縮小上移，不壓技能鍵
       B.menu = { x: R - 58, y: T, w: 58, h: 30 };
       B.zoom = { x: R - 136, y: T, w: 70, h: 30 };
@@ -109,13 +110,19 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
   /* r3.100.0：附近有可對話／調查的對象、且身邊沒有敵人時，「斬」鍵改成「談／查」 */
   const actNear = () => { const n = UI.near; if (!n) return null; const H = G.H, R = G.HERO_H * 3; for (const e of G.E) if (e.st !== 'dead' && e.hp > 0 && !(e.delay > 0) && Math.hypot(e.x - H.x, (e.y - H.y) * 1.4) < R) return null; return n; };
   UI.actNear = actNear;
+  /* r3.154.0：冷卻改成環狀——按鈕淡暗＋外圈金環隨時間補滿；冷卻結束閃一下 */
+  const CDP = {}, CDF = {};
+  function cdRing(b, k, cd, dim) { const was = CDP[k] || 0; CDP[k] = cd; if (was > 0.02 && cd <= 0 && !dim) CDF[k] = G.t;
+    if (cd > 0) { ctx.fillStyle = dim ? 'rgba(8,5,8,.55)' : 'rgba(8,5,8,.38)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r - 3, 0, 6.283); ctx.fill();
+      if (!dim) { ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 3.4; ctx.beginPath(); ctx.arc(b.x, b.y, b.r - 1, 0, 6.283); ctx.stroke();
+        ctx.strokeStyle = '#f3d98a'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.arc(b.x, b.y, b.r - 1, -1.5708, -1.5708 + 6.283 * (1 - cd)); ctx.stroke(); ctx.lineCap = 'butt'; } }
+    const ft = CDF[k] !== undefined ? G.t - CDF[k] : 99; if (ft < 18) { const a = 1 - ft / 18; ctx.strokeStyle = `rgba(255,236,170,${a})`; ctx.lineWidth = 2 + 4 * a; ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 2 + ft * 0.5, 0, 6.283); ctx.stroke(); } }
   function round(b, k, big, cd, sub, glow, dim, ic) { const on = [...ptr.values()].includes(k); if (dim) cd = Math.max(cd, 0.0001);
     ctx.fillStyle = on ? 'rgba(120,40,30,.75)' : 'rgba(18,12,14,.55)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.283); ctx.fill();
     ctx.strokeStyle = glow ? `rgba(255,190,215,${0.6 + 0.4 * Math.sin(G.t * 0.2)})` : 'rgba(227,194,122,.85)'; ctx.lineWidth = big || glow ? 2.2 : 1.5; ctx.beginPath(); ctx.arc(b.x, b.y, b.r - 3, 0, 6.283); ctx.stroke();
-    if (cd > 0) { ctx.fillStyle = 'rgba(8,5,8,.62)'; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.arc(b.x, b.y, b.r - 3, -1.5708, -1.5708 + 6.283 * cd); ctx.fill(); }
     if (ic && G.drawIcon) { ctx.save(); ctx.beginPath(); ctx.arc(b.x, b.y, b.r - 4, 0, 6.283); ctx.clip(); const okI = G.drawIcon(ic, b.x - b.r + 4, b.y - b.r + 4, (b.r - 4) * 2, dim ? 0.35 : 0.95);
-      if (okI && cd > 0) { ctx.fillStyle = 'rgba(8,5,8,.62)'; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.arc(b.x, b.y, b.r - 3, -1.5708, -1.5708 + 6.283 * cd); ctx.fill(); }
-      ctx.restore(); if (okI) { if (sub) { ctx.fillStyle = 'rgba(10,7,9,.7)'; G.rr(b.x - 19, b.y + b.r - 9, 38, 12, 4); ctx.fill(); G.txt(sub, b.x, b.y + b.r - 3, 8, cd > 0 ? C.dim : C.gold, 'center', G.FONT, 700); } return; } }   // 有圖示：圖示＋下方名稱
+      ctx.restore(); cdRing(b, k, cd, dim); if (okI) { if (sub) { ctx.fillStyle = 'rgba(10,7,9,.7)'; G.rr(b.x - 19, b.y + b.r - 9, 38, 12, 4); ctx.fill(); G.txt(sub, b.x, b.y + b.r - 3, 8, cd > 0 ? C.dim : C.gold, 'center', G.FONT, 700); } return; } }   // 有圖示：圖示＋下方名稱
+    if (!ic || !G.drawIcon) cdRing(b, k, cd, dim);
     G.txt(b.label, b.x, b.y + (sub ? -4 : 1), big ? 26 : 16, cd > 0 ? C.dim : C.ink, 'center', G.FONT_S, 900);
     if (sub) G.txt(sub, b.x, b.y + 11, 8, cd > 0 ? C.dim : C.gold, 'center', G.FONT, 700); }
   function bar(x, y, w, h, v, c1, c2) { ctx.fillStyle = 'rgba(12,8,10,.72)'; G.rr(x - 1, y - 1, w + 2, h + 2, (h + 2) / 2); ctx.fill();

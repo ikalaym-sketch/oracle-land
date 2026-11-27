@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 50_party_kit.js
- * Version : r3.104.2  (2026-11-26)　r3.104.2：夥伴範圍（結界／束縛／冰霜等）拿掉外框橢圓線，改柔邊貼地漸層＋法陣素材
+ * Version : r3.154.0  (2026-11-27)　r3.154.0：夥伴招式特效放大 10%＋發光層，跟主角招式亮度一致
+ * 舊版    : r3.104.2  (2026-11-26)　r3.104.2：夥伴範圍（結界／束縛／冰霜等）拿掉外框橢圓線，改柔邊貼地漸層＋法陣素材
  * 舊版    : r3.58.0  (2026-11-24)　r3.58.0：事件支援 mkK／chK（見切、雷荷倍率）、fc（必暴擊）、風路 spd（滿級效果用，見 97_partner5）
  * 舊版    : r3.10.1  (2026-11-13)
  * 變更    : r3.10.1 unit/refH 改用顯示階段 P.stg。
@@ -173,7 +174,7 @@
   const fxSpawn = (P, name, x, y, face, k) => { const def = PY.DEF[P.id]; let u, r;
     if (def.fx) { u = A.get(def.fx); r = u && u.fx[name]; } else { u = A.get(def.unit(P)); r = u && u.act[def.pre + name]; }
     if (!r) return; const s = G.HERO_H * def.ratio * SC.depth(y) / def.refH(P) * (k || 1);
-    G.FX.push({ k: 'spr', u: u.key, r, x, y, face: face || P.face, s: s * 130 / G.HERO_H, t: 0, life: Math.max(8, Math.round(A.dur(r) / TK)) }); };
+    G.FX.push({ k: 'spr', u: u.key, r, x, y, face: face || P.face, s: s * 1.1 * 130 / G.HERO_H, glow: 0.4, t: 0, life: Math.max(8, Math.round(A.dur(r) / TK)) }); };
   PY.fxSpawn = fxSpawn;
   const targets = (P, o, cx, cy) => { const n = o.n || 1, r = o.r || 0, L = [];
     if (!r) { const e = alive(P.tg) ? P.tg : null; if (e && (o.ranged || dist(e, P) < PY.DEF[P.id].reach + 46)) L.push(e); return L; }

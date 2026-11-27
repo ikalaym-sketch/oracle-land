@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 138_feather.js
- * Version : r3.142.0  (2026-11-27)　r3.142.0：看得到出手：三兄弟改進角色層（G.NPC，依前後排序），旋風／風刃特效畫在角色上方；出手站在敵人側前方（不與敵人重疊）；等冷卻時待機不原地跑
+ * Version : r3.154.0  (2026-11-27)　r3.154.0：三兄弟旋風／風刃／藥霧特效放大 25%＋發光層
+ * 舊版    : r3.142.0  (2026-11-27)　r3.142.0：看得到出手：三兄弟改進角色層（G.NPC，依前後排序），旋風／風刃特效畫在角色上方；出手站在敵人側前方（不與敵人重疊）；等冷卻時待機不原地跑
  * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：修正圖集被釋放後叫不出三兄弟（每次都顯示「風還在聚集」）
  * 舊版    : r3.122.0  (2026-11-26)　r3.122.0：三兄弟留場 12 秒（餵過小鼬 15 秒）：長兄每 3 秒旋風斬、次兄每 2.5 秒風刃三連、三弟先補 15% 之後每 4 秒補 5%；沒敵人時跟在主角身邊；換地圖消失
  * 舊版    : r3.110.0  (2026-11-26)
@@ -73,7 +74,7 @@
   function vh(u, id) { if (VH[id]) return VH[id]; const r = u.act[id + '_idle_left3q']; if (!r) return 200; const L = r.f.map(f => f[5]).sort((p, q) => p - q); return (VH[id] = L[L.length >> 1]); }
   function drawFx() { const u = A.get('b_kama'); if (!u) return;   // r3.142.0：特效畫在角色上方
     for (let i = fxL.length - 1; i >= 0; i--) { const q = fxL[i]; q.t++; if (q.t > q.life) { fxL.splice(i, 1); continue; } const f = q.r.f[Math.min(q.r.f.length - 1, Math.floor(q.t / q.life * q.r.f.length))], s = S(q.y);
-      A.draw(u, f, q.x, q.y, HH() * s * q.s / vh(u, 'kama1'), false, Math.min(1, (q.life - q.t) / 8)); } }
+      const sz = HH() * s * q.s * 1.25 / vh(u, 'kama1'), al = Math.min(1, (q.life - q.t) / 8); A.draw(u, f, q.x, q.y, sz, false, al); ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.draw(u, f, q.x, q.y, sz, false, al * 0.55); ctx.restore(); } }   /* r3.154.0：三兄弟特效放大 25%＋發光層（原本太淡） */
   function drawOne(a) { const u = A.get('b_kama'); if (!u || a.a <= 0) return; { const r = clipOf(u, a); if (!r) return; const f = r.f[Math.floor(a.ft / 4) % r.f.length], s = S(a.y), sc = HH() * s * a.sz / vh(u, a.id);
       ctx.save(); ctx.globalAlpha = 0.3 * a.a; ctx.fillStyle = 'rgba(20,14,8,1)'; ctx.beginPath(); ctx.ellipse(a.x, a.y, HH() * s * 0.22, HH() * s * 0.06, 0, 0, 6.283); ctx.fill(); ctx.restore();
       A.draw(u, f, a.x, a.y, sc, a.face > 0, a.a); } }

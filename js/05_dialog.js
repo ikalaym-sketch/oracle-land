@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 05_dialog.js
- * Version : r3.146.0  (2026-11-27)　r3.146.0：記錄對話結束時間（_endT，橫幅延後用）
+ * Version : r3.154.0  (2026-11-27)　r3.154.0：出選項時上方保留上一句台詞（誰在問、問什麼）
+ * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：記錄對話結束時間（_endT，橫幅延後用）
  * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：對話改成半身頭像：框外上方站人，位置在一段對話內固定（蒼真右、對方左），講話的人亮、其他人暗；名字牌移到講話者那側；有底色的頭像自動去背
  * 舊版    : r3.90.0  (2026-11-26)　r3.90.0：選項框加寬（440→560）；選項文字太長先縮字、再分兩行，不再超出框
  * 舊版    : r2.0.0  (2026-11-10)
@@ -57,6 +58,10 @@
     const L = this.list && this.list[this.i]; if (!L) return;
     if (this.log) return drawLog();
     if (this.choice) { G.veil(0.35);
+      const cy0 = choiceRect(0, this.choice.length).y; let pv = null; for (let j = this.i - 1; j >= 0; j--) { const q = this.list[j]; if (q && q.text) { pv = q; break; } }   /* r3.154.0：選項上方保留上一句台詞，看得出是誰在問 */
+      if (pv && cy0 - 30 > 70 + G.SAFE.t) { const pw = Math.min(600, G.LW - 60), px = (G.LW - pw) / 2, Ls = (ctx.font = `600 ${13 * G.FS()}px ${G.FONT}`, G.wrap(pv.text, pw - 32)).slice(0, 2), ph = 20 + Ls.length * 18 + (pv.who ? 14 : 0), py = cy0 - 34 - ph;
+        ctx.fillStyle = 'rgba(12,8,10,.88)'; G.rr(px, py, pw, ph, 8); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.4)'; ctx.lineWidth = 1; G.rr(px + .5, py + .5, pw - 1, ph - 1, 8); ctx.stroke();
+        let ly = py + 14; if (pv.who) { G.txt(pv.who, px + 16, ly, 12, G.C.gold, 'left', G.FONT_S, 900); ly += 16; } Ls.forEach(l => { G.txt(l, px + 16, ly + 2, 13, G.C.ink, 'left', G.FONT, 600); ly += 18; }); }
       G.txt('你要怎麼做？', G.LW / 2, choiceRect(0, this.choice.length).y - 22, 13, G.C.sub, 'center', G.FONT, 500);
       this.choice.forEach((c, k) => { const b = choiceRect(k, this.choice.length); ctx.fillStyle = 'rgba(16,10,14,.9)'; G.rr(b.x, b.y, b.w, b.h, 8); ctx.fill();
         ctx.strokeStyle = G.C.gold; ctx.lineWidth = 1.2; G.rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 8); ctx.stroke(); choiceLabel(c.label, b); });

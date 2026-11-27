@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 139_foeai.js
- * Version : r3.145.0  (2026-11-27)　r3.145.0：預警調淡（底色約減半、圖示平常 30%，出手前才亮）
+ * Version : r3.154.0  (2026-11-27)　r3.154.0：重擊時一般妖怪後仰約 0.2 秒；妖怪互相推開（被吸住、擊退中先不推，結束後才散開）
+ * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：預警調淡（底色約減半、圖示平常 30%，出手前才亮）
  * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：突進（踏步斬）、群撲、盾擊改約主角跑速 1.1 倍，巨體衝撞 1.3 倍（原本 3～5 倍）
  * 舊版    : r3.126.1  (2026-11-27)　r3.126.1：突擊衝刺降速＝主角跑步 1.2 倍（原本約 6.5 倍）、距離上限 2.5 身高、起手 0.73 秒、回身再衝 25%（精英照舊）、同圖最多 2 隻同時衝刺
  * 舊版    : r3.126.0  (2026-11-27)　r3.126.0：一般攻擊預警在敵人被打斷（不在出手狀態）時立刻消失
@@ -196,4 +197,25 @@
   let tk = 0; (function hkY() { if (!G.STORY || !G.STORY.step) return setTimeout(hkY, 60); const st0 = G.STORY.step.bind(G.STORY); G.STORY.step = function () { st0();
       if (++tk % 20 || SC.id !== 'hub_city' || F().yv_c1_b_patrol || !G.HUB || !G.HUB.marks) return; if (G.HUB.marks.some(m => m.id === 'yokai_path')) G.HUB.marks = G.HUB.marks.filter(m => m.id !== 'yokai_path'); }; })();
   G.FOEAI = { MODE, on, lvOf, ADD, KIT, MV, W, ORB, tryMove, patch };
+  /* ---------- r3.154.0：受擊後仰＋敵人互相推開 ---------- */
+  /* 受擊後仰：重擊（big）打中一般妖怪 → 往被打的方向後仰約 0.2 秒（12 格）；頭目、大型單位不仰 */
+  (function hkLean() { if (!G.damageOni || !G.drawOni) return setTimeout(hkLean, 50);
+    const dm = G.damageOni; G.damageOni = function (e, mult, big) { const r = dm.apply(this, arguments);
+      if (big && e && !e.bb && !e.boss && e.st !== 'dead' && e.hp > 0) { e.lean = 12; e.leanD = Math.sign(e.kb || 0) || -(e.face || 1); } return r; };
+    const dw = G.drawOni; G.drawOni = function (e) { if (!e || !(e.lean > 0) || e.st === 'dead') return dw.apply(this, arguments);
+      const k = e.lean / 12, a = e.leanD * 0.2 * Math.sin(k * Math.PI * 0.5 + 0.35); e.lean--;
+      const ctx = G.ctx; ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(a); ctx.translate(-e.x, -e.y); try { return dw.apply(this, arguments); } finally { ctx.restore(); } }; })();
+  /* 推開：每格一次，兩隻一般妖怪靠太近 → 各往外推一點（最多 0.9px／格）。
+     被吸住、被擊退時（位置一格移動超過 3px）先不推，等 40 格（約 0.7 秒）不再被拉才恢復——吸怪招式結束後才會散開 */
+  let sepT = -1;
+  function separate() { const L = G.E.filter(e => e.st !== 'dead' && e.hp > 0 && !e.bb && !e.boss && !e.wo && !(e.delay > 0)); if (L.length < 2 || L.length > 40) { for (const e of L) e._px = e.x; return; }
+    const ak = H.act && H.act.kind, casting = ak && !['atk', 'dash', 'dodge', 'guard', 'hurt'].includes(ak);   /* 主角放招中（含吸怪招）→ 全部先不推，招式結束 0.5 秒後才散開 */
+    for (const e of L) { if (casting) e.sepOff = Math.max(e.sepOff || 0, 30); else if (e._px !== undefined && Math.abs(e.x - e._px) > 3) e.sepOff = 40; else if (e.sepOff > 0) e.sepOff--; }
+    for (let i = 0; i < L.length; i++) { const a = L[i]; for (let j = i + 1; j < L.length; j++) { const b = L[j]; if (a.sepOff > 0 || b.sepOff > 0) continue;
+      const dy = b.y - a.y; if (Math.abs(dy) > 22) continue; const s = SC.depth((a.y + b.y) / 2), need = (G.bodyX(a) + G.bodyX(b)) * 0.6 + 46 * s * Math.min(1.3, (a.ratio + b.ratio) / 2 / 1.2), dx = b.x - a.x, ad = Math.abs(dx);
+      if (ad >= need) continue; const sg = dx ? Math.sign(dx) : (i % 2 ? 1 : -1), p = Math.min(0.9, (need - ad) * 0.08);
+      if (SC.walkable(a.x - sg * p, a.y)) a.x -= sg * p; if (SC.walkable(b.x + sg * p, b.y)) b.x += sg * p;
+      if (ad < need * 0.35) { const py = (dy ? Math.sign(dy) : sg) * 0.4; if (SC.walkable(a.x, a.y - py)) a.y -= py; if (SC.walkable(b.x, b.y + py)) b.y += py; } } }
+    for (const e of L) e._px = e.x; }
+  (function hkSep() { if (!G.oniStep) return setTimeout(hkSep, 50); const os = G.oniStep; G.oniStep = function (e) { if (sepT !== G.t) { sepT = G.t; try { separate(); } catch (x) { console.warn('sep', x); } } return os.apply(this, arguments); }; })();
 })();

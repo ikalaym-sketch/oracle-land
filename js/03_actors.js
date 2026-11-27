@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.151.0  (2026-11-27)　r3.151.0：劇情人物靜態圖站著時加呼吸起伏
+ * Version : r3.154.0  (2026-11-27)　r3.154.0：夥伴特效（spr）可加發光層 glow
+ * 舊版    : r3.151.0  (2026-11-27)　r3.151.0：劇情人物靜態圖站著時加呼吸起伏
  * 舊版    : r3.148.0  (2026-11-27)　r3.148.0：衝刺 Lv5 穿過的敵人停頓 0.5 秒
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：「此鍵尚未設定」提示加前往按鈕
  * 舊版    : r3.145.0  (2026-11-27)　掉落物：稀品以上才顯示名字，光柱高度依品質拉開；r3.145.0：傷害數字放大（一般 19、暴擊 28），出現與合併時彈一下，暴擊上跳
@@ -443,7 +444,7 @@ G.ONI_RATIO = 1.38;
       else { ctx.strokeStyle = 'rgba(255,240,200,.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x - p.vx * 2, p.y - p.h); ctx.lineTo(p.x, p.y - p.h); ctx.stroke(); } }
     for (const f of G.FX) { const a = 1 - f.t / f.life;
       if (f.k === 'spr') { const u = A.get(f.u); if (!u) continue; const fr = A.frameAt(f.r, f.t * TK), sc = f.s * G.HERO_H / 130;
-        A.draw(u, fr, f.x, f.y, sc, f.face < 0, Math.min(1, a * 2.5)); }
+        A.draw(u, fr, f.x, f.y, sc, f.face < 0, Math.min(1, a * 2.5)); if (f.glow) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.draw(u, fr, f.x, f.y, sc, f.face < 0, Math.min(1, a * 2.5) * f.glow); ctx.restore(); } }   /* r3.154.0：夥伴特效加一層發光 */
       else if (f.k === 'orb') { const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 10); g.addColorStop(0, `rgba(255,250,220,${a})`); g.addColorStop(1, 'rgba(255,220,120,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, 10, 0, 6.283); ctx.fill(); }
       else if (f.k === 'spark') { f.x += f.vx; f.y += f.vy; f.vy += 0.18; ctx.fillStyle = `rgba(255,${200 + (f.t * 3 | 0)},140,${a})`; ctx.fillRect(f.x, f.y, 2.4, 2.4); }
       else if (f.k === 'dust') { ctx.fillStyle = `rgba(140,110,80,${a * 0.45})`; ctx.beginPath(); ctx.ellipse(f.x, f.y, 30 + f.t * 2, 8 + f.t * 0.5, 0, 0, 6.283); ctx.fill(); }
