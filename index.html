@@ -2,7 +2,7 @@
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d0b10"><link rel="icon" href="icon-192.png">
 <script>
 /* 版本檢查：ver.json 不走快取；與本頁載入的版本不同就換網址重新載入（避免手機用到舊版快取）。每次開啟檢查一次，同一版本最多重載一次。 */
-(function () { var cur = 'r3.155.0';
+(function () { var cur = 'r3.156.0';
   fetch('ver.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
     if (!j || !j.v || j.v === cur) return; var k = 'reload_' + j.v; try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, 1); } catch (e) {}
     location.replace(location.pathname + '?v=' + j.v); }).catch(function () {}); })();
@@ -72,7 +72,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/45_boss_mini.js?v=r3.36.1"></script>
 <script src="js/46_boss_hidden.js?v=r3.28.0"></script>
 <script src="js/47_partner.js?v=r3.154.0"></script>
-<script src="js/48_occlude.js?v=r3.129.0"></script>
+<script src="js/48_occlude.js?v=r3.156.0"></script>
 <script src="js/49_party.js?v=r3.144.0"></script>
 <script src="js/50_party_kit.js?v=r3.154.0"></script>
 <script src="js/51_party_grow.js?v=r3.97.0"></script>

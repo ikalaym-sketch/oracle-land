@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 48_occlude.js
- * Version : r3.129.0  (2026-11-27)　r3.129.0：兩岸城換新圖，移除舊城門樹遮擋
+ * Version : r3.156.0  (2026-11-27)　r3.156.0：兩岸城自動遮擋——依可走遮罩算建築前緣，角色走到屋頂／圍牆後方會被擋住（主角被擋時半透明）
+ * 舊版    : r3.129.0  (2026-11-27)　r3.129.0：兩岸城換新圖，移除舊城門樹遮擋
  * 舊版    : r3.43.0  (2026-11-18)　r3.43.0：後山鳥居、葦穗村木橋前欄杆改成鳥居式（可走到後方，被遮時半透明）
  * 舊版    : r3.33.0  (2026-11-17)　r3.33.0：兩岸城城門右側的樹、神社神木圍籬前緣改成鳥居式（可走到後方，被遮時半透明）
  * 舊版    : r3.31.1  (2026-11-17)　r3.31.1：主角走到遮擋物（鳥居等）後方時，遮擋物變半透明
@@ -60,14 +61,37 @@
     for (const poly of o.p) for (const [x, y] of poly) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
     o.x0 = x0; o.y0 = y0; o.x1 = x1; o.y1 = y1; }
   const near = (o, x, y) => y < o.b && y > o.y0 - 40 && x > o.x0 - 70 && x < o.x1 + 70;
+  /* ---------- r3.156.0：自動遮擋（依可走遮罩算出建築前緣深度；走到屋頂、牆後時被擋住） ----------
+     每個不可走格的「腳底線」＝同一欄往下第一個可走格；角色腳底在腳底線之上（較遠）且身體重疊時，該格畫在角色前面。
+     只留角色可能重疊的格子（下方 0～112px、左右 28px 內有可走格且比腳底線近），依腳底線（16px 一段）＋橫向 256px 分組，
+     每組裁成一張小圖（換圖——夜間／戰火／重建——時重建）。 */
+  const AUTO = { hub_city: 1 }, AC = {};
+  function autoBuild(id) { const k = G.SC.def && G.SC.def.mask; if (!k || !k.m) return null; if (AC[id] && AC[id].m === k.m && AC[id].v === k._st) return AC[id];
+    const w = k.w, h = k.h, s = k.s, m = k.m, nwb = new Int16Array(w * h);
+    for (let x = 0; x < w; x++) { let nb = 32767; for (let y = h - 1; y >= 0; y--) { nwb[y * w + x] = nb; if (m[y * w + x]) nb = y; } }
+    const R = 28, X = 7, grp = new Map();
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (m[i]) continue; const base = nwb[i];
+      let ok = false; for (let c = Math.max(0, x - X); c <= Math.min(w - 1, x + X) && !ok; c++) { const q = nwb[y * w + c]; if (q <= y + R && q < base) ok = true; }
+      if (!ok) continue; const bk = (base >= 32767 ? 9999 : (base >> 2)) + ':' + (x >> 6); let g = grp.get(bk);
+      if (!g) grp.set(bk, g = { b: base >= 32767 ? 99999 : base * s, cells: [], x0: 1e9, y0: 1e9, x1: -1, y1: -1 });
+      g.cells.push(x, y); g.x0 = Math.min(g.x0, x * s); g.y0 = Math.min(g.y0, y * s); g.x1 = Math.max(g.x1, x * s + s); g.y1 = Math.max(g.y1, y * s + s); }
+    return AC[id] = { m: k.m, v: k._st, L: [...grp.values()], s }; }
+  function autoCv(g, img, s) { if (g.cv && g.img === img) return g.cv; const w = g.x1 - g.x0, h = g.y1 - g.y0, c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
+    for (let i = 0; i < g.cells.length; i += 2) x.fillRect(g.cells[i] * s - g.x0, g.cells[i + 1] * s - g.y0, s, s);
+    x.globalCompositeOperation = 'source-in'; x.drawImage(img, g.x0, g.y0, w, h, 0, 0, w, h); g.cv = c; g.img = img; return c; }
+  const nearA = (g, x, y) => y < g.b && y > g.y0 && x > g.x0 - 30 && x < g.x1 + 30;
   const O = G.OCC = { D,
     /* 把需要的遮擋物放進 drawWorld 的排序清單 */
-    add(L) { const a = D[G.SC.id], img = G.SC.img; if (!a || !img || !img.width) return;
+    add(L) { const id = G.SC.id; if (AUTO[id] && G.SC.img && G.SC.img.width) { const A = autoBuild(id);
+        if (A) { const P = [G.H].concat(G.E.filter(e => e.delay <= 0), G.NPC, (G.PARTY && G.PARTY.list) || []);
+          for (const g of A.L) { for (const p of P) if (p && nearA(g, p.x, p.y)) { L.push({ y: g.b, oc: g, auto: A }); break; } } } }
+      const a = D[id], img = G.SC.img; if (!a || !img || !img.width) return;
       for (const o of a) { let hit = near(o, G.H.x, G.H.y);
         if (!hit) for (const e of G.E) if (e.delay <= 0 && near(o, e.x, e.y)) { hit = true; break; }
         if (!hit) for (const n of G.NPC) if (near(o, n.x, n.y)) { hit = true; break; }
         if (hit) L.push({ y: o.b, oc: o }); } },
-    draw(o) { const c = G.ctx, img = G.SC.img, H = G.H; c.save(); if (near(o, H.x, H.y) && H.x > o.x0 - 20 && H.x < o.x1 + 20) c.globalAlpha = 0.42; c.beginPath();   /* r3.31.1：主角在物件後方時半透明，不會整個被擋住 */
+    draw(o) { const c = G.ctx, img = G.SC.img, H = G.H; if (o.cells) { const A = AC[G.SC.id]; if (!A) return; const cv = autoCv(o, img, A.s); c.save(); if (nearA(o, H.x, H.y) && H.x > o.x0 - 10 && H.x < o.x1 + 10) c.globalAlpha = 0.5; c.drawImage(cv, o.x0, o.y0); c.restore(); return; }
+      c.save(); if (near(o, H.x, H.y) && H.x > o.x0 - 20 && H.x < o.x1 + 20) c.globalAlpha = 0.42; c.beginPath();   /* r3.31.1：主角在物件後方時半透明，不會整個被擋住 */
       for (const poly of o.p) { poly.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); }
       c.clip(); c.drawImage(img, o.x0, o.y0, o.x1 - o.x0, o.y1 - o.y0, o.x0, o.y0, o.x1 - o.x0, o.y1 - o.y0); c.restore(); }
   };
