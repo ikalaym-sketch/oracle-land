@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 88_rune.js
- * Version : r3.195.0  (2026-11-28)　r3.195.0：霜結腳下的藍色實線圈改成霜霧
+ * Version : r3.196.0  (2026-11-28)　r3.196.0：靈紋／套裝／神器的幾何圖形全部換成有主題的分層畫法（風刃、斬月、震地、落雷、狐火、光箭、感電、破甲、鏡返、潮浪、鬼火、天光、日鏡、勾玉光線）
+ * 舊版    : r3.195.0  (2026-11-28)　r3.195.0：霜結腳下的藍色實線圈改成霜霧
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：冰緩狀態不再畫整片白色橢圓 → 身邊飄冰晶＋腳下淡藍霜圈
  * 舊版    : r3.107.2  (2026-11-26)　r3.107.2：吸魂特效改成「被吸過來」：12 縷柔光粒子錯開、螺旋加速吸進胸口＋拖尾，取代一整顆圓球
  * 舊版    : r3.94.0  (2026-11-26)　r3.94.0：觸發改每次出手 1 次＋內部冷卻（雷鳴 1 秒、燃燒／冰霜同目標 0.5 秒）
@@ -107,7 +108,7 @@
   /* ======================= 狀態異常 ======================= */
   function burn(e) { const s = e.st2 = e.st2 || {}; s.bn = Math.min(3, (s.bn || 0) + 1); s.bnT = sec(4); }
   function frost(e) { const s = e.st2 = e.st2 || {}; if ((s.frzCd || 0) > G.t) return; s.fr = (s.fr || 0) + 1; s.frT = sec(4);
-    if (s.fr >= 3) { s.fr = 0; s.frz = sec(1.5); s.frzCd = G.t + sec(6); s.frBig = !!e.bb; G.UI.toast && 0; } }
+    if (s.fr >= 3) { KU('moon', () => { const K2 = G.KF; K2.burst(e.x, e.y, 0.5 * (e.ratio || 1), 2.2); K2.puff(e.x, e.y, 1.2); K2.glint(e.x, e.y, 0.6 * (e.ratio || 1), 0.5, 12); }); KFa(22, 'o', (c2, u) => { const k = HH() * S(e.y) * (e.ratio || 1); for (let i = 0; i < 7; i++) { const an = i * 0.9 + 0.3, d = k * (0.2 + 0.5 * Math.min(1, u / 10)); snow(c2, e.x + Math.cos(an) * d, e.y - k * 0.5 + Math.sin(an) * d * 0.8, k * 0.07, u * 0.1 + i, 1 - u / 22); } }); s.fr = 0; s.frz = sec(1.5);   /* r3.196.0：凍住的瞬間白霜炸開＋雪花 */ s.frzCd = G.t + sec(6); s.frBig = !!e.bb; G.UI.toast && 0; } }
   function shock(e) { const s = e.st2 = e.st2 || {}; s.sk = sec(6); }
   function armor(e) { e.db = e.db || {}; e.db.def = Math.max(e.db.def || 0, 20); e.db.defT = Math.max(e.db.defT || 0, sec(5)); (e.st2 = e.st2 || {}).ha = sec(5); }
   G.STAT2 = { burn, frost, shock, armor };
@@ -134,14 +135,43 @@
       ctx.strokeStyle = 'rgba(150,215,255,' + al + ')'; ctx.lineWidth = 1; ctx.beginPath();
       for (let j = 0; j < 3; j++) { const b = j * Math.PI / 3 + a * 0.5; ctx.moveTo(x - Math.cos(b) * r, y - Math.sin(b) * r); ctx.lineTo(x + Math.cos(b) * r, y + Math.sin(b) * r); } ctx.stroke(); }
     ctx.restore(); }
+  /* ====================== r3.196.0 靈紋／套裝／神器／名物 美術元件 ======================
+   * 原則：每個效果至少三層（深色收邊、主色漸層、高光），形狀有主題（狐臉火、浪頭、鏡片、裂盾…），不用單色圓／環／直線當主體。 */
+  const KU = (pal, fn) => { try { if (G.KF && G.KF.use) G.KF.use(pal, fn); } catch (x) { console.warn('rfx', x); } }, KFa = (life, layer, draw, step) => { try { return G.KF && G.KF.add && G.KF.add(life, layer, draw, step); } catch (x) {} };
+  const rgb = (c, a) => 'rgba(' + c + ',' + Math.max(0, Math.min(1, a)).toFixed(3) + ')';
+  const PALF = { fox: ['70,24,6', '255,150,50', '255,220,140', '255,252,235'], kyubi: ['16,36,96', '90,170,255', '190,235,255', '255,255,255'], oni: ['30,10,60', '150,90,255', '170,255,200', '240,255,245'], sake: ['70,10,10', '220,60,50', '255,150,110', '255,230,210'], mura: ['24,4,10', '150,20,40', '230,70,80', '255,200,200'] };
+  /* 帶臉的火（狐火／鬼火）：頭朝 ang 方向，後面拖一條會擺動的尾焰；face=1 畫狐耳與眼 */
+  function wisp(c2, x, y, ang, k, pal, a, face, ph) { const P4 = PALF[pal] || PALF.fox, fl = 1 + 0.18 * Math.sin(G.t * 0.7 + (ph || 0)), wg = Math.sin(G.t * 0.45 + (ph || 0)) * 0.35; c2.save(); c2.translate(x, y); c2.rotate(ang); c2.globalAlpha *= a; { const gg = c2.createRadialGradient(0, 0, 0, 0, 0, k * 2.6); gg.addColorStop(0, rgb(P4[1], 0.45)); gg.addColorStop(1, rgb(P4[1], 0)); c2.fillStyle = gg; c2.beginPath(); c2.arc(0, 0, k * 2.6, 0, TAU); c2.fill(); }
+    const body = (sc, col, al) => { c2.fillStyle = rgb(col, al); c2.beginPath(); c2.moveTo(-k * 0.2, -k * 0.62 * sc); c2.bezierCurveTo(k * 0.5 * sc, -k * 0.7 * sc, k * 0.95 * sc, -k * 0.3 * sc, k * 0.95 * sc, 0); c2.bezierCurveTo(k * 0.95 * sc, k * 0.3 * sc, k * 0.5 * sc, k * 0.7 * sc, -k * 0.2, k * 0.62 * sc);
+      c2.bezierCurveTo(-k * 1.2 * fl, k * 0.5 * sc + wg * k, -k * 2.0 * fl, -k * 0.2 * sc + wg * k * 1.4, -k * 3.2 * sc * fl, wg * k * 2); c2.bezierCurveTo(-k * 2.0 * fl, k * 0.1 * sc + wg * k * 1.2, -k * 1.2 * fl, -k * 0.6 * sc + wg * k, -k * 0.2, -k * 0.62 * sc); c2.fill(); };   /* 圓頭＋一條會擺動的 S 形尾焰 */
+    body(1.25, P4[0], 0.5); if (face) for (const sd of [-1, 1]) { c2.fillStyle = rgb(P4[1], 0.95); c2.beginPath(); c2.moveTo(k * 0.05, sd * k * 0.5); c2.quadraticCurveTo(k * 0.3, sd * k * 1.05, k * 0.62, sd * k * 0.98); c2.quadraticCurveTo(k * 0.55, sd * k * 0.6, k * 0.5, sd * k * 0.4); c2.fill(); }
+    body(1, P4[1], 0.95); body(0.72, P4[2], 1); body(0.4, P4[3], 1);
+    if (face) { c2.fillStyle = rgb(P4[0], 0.9); for (const sd of [-1, 1]) { c2.beginPath(); c2.ellipse(k * 0.4, sd * k * 0.26, k * 0.16, k * 0.055, sd * 0.5, 0, TAU); c2.fill(); } }
+    c2.restore(); }
+  /* 光箭：金白箭身＋箭羽＋深色收邊，朝 ang 飛 */
+  function lightArrow(c2, x, y, ang, k, a) { c2.save(); c2.translate(x, y); c2.rotate(ang); c2.globalAlpha *= a; const sh = (w, l, col, al) => { c2.fillStyle = rgb(col, al); c2.beginPath(); c2.moveTo(k * 1.2, 0); c2.lineTo(k * 0.5, -w); c2.lineTo(-l, -w * 0.35); c2.lineTo(-l, w * 0.35); c2.lineTo(k * 0.5, w); c2.closePath(); c2.fill(); };
+    sh(k * 0.3, k * 3.2, '70,44,10', 0.5); sh(k * 0.2, k * 3, '255,206,120', 0.95); sh(k * 0.09, k * 2.2, '255,252,240', 1); for (const sd of [-1, 1]) { c2.fillStyle = rgb('255,236,180', 0.9); c2.beginPath(); c2.moveTo(-k * 1.6, 0); c2.lineTo(-k * 2.6, sd * k * 0.55); c2.lineTo(-k * 2.2, 0); c2.fill(); } c2.restore(); }
+  /* 黑羽／水滴／雪花／甲片（小圖示都帶收邊與高光） */
+  function feather(c2, x, y, rot, k, a, col) { c2.save(); c2.translate(x, y); c2.rotate(rot); c2.globalAlpha *= a; c2.fillStyle = rgb('8,8,14', 0.6); c2.beginPath(); c2.moveTo(-k * 1.1, 0); c2.quadraticCurveTo(0, -k * 0.5, k * 1.1, 0); c2.quadraticCurveTo(0, k * 0.5, -k * 1.1, 0); c2.fill();
+    c2.fillStyle = rgb(col || '34,36,52', 1); c2.beginPath(); c2.moveTo(-k, 0); c2.quadraticCurveTo(0, -k * 0.38, k, 0); c2.quadraticCurveTo(0, k * 0.38, -k, 0); c2.fill(); c2.strokeStyle = rgb('170,180,210', 0.8); c2.lineWidth = Math.max(0.6, k * 0.07); c2.beginPath(); c2.moveTo(-k, 0); c2.lineTo(k, 0); c2.stroke(); c2.restore(); }
+  function droplet(c2, x, y, k, a) { c2.save(); c2.translate(x, y); c2.globalAlpha *= a; const sh = (sc, col, al) => { c2.fillStyle = rgb(col, al); c2.beginPath(); c2.moveTo(0, -k * 1.5 * sc); c2.bezierCurveTo(k * 0.9 * sc, -k * 0.2 * sc, k * 0.8 * sc, k * 0.9 * sc, 0, k * 0.9 * sc); c2.bezierCurveTo(-k * 0.8 * sc, k * 0.9 * sc, -k * 0.9 * sc, -k * 0.2 * sc, 0, -k * 1.5 * sc); c2.fill(); };
+    sh(1.25, '14,50,70', 0.5); sh(1, '90,190,220', 0.95); sh(0.6, '200,240,250', 0.9); c2.fillStyle = rgb('255,255,255', 0.95); c2.beginPath(); c2.ellipse(-k * 0.25, k * 0.1, k * 0.12, k * 0.28, 0.4, 0, TAU); c2.fill(); c2.restore(); }
+  function snow(c2, x, y, r, rot, a) { c2.save(); c2.translate(x, y); c2.rotate(rot); c2.globalAlpha *= a; c2.lineCap = 'round'; for (const [w, col, al] of [[0.34, '30,70,110', 0.45], [0.18, '200,235,255', 1], [0.07, '255,255,255', 1]]) { c2.strokeStyle = rgb(col, al); c2.lineWidth = Math.max(0.6, r * w); for (let j = 0; j < 3; j++) { const b = j * Math.PI / 3; c2.beginPath(); c2.moveTo(-Math.cos(b) * r, -Math.sin(b) * r); c2.lineTo(Math.cos(b) * r, Math.sin(b) * r); c2.stroke(); for (const sd of [-1, 1]) { const bx = Math.cos(b) * r * 0.6 * sd, by = Math.sin(b) * r * 0.6 * sd; c2.beginPath(); c2.moveTo(bx, by); c2.lineTo(bx + Math.cos(b + 0.9) * r * 0.28 * sd, by + Math.sin(b + 0.9) * r * 0.28 * sd); c2.stroke(); } } } c2.restore(); }
+  /* 破甲：一面裂開的甲片（盾形），右半片慢慢往下剝落 */
+  function brokenPlate(c2, x, y, k, t) { const off = 0.5 + 0.5 * Math.sin(t * 0.08); c2.save(); c2.translate(x, y); const half = (sd, dy, rot) => { c2.save(); c2.translate(sd * k * 0.08, dy); c2.rotate(rot); c2.beginPath(); c2.moveTo(0, -k); c2.lineTo(sd * k * 0.8, -k * 0.7); c2.lineTo(sd * k * 0.7, k * 0.3); c2.lineTo(0, k); c2.lineTo(-sd * k * 0.14, k * 0.3); c2.lineTo(sd * k * 0.12, -k * 0.1); c2.lineTo(-sd * k * 0.1, -k * 0.5); c2.closePath();
+        c2.fillStyle = rgb('40,10,8', 0.85); c2.fill(); c2.save(); c2.clip(); c2.fillStyle = rgb('190,60,44', 1); c2.fillRect(-k, -k, k * 2, k * 2); c2.fillStyle = rgb('255,150,120', 0.9); c2.fillRect(-k, -k, k * 2, k * 0.55); c2.restore(); c2.strokeStyle = rgb('40,10,8', 0.9); c2.lineWidth = Math.max(0.8, k * 0.12); c2.stroke(); c2.restore(); };
+    half(-1, 0, 0); half(1, k * 0.25 * off, 0.18 * off); c2.restore(); }
+  /* 感電：在身上爬的電弧（每 3 格換一次形狀），深紫收邊＋紫＋白芯 */
+  function arcs(c2, e) { const h = HH() * (e.ratio || 1) * S(e.y), sd0 = Math.floor(G.t / 3) * 7.13 + e.x; let q = sd0; const R2 = () => { q = (q * 9301 + 49297) % 233280; return q / 233280; }; c2.save(); c2.lineCap = 'round'; c2.lineJoin = 'round';
+    for (let n = 0; n < 2; n++) { const pts = [], x0 = e.x + (R2() - 0.5) * h * 0.5, y0 = e.y - h * (0.15 + R2() * 0.7); let px = x0, py = y0; pts.push([px, py]); for (let i = 0; i < 4; i++) { px += (R2() - 0.5) * h * 0.3; py += (R2() - 0.5) * h * 0.3; pts.push([px, py]); }
+      for (const [w, col, al] of [[0.05, '34,16,80', 0.6], [0.028, '170,140,255', 1], [0.011, '255,255,255', 1]]) { c2.strokeStyle = rgb(col, al); c2.lineWidth = Math.max(0.8, h * w); c2.beginPath(); pts.forEach((p2, i) => c2[i ? 'lineTo' : 'moveTo'](p2[0], p2[1])); c2.stroke(); } } c2.restore(); }
+  G.RFX = { wisp, lightArrow, feather, droplet, snow, KU, KFa, rgb };
   function statusDraw() { for (const e of G.E) { const s = e.st2; if (!s || e.st === 'dead') continue; const k = Math.max(0.7, (e.ratio || 1) * 0.85), z = (e.ratio || 1) * 0.1;
       if (s.bnT > 0) (G.FLAMES || flames)(e, 1 + s.bn);   // r3.82.0：可由 117 換掉身上火苗   // r3.59.0：原本借用地面火圈圖（整圈火焰）→ 改成身上竄出的小火苗
       if (s.frz > 0) VX.draw2 && VX.draw2(ctx, 'fx_ice_shell', 0, e.x, e.y - HH() * S(e.y) * k * 0.62, k, { a: 0.85 });
       else if (s.fr > 0) frostMotes(e, k, s.fr);   // r3.166.0：原本整片白色橢圓 → 改成身邊飄的冰晶＋腳下霜圈
-      if (s.sk > 0 && G.t % 6 < 3) { const y = chest(e), r = HH() * 0.45 * S(e.y); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = 'rgba(200,190,255,.9)'; ctx.lineWidth = 1.4; ctx.beginPath();
-        let px = e.x - r, py = y; ctx.moveTo(px, py); for (let i = 0; i < 5; i++) { px += r * 0.4; py = y + rnd(-r * 0.4, r * 0.4); ctx.lineTo(px, py); } ctx.stroke(); ctx.restore(); }
-      if (s.ha > 0) { const y = e.y - HH() * (e.ratio || 1) * S(e.y) * 1.15; ctx.save(); ctx.strokeStyle = 'rgba(255,120,100,.95)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(e.x - 5, y - 5); ctx.lineTo(e.x + 1, y); ctx.lineTo(e.x - 2, y + 2); ctx.lineTo(e.x + 5, y + 6); ctx.stroke();
-        ctx.strokeStyle = 'rgba(255,200,180,.7)'; ctx.beginPath(); ctx.arc(e.x, y, 7, 0, TAU); ctx.stroke(); ctx.restore(); } } }
+      if (s.sk > 0) arcs(ctx, e);   /* r3.196.0：感電＝身上爬的電弧（原本一條閃爍的紫色折線） */
+      if (s.ha > 0) brokenPlate(ctx, e.x, e.y - HH() * (e.ratio || 1) * S(e.y) * 1.2, Math.max(6, HH() * S(e.y) * 0.075), G.t); } }   /* 破甲＝裂開剝落的甲片（原本一道紅折線＋圓圈） */
 
   /* ======================= 爆氣 ======================= */
   const QI = { t: 0, max: 1, big: false, end: null };
@@ -170,7 +200,7 @@
     if (lvOf('un') && /yumi|teppo/.test(G.WPN && G.WPN.curId && G.WPN.curId()) && G.PROC('r_un', 0) && ++shotN % 5 === 0) homing(e, 0.8 * LVM[lvOf('un')], 'arrow');
     if (lvOf('toki') && comboN >= 30 && QI.t <= 0 && ready('toki', 30)) burst(5, 15, 0, false);
     if (ON.set.yomi && e.hp / e.hpMax < 0.2 && alive(e) && (e._ym || 0) < G.t) { e._ym = G.t + sec(6); s2('fx_yomi_hand', { x: e.x, y: e.y, k: 1, life: 30 }); G.STORY.later(10, () => dmg(e, 2.5, true)); }
-    if (ON.set.tenmon && G.PROC('r_ten', 0) && ++tenN % 10 === 0) { VX.pillar && VX.pillar({ x: e.x, y: e.y, h: 4, wk: 1 }); G.STORY.later(6, () => dmg(e, 3.0, true)); }
+    if (ON.set.tenmon && G.PROC('r_ten', 0) && ++tenN % 10 === 0) { VX.pillar && VX.pillar({ x: e.x, y: e.y, h: 4, wk: 1 }); VX.sigil && VX.sigil({ x: e.x, y: e.y, kind: 'shrine', r: 0.9, life: 34, a: 0.7 }); KU('holy', () => { const K2 = G.KF; K2.light(e.x, e.y, 1.6, 24, 0.6, 0.4); K2.leaves(e.x, e.y, 1.6, 8, { sp: 0.9, life: 40 }); K2.glint(e.x, e.y, 0.1, 0.6, 14); }); G.STORY.later(6, () => dmg(e, 3.0, true)); }   /* r3.196.0：天光＝光柱＋落點金色紋樣＋飄落金羽 */
     if (ON.set.foxfire && crit && ready('fox', 2)) for (let i = 0; i < 3; i++) homing(e, 0.6, 'fox', i);
   }
   const do0 = G.damageOni; G.damageOni = function (e, mult, big, fc, opt) { const hero = e && e.st !== 'dead' && !(opt && (opt.party || opt.rune)) && !G._bleedTick, n0 = G.NUMS.length, hp0 = e && e.hp;
@@ -180,24 +210,40 @@
     return r; };
   const ok0 = R.onKill; R.onKill = function (e) { ok0.apply(this, arguments); try {
       if (lvOf('kon') && ready('kon', 0.5)) { const v = Math.round(H.hpMax * 0.03 * LVM[lvOf('kon')]); H.hp = Math.min(H.hpMax, H.hp + v); G.NUMS.push({ x: H.x, y: H.y - HH() * S(H.y) - 10, v: '+' + v, gold: true, t: 0 }); E.push({ k: 'soul', x: e.x, y: chest(e), t: 0, life: 40, sd: Math.random() * 6.28 }); }
-      if (ON.set.onibi) { VX.blast && VX.blast({ x: e.x, y: e.y, r: 1.2 }); for (const n of near(e.x, e.y, HH() * 1.5)) if (n !== e) dmg(n, 1.5, true); } } catch (x) { console.warn('rune kill', x); } };
+      if (ON.set.onibi) { VX.blast && VX.blast({ x: e.x, y: e.y, r: 1.0 }); { const x0 = e.x, y0 = e.y, W8 = []; for (let i = 0; i < 6; i++) W8.push([rnd(-1, 1), rnd(0.6, 1.2), rnd(0, 6)]); KFa(34, 'o', (c2, u) => { const k = HH() * S(y0); for (const w of W8) wisp(c2, x0 + w[0] * k * 0.6 + Math.sin(u * 0.2 + w[2]) * k * 0.12, y0 - k * (0.3 + u * 0.035 * w[1]), -Math.PI / 2, k * 0.13, 'oni', Math.min(1, u / 4) * (1 - u / 34), 0, w[2]); }); }   /* r3.196.0：鬼火爆＝爆炸後幾縷紫綠怨火往上飄散 */ for (const n of near(e.x, e.y, HH() * 1.5)) if (n !== e) dmg(n, 1.5, true); } } catch (x) { console.warn('rune kill', x); } };
+  /* r3.196.0：鏡返＝身前閃現一面銅鏡（鏡框、鏡面漸層、一道反光）→ 碎成鏡片射向目標（原本一圈藍環） */
+  function mirrorFx(n) { const hx = H.x, hy = H.y, f = Math.sign(n.x - H.x) || H.face, Sh = []; for (let i = 0; i < 8; i++) Sh.push([rnd(-0.35, 0.35), rnd(-0.5, 0.5), rnd(0, 6), rnd(0.6, 1.2)]);
+    KFa(20, 'o', (c2, u) => { const k = HH() * S(hy), mx = hx + f * k * 0.5, my = hy - k * 0.62, tx = n.x, ty = n.y - k * 0.5;
+      if (u < 6) { const g0 = Math.min(1, u / 2), r = k * 0.42 * g0; c2.save(); c2.translate(mx, my); c2.scale(0.55, 1); c2.fillStyle = rgb('40,26,8', 0.7); c2.beginPath(); c2.arc(0, 0, r * 1.14, 0, TAU); c2.fill(); c2.fillStyle = rgb('206,160,70', 1); c2.beginPath(); c2.arc(0, 0, r * 1.06, 0, TAU); c2.fill();
+        const gr = c2.createLinearGradient(-r, -r, r, r); gr.addColorStop(0, rgb('235,250,255', 1)); gr.addColorStop(0.5, rgb('130,190,220', 1)); gr.addColorStop(1, rgb('60,100,150', 1)); c2.fillStyle = gr; c2.beginPath(); c2.arc(0, 0, r * 0.9, 0, TAU); c2.fill();
+        c2.save(); c2.beginPath(); c2.arc(0, 0, r * 0.9, 0, TAU); c2.clip(); c2.fillStyle = rgb('255,255,255', 0.85); c2.rotate(-0.6); c2.fillRect(-r * 2, -r * 0.2 + (u - 3) * r * 0.3, r * 4, r * 0.22); c2.restore(); c2.restore(); }
+      else { const q = (u - 6) / 14, e2 = q * q; for (const s2 of Sh) { const x = mx + (tx - mx) * e2 + s2[0] * k * (1 - e2), y = my + (ty - my) * e2 + s2[1] * k * (1 - e2), L = k * 0.11 * s2[3]; c2.save(); c2.translate(x, y); c2.rotate(s2[2] + u * 0.5); c2.globalAlpha = 1 - Math.max(0, q - 0.8) / 0.2;
+          c2.fillStyle = rgb('20,40,70', 0.7); c2.beginPath(); c2.moveTo(L * 1.3, 0); c2.lineTo(-L * 0.8, -L * 0.8); c2.lineTo(-L * 0.5, L * 0.9); c2.fill(); c2.fillStyle = rgb('150,205,235', 1); c2.beginPath(); c2.moveTo(L, 0); c2.lineTo(-L * 0.6, -L * 0.6); c2.lineTo(-L * 0.35, L * 0.7); c2.fill(); c2.fillStyle = rgb('255,255,255', 0.95); c2.beginPath(); c2.moveTo(L, 0); c2.lineTo(-L * 0.6, -L * 0.6); c2.lineTo(-L * 0.1, -L * 0.1); c2.fill(); c2.restore(); } } }); }
+  /* r3.196.0：潮浪＝一圈往外推的浪頭（深藍浪身、青色浪面、白色浪花）＋水沫（原本一圈藍環＋風線） */
+  function tideFx(hx, hy) { const N = 12, F2 = []; for (let i = 0; i < 30; i++) F2.push([rnd(0, TAU), rnd(0.8, 1.1), rnd(0.1, 0.55)]);
+    VX.ring && VX.ring({ x: hx, y: hy, r0: 0.3, r1: 2.7, life: 26, col: '120,200,255', lw: 0.22 }); KU('moon', () => { const k = HH() * S(hy); for (let i = 0; i < 8; i++) { const an = i / 8 * TAU; G.STORY.later(6, () => KU('moon', () => G.KF.puff(hx + Math.cos(an) * 1.6 * k, hy + Math.sin(an) * 0.6 * k, 1.0, 22))); } });
+    KFa(26, 'o', (c2, u) => { const k = HH() * S(hy), q = u / 26, R0 = k * (0.4 + 2.3 * (1 - Math.pow(1 - q, 2))), a = q < 0.65 ? 1 : 1 - (q - 0.65) / 0.35;
+      KU('moon', () => { for (let i = 0; i < N; i++) { const an = i / N * TAU + 0.2, cx = Math.cos(an); if (Math.abs(cx) < 0.25) continue; G.KF.moonShape(c2, hx + cx * R0, hy + Math.sin(an) * R0 * 0.38 - k * 0.3, k * 0.42 * (1 - q * 0.3), cx > 0 ? 1 : -1, a, k); } });   /* 一圈往外推的浪頭（筆觸月牙） */
+      c2.fillStyle = rgb('240,252,255', 0.95 * a); for (const f2 of F2) { const r = R0 * f2[1]; c2.beginPath(); c2.arc(hx + Math.cos(f2[0]) * r, hy + Math.sin(f2[0]) * r * 0.38 - k * f2[2] * Math.sin(q * Math.PI), Math.max(1, k * 0.02), 0, TAU); c2.fill(); } }); }
   /* 致命傷：紙人替身、八咫鏡（日鏡）；閃避成功：鏡返 */
   const hh0 = G.hurtHero; G.hurtHero = function (atk, srcX) {
-    if (H.inv > 0 && H.act && /dodge|dash/.test(H.act.kind) && ON.set.mirror && ready('mirror', 3)) { const n = nearest(H.x, H.y, HH() * 3); if (n) { VX.ring && VX.ring({ x: H.x, y: H.y, r1: 1.2, life: 14, col: '180,230,255', lw: 0.08 }); G.STORY.later(4, () => { dmg(n, 1.8, true); VX.impact && VX.impact({ x: n.x, y: n.y, z: 0.6, big: 1 }); }); } }
+    if (H.inv > 0 && H.act && /dodge|dash/.test(H.act.kind) && ON.set.mirror && ready('mirror', 3)) { const n = nearest(H.x, H.y, HH() * 3); if (n) { mirrorFx(n); G.STORY.later(4, () => { dmg(n, 1.8, true); VX.impact && VX.impact({ x: n.x, y: n.y, z: 0.6, big: 1 }); }); } }
     const r = hh0.apply(this, arguments);
     if (H.hp <= 0) { if (ON.jg.komakin && ready('yata', 60)) { H.hp = 1; H.inv = 90; sunMirror(); } else if (lvOf('mi') && ready('mi', 90)) { H.hp = 1; H.inv = 90; s2('shiki_doll', { x: H.x, y: H.y, k: 1, life: 36 }); G.UI.banner('紙人替身', '替你擋下了致命一擊'); } }
     else if (H.hp < H.hpMax * 0.5 && lvOf('goho') && ready('goho', 30)) { const B = BUF(); if (B) B.add('dr', 50, sec(6)); E.push({ k: 'goho', t: 0, life: sec(6) }); G.UI.toast('護法童子：6 秒減傷 50%'); }
-    if (H.hp > 0 && H.hp < H.hpMax * 0.3 && lvOf('ikari') && QI.t <= 0 && ready('ikari', 60)) { const L = LVM[lvOf('ikari')]; burst(8, 25, 20, true, () => { VX.ring && VX.ring({ x: H.x, y: H.y, r1: 2.2, life: 20, col: '255,140,90', lw: 0.12 }); VX.crack && VX.crack({ x: H.x, y: H.y, r: 1.2 }); for (const n of near(H.x, H.y, HH() * 2.2)) dmg(n, 2.0 * L, true); }); }
+    if (H.hp > 0 && H.hp < H.hpMax * 0.3 && lvOf('ikari') && QI.t <= 0 && ready('ikari', 60)) { const L = LVM[lvOf('ikari')]; burst(8, 25, 20, true, () => { { const x0 = H.x, y0 = H.y; KU('ember', () => { const K2 = G.KF, k = HH() * S(y0); K2.burst(x0, y0, 0.5, 3.2); K2.crack(x0, y0, 1.6, 70, true); K2.embers(x0, y0, 0.4, 16, { sp: 1.6, life: 34 }); for (let i = 0; i < 8; i++) { const an = i / 8 * TAU; K2.puff(x0 + Math.cos(an) * 1.6 * k, y0 + Math.sin(an) * 0.6 * k, 1.1); } }); }   /* r3.196.0：怒氣結束的震波＝焰色爆開＋地裂＋火星＋塵柱 */ for (const n of near(H.x, H.y, HH() * 2.2)) dmg(n, 2.0 * L, true); }); }
     return r; };
 
   /* ======================= 招式本體 ======================= */
-  function thunder(e, id) { const L = LVM[lvOf(id) || 1]; VX.bolt && VX.bolt({ x0: e.x + rnd(-10, 10), y0: e.y - HH() * 5, x1: e.x, y1: e.y, col: '200,220,255', life: 14, w: 3 }); VX.sigil && VX.sigil({ x: e.x, y: e.y, kind: 'raiden', r: 0.6, life: 20 });
-    dmg(e, 1.5 * L, true); let p = e; const hit = [e]; for (let i = 0; i < 2; i++) { const n = nearest(p.x, p.y, HH() * 3, hit); if (!n) break; hit.push(n); VX.bolt && VX.bolt({ x0: p.x, y0: chest(p), x1: n.x, y1: chest(n), col: '200,220,255', life: 12 }); dmg(n, 0.6 * L); p = n; } }
+  function thunder(e, id) { const L = LVM[lvOf(id) || 1]; strike(e.x, e.y, 5); VX.sigil && VX.sigil({ x: e.x, y: e.y, kind: 'raiden', r: 0.6, life: 20 });
+    dmg(e, 1.5 * L, true); let p = e; const hit = [e]; for (let i = 0; i < 2; i++) { const n = nearest(p.x, p.y, HH() * 3, hit); if (!n) break; hit.push(n); { const a1 = [p.x, chest(p)], b1 = [n.x, chest(n)]; KU('moon', () => { G.KF.bolt(a1[0], a1[1], b1[0], b1[1], 12, 1.6, 1); G.KF.glint(b1[0], n.y, 0.55 * (n.ratio || 1), 0.3, 8); }); } dmg(n, 0.6 * L); p = n; } }
+  /* r3.196.0：落雷＝加粗帶墨邊的雷光＋分岔＋落點焦痕、塵與電光（原本一條折線） */
+  function strike(x, y, w) { KU('moon', () => { const K2 = G.KF, k = HH() * S(y); K2.bolt(x + rnd(-0.5, 0.5) * k, y - 6 * k, x, y - 0.1 * k, 16, Math.min(3, w * 0.5), 3); K2.light(x, y, 1.3, 16, 0.7, 0.5); K2.puff(x, y, 0.9); K2.scar && K2.scar(x, y, 1, 1.5); for (let i = 0; i < 3; i++) K2.bolt(x, y - 0.15 * k, x + rnd(-1, 1) * k, y - rnd(0, 0.5) * k, 8, 1, 1); }); }
   function windBlade(id, coef, len, col, giant) { const f = H.face, L = id === 'kusanagi' ? 1 : LVM[lvOf(id) || 1]; E.push({ k: 'blade', x: H.x, y: H.y, f, d: 0, len: len * HH(), spd: HH() * (giant ? 0.32 : 0.22), coef: coef * L, hit: [], col, giant, t: 0, life: 99 });
     if (giant) { G.SC.shake = Math.max(G.SC.shake || 0, 6); G.UI.toast('草薙劍・叢雲'); } }
-  function moon() { const f = H.face, L = LVM[lvOf('zan')], cx = H.x + f * HH() * 1.0; E.push({ k: 'moon', x: cx, y: H.y, f, t: 0, life: 18 });
+  function moon() { const f = H.face, L = LVM[lvOf('zan')], cx = H.x + f * HH() * 1.0; KU('moon', () => { const K2 = G.KF; K2.smear({ x: H.x, y: H.y, f, cy: 0.6, r: 1.7, sq: 0.8, a0: -1.3, a1: 1.3, w: 0.6, dur: 4, life: 22, tier: 2, trail: 2.6 }); K2.glint(cx + f * HH() * 0.5, H.y, 0.6, 0.5, 12); K2.scar && K2.scar(cx, H.y, f, 2); });   /* r3.196.0：斬月＝帶墨邊的月白大月牙＋地面刀痕（原本一道純白弧線） */
     for (const n of near(cx, H.y, HH() * 1.5)) dmg(n, 1.6 * L, true); }
-  function quake() { const L = LVM[lvOf('shin')], x = H.x + H.face * HH() * 0.6; VX.crack && VX.crack({ x, y: H.y, r: 1.1 }); VX.ring && VX.ring({ x, y: H.y, r1: 1.6, life: 16, col: '235,200,140', lw: 0.1 }); VX.debris2 && VX.debris2({ x, y: H.y, n: 6 });
+  function quake() { const L = LVM[lvOf('shin')], x = H.x + H.face * HH() * 0.6; { const y0 = H.y; KU('lance', () => { const K2 = G.KF, k = HH() * S(y0); K2.crack(x, y0, 1.5, 70, true); K2.rocks(x, y0, 14, 1.5); for (let i = 0; i < 6; i++) { const an = i / 6 * TAU; K2.puff(x + Math.cos(an) * 1.1 * k, y0 + Math.sin(an) * 0.45 * k, 1.0); } K2.light(x, y0, 1.6, 16, 0.5, 0.2); }); VX.debris2 && VX.debris2({ x, y: y0, n: 6 }); }   /* r3.196.0：震地＝地裂透光＋掀起岩塊＋一圈塵柱（原本裂紋線＋一圈環） */
     G.SC.shake = Math.max(G.SC.shake || 0, 5); for (const n of near(x, H.y, HH() * 1.4)) { dmg(n, 1.4 * L, true); if (!n.bb) { n.stun = Math.max(n.stun || 0, 30); n.lift = 0; E.push({ k: 'lift', e: n, t: 0, life: 30 }); } } }
   function homing(e, coef, kind, i) { const y0 = H.y - HH() * S(H.y) * 0.7; E.push({ k: 'hm', kind, x: H.x + rnd(-10, 10), y: y0, z: 0, vx: H.face * 4 + (i || 0) * 1.5 - 1.5, vy: -3 - (i || 0), e, coef, t: 0, life: 90 }); }
   function sunMirror() { s2('fx_hikagami', { x: H.x, y: H.y, k: 1.2, life: 40, z: 0.8, add: 1 }); G.UI.banner('八咫鏡・日鏡', '致命傷被鏡光反射'); G.flash = 8;
@@ -222,8 +268,8 @@
       for (const b of PET.ball) { b.a += 0.06; const bx = hx + Math.cos(b.a) * hz * 0.95, by = hy - hz * 0.45 + Math.sin(b.a) * hz * 0.3; b.x = bx; b.y = by;
         const e = foes().find(e => Math.hypot(e.x - bx, (e.y - hy) * 1.4) < hz * 0.45); if (e) { dmg(e, 1.0, true); VX.wind && VX.wind({ x: bx, y: hy, r: 0.6, n: 3, life: 14, col: '200,255,235', face: 1, spin: 0.4 }); b.dead = 1; } }
       PET.ball = PET.ball.filter(b => !b.dead); }
-    if (ON.set.thunder && t % sec(10) === 0) { const L = near(hx, hy, hz * 4.5); for (let i = 0; i < 3 && L.length; i++) { const e = L[i % L.length]; G.STORY.later(i * 10, () => { if (!alive(e)) return; VX.bolt && VX.bolt({ x0: e.x, y0: e.y - hz * 5, x1: e.x, y1: e.y, col: '210,220,255', life: 14, w: 3.5 }); VX.sigil && VX.sigil({ x: e.x, y: e.y, kind: 'raiden', r: 0.7, life: 22 }); dmg(e, 1.2, true); }); } }
-    if (ON.set.tide && t % sec(8) === 0 && near(hx, hy, hz * 2.5).length) { VX.ring && VX.ring({ x: hx, y: hy, r1: 2.6, life: 22, col: '120,200,255', lw: 0.14 }); VX.wind && VX.wind({ x: hx, y: hy, r: 2.2, n: 8, life: 22, col: '160,220,255', face: 1, spin: 0.5 });
+    if (ON.set.thunder && t % sec(10) === 0) { const L = near(hx, hy, hz * 4.5); for (let i = 0; i < 3 && L.length; i++) { const e = L[i % L.length]; G.STORY.later(i * 10, () => { if (!alive(e)) return; strike(e.x, e.y, 6); VX.sigil && VX.sigil({ x: e.x, y: e.y, kind: 'raiden', r: 0.7, life: 22 }); dmg(e, 1.2, true); }); } }
+    if (ON.set.tide && t % sec(8) === 0 && near(hx, hy, hz * 2.5).length) { tideFx(hx, hy);
       for (const e of near(hx, hy, hz * 2.6)) { dmg(e, 1.3, true); e.kb = Math.sign(e.x - hx || 1) * 9 / (e.ratio || 1); } }
     if (ON.jg3 && t % sec(30) === sec(5) && near(hx, hy, hz * 6).length) { VX.sigil && VX.sigil({ x: hx, y: hy, kind: 'shrine', r: 3.2, life: 120, a: 0.5 }); G.UI.banner('天照', '三神器共鳴');
       for (let i = 0; i < 10; i++) G.STORY.later(8 + i * 8, () => { const L = near(hx, hy, hz * 6), e = L.length ? L[ri(0, L.length - 1)] : null, x = e ? e.x : hx + rnd(-hz * 4, hz * 4), y = e ? e.y : hy + rnd(-30, 30);
@@ -239,15 +285,22 @@
   const sp = (n, fi, x, y, k, o) => VX.draw2 && VX.draw2(ctx, n, fi, x, y, k, o);
   function entDraw() { const hz = HH() * S(H.y);
     for (const o of E) { const q = o.t / o.life;
-      if (o.k === 'blade') { const w = HH() * (o.giant ? 1.4 : 0.8), h = HH() * (o.giant ? 1.8 : 1.0); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.translate(o.x, o.y - h * 0.55); ctx.scale(o.f, 1);
-        const g = ctx.createLinearGradient(-w, 0, w * 0.3, 0); g.addColorStop(0, 'rgba(' + o.col + ',0)'); g.addColorStop(0.7, 'rgba(' + o.col + ',0.35)'); g.addColorStop(1, 'rgba(' + o.col + ',0.6)'); ctx.fillStyle = g;
-        ctx.beginPath(); ctx.moveTo(-w, -h * 0.45); ctx.quadraticCurveTo(w * 0.55, -h * 0.5, w * 0.35, 0); ctx.quadraticCurveTo(w * 0.55, h * 0.5, -w, h * 0.45); ctx.quadraticCurveTo(w * 0.05, 0, -w, -h * 0.45); ctx.fill(); ctx.restore(); }
-      else if (o.k === 'moon') { const r = HH() * 1.3 * (0.6 + 0.4 * Math.min(1, q * 3)), a = 1 - q; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.translate(o.x, o.y - HH() * 0.6); ctx.scale(o.f, 0.75);
-        ctx.strokeStyle = 'rgba(255,240,190,' + a + ')'; ctx.lineWidth = HH() * 0.16 * (1 - q * 0.6); ctx.beginPath(); ctx.arc(-r * 0.3, 0, r, -1.2, 1.2); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,' + a + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(-r * 0.3, 0, r, -1.1, 1.1); ctx.stroke(); ctx.restore(); }
-      else if (o.k === 'hm') { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const c = o.kind === 'fox' ? '255,170,90' : '220,240,255'; const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, 9); g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(0.4, 'rgba(' + c + ',.8)'); g.addColorStop(1, 'rgba(' + c + ',0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x, o.y, 9, 0, TAU); ctx.fill();
-        ctx.strokeStyle = 'rgba(' + c + ',.5)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(o.x - o.vx * 2.5, o.y - o.vy * 2.5); ctx.stroke(); ctx.restore(); }
-      else if (o.k === 'ray') { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = 'rgba(160,255,220,' + (1 - q) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(o.x0, o.y0); ctx.lineTo(o.x1, o.y1); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,' + (1 - q) + ')'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore(); }
-      else if (o.k === 'beam') { const L = HH() * 9, h = HH() * 0.5 * (1 - q * 0.5); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.translate(o.x, o.y); ctx.scale(o.f, 1); const g = ctx.createLinearGradient(0, -h, 0, h); g.addColorStop(0, 'rgba(255,240,190,0)'); g.addColorStop(0.5, 'rgba(255,250,230,' + (1 - q) + ')'); g.addColorStop(1, 'rgba(255,240,190,0)'); ctx.fillStyle = g; ctx.fillRect(0, -h, L, h * 2); ctx.restore(); }
+      if (o.k === 'blade') { const k = HH() * S(o.y), R0 = k * (o.giant ? 1.7 : 0.95), cy = o.y - k * 0.58;   /* r3.196.0：風刃／叢雲＝筆觸月牙風刃（薙刀那套青碧色）＋後方氣流與葉片；叢雲更大、中間一把劍影、帶雲氣 */
+        ctx.save(); ctx.lineCap = 'round'; for (let i = 0; i < 5; i++) { const yy = cy + (i - 2) * R0 * 0.22, L = R0 * (1.2 + ((i * 37) % 5) * 0.2), x1 = o.x - o.f * R0 * 0.2, x0 = x1 - o.f * L; for (const [w, col, al] of [[0.05, '8,46,42', 0.3], [0.022, '200,255,235', 0.8]]) { const g0 = ctx.createLinearGradient(x0, 0, x1, 0); g0.addColorStop(0, rgb(col, 0)); g0.addColorStop(1, rgb(col, al)); ctx.strokeStyle = g0; ctx.lineWidth = Math.max(1, k * w); ctx.beginPath(); ctx.moveTo(x0, yy + Math.sin(o.t * 0.5 + i) * k * 0.03); ctx.lineTo(x1, yy); ctx.stroke(); } } ctx.restore();
+        KU('gale', () => G.KF.moonShape(ctx, o.x, cy, R0, o.f, 1, k));
+        if (o.giant) { ctx.save(); ctx.translate(o.x, cy); ctx.scale(o.f, 1); const bl = (sc, col, al) => { ctx.fillStyle = rgb(col, al); ctx.beginPath(); ctx.moveTo(R0 * 0.75, 0); ctx.lineTo(R0 * 0.45, -k * 0.06 * sc); ctx.lineTo(-R0 * 1.0, -k * 0.045 * sc); ctx.lineTo(-R0 * 1.0, k * 0.045 * sc); ctx.lineTo(R0 * 0.45, k * 0.06 * sc); ctx.closePath(); ctx.fill(); }; bl(1.7, '8,46,42', 0.55); bl(1, '215,255,245', 1); bl(0.4, '255,255,255', 1); ctx.fillStyle = rgb('206,160,70', 1); ctx.fillRect(-R0 * 1.05, -k * 0.15, k * 0.05, k * 0.3); ctx.restore(); }
+        if (o.t % 4 === 0 && o._lt !== o.t) { o._lt = o.t; KU('gale', () => { G.KF.leaves(o.x, o.y, 0.55, o.giant ? 4 : 2, { sp: 1.6, life: 26, rx: 0.5 }); if (o.giant) G.KF.puff(o.x - o.f * k, o.y, 0.9, 20); }); } }
+      else if (o.k === 'moon') { /* 斬月改在發動時用月牙元件畫 */ }
+      else if (o.k === 'hm') { const an = Math.atan2(o.vy, o.vx), k = HH() * S(o.y); if (o.kind === 'fox') wisp(ctx, o.x, o.y, an, k * 0.1, 'fox', 1, 1, o.x); else lightArrow(ctx, o.x, o.y, an, k * 0.1, 1); }   /* r3.196.0：狐火＝有狐耳狐眼、拖尾焰的火；穿雲＝金白光箭（原本都是一顆光點） */
+      else if (o.k === 'ray') { const a = 1 - q, dx = o.x1 - o.x0, dy = o.y1 - o.y0, L = Math.hypot(dx, dy) || 1, k = HH() * S(o.y1); ctx.save(); ctx.translate(o.x0, o.y0); ctx.rotate(Math.atan2(dy, dx));   /* r3.196.0：勾玉光線＝由粗到細的翠綠光束（墨邊、白芯），命中點綻開一枚小勾玉 */
+        const beam = (w, col, al) => { ctx.fillStyle = rgb(col, al * a); ctx.beginPath(); ctx.moveTo(0, -w); ctx.quadraticCurveTo(L * 0.5, -w * 0.5, L, 0); ctx.quadraticCurveTo(L * 0.5, w * 0.5, 0, w); ctx.closePath(); ctx.fill(); }; beam(k * 0.07, '8,50,40', 0.6); beam(k * 0.045, '120,240,190', 1); beam(k * 0.018, '255,255,255', 1); ctx.restore();
+        sp('fx_magatama', 0, o.x1, o.y1 + k * 0.1, 0.5 + 0.4 * q, { add: 1, a: a }); }
+      else if (o.k === 'beam') { const k = HH() * S(o.y), L = k * 9, a = 1 - q, h = k * 0.42 * (1 - q * 0.5); ctx.save(); ctx.translate(o.x, o.y); ctx.scale(o.f, 1);   /* r3.196.0：日鏡＝鏡前先亮起日輪（光芒旋轉）＋金邊白芯的光束＋金粉（原本一條白色漸層長方形） */
+        const band = (w, col, al) => { ctx.fillStyle = rgb(col, al * a); ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(k * 0.5, -w, k * 1.2, -w); ctx.lineTo(L, -w * 0.7); ctx.lineTo(L, w * 0.7); ctx.lineTo(k * 1.2, w); ctx.quadraticCurveTo(k * 0.5, w, 0, 0); ctx.fill(); };
+        band(h * 1.25, '90,50,6', 0.45); band(h, '255,196,90', 0.9); band(h * 0.62, '255,240,190', 1); band(h * 0.28, '255,255,255', 1);
+        ctx.rotate(o.t * 0.12); for (let i = 0; i < 12; i++) { ctx.rotate(TAU / 12); ctx.fillStyle = rgb(i % 2 ? '255,196,90' : '255,244,200', 0.9 * a); ctx.beginPath(); ctx.moveTo(k * 0.3, -k * 0.045); ctx.lineTo(k * (i % 2 ? 0.62 : 0.8), 0); ctx.lineTo(k * 0.3, k * 0.045); ctx.fill(); }
+        ctx.fillStyle = rgb('90,50,6', 0.6 * a); ctx.beginPath(); ctx.arc(0, 0, k * 0.34, 0, TAU); ctx.fill(); ctx.fillStyle = rgb('255,210,110', a); ctx.beginPath(); ctx.arc(0, 0, k * 0.3, 0, TAU); ctx.fill(); ctx.fillStyle = rgb('255,252,235', a); ctx.beginPath(); ctx.arc(-k * 0.04, -k * 0.04, k * 0.19, 0, TAU); ctx.fill(); ctx.restore();
+        if (o.t % 3 === 0 && o._lt !== o.t) { o._lt = o.t; KU('holy', () => G.KF.motes(o.x + o.f * rnd(1, 8) * k, o.y + k * 0.55, 0.55, 2, { sp: 0.6, life: 22 })); } }
       else if (o.k === 'soul') soulDraw(o, hz);
       else if (o.k === 'goho') { const a = Math.min(1, (o.life - o.t) / 20, o.t / 8); if (!o.sh && G.PFX_SHIELD) { o.sh = 1; G.PFX_SHIELD({ c: '255,225,150', c2: '255,245,215' }, o.life - o.t); } else if (!G.PFX_SHIELD) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = 'rgba(255,230,150,' + 0.6 * a + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(H.x, H.y - hz * 0.55, hz * 0.6, hz * 0.75, 0, 0, TAU); ctx.stroke(); ctx.restore(); }   // r3.43.0：改用結界光罩
         if (o.t % 40 < 20) sp('fx_hikagami', 0, H.x + H.face * hz * 0.5, H.y - hz * 0.2, 0.8, { add: 1, a: 0.5 * a }); } }

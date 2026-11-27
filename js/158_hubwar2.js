@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 158_hubwar2.js
- * Version : r3.163.0  (2026-11-27)　r3.163.0：東面援軍過場：鬼族友好時孫六承認第 5 章「鬼族盜火」文書是自己寫錯的
+ * Version : r3.196.0  (2026-11-28)　玄符氣場拿掉紫色實線橢圓外框
+ * 舊版    : r3.163.0  (2026-11-27)　r3.163.0：東面援軍過場：鬼族友好時孫六承認第 5 章「鬼族盜火」文書是自己寫錯的
  * 舊版    : r3.162.0  (2026-11-27)　r3.162.0：難度提高——出兵 14 秒一隊、一隊 4～6（每 3 隊 1 精英）、上限 28；兵糧開局 300、每秒 +2、擊倒 +5／精英 +20、攻下 +200；東方妖穴血量 ×2.7、援軍打據點減半、每掉 25% 噴一波精英
  * 舊版    : r3.161.0  (2026-11-27)　r3.161.0：援軍也會打 W8 的波次敵人；援軍講話者同名（對話不另生一個）；匯出援軍介面給 W8
  * 舊版    : r3.160.0  (2026-11-27)
@@ -230,7 +231,7 @@
     const dn0 = G.drawNpc; G.drawNpc = function (n) { if (n && n.hwA) { try { drawAlly(n); } catch (x) { console.warn('hw7a', x); } return; } return dn0.apply(this, arguments); };
     const do0 = G.drawOni; G.drawOni = function (e) { if (e && e.hwObj) return drawObj(e); if (e && e.hwBoss && e.st !== 'dead') { const s = S(e.y), r = HH() * s * 0.9, pu = 0.5 + 0.25 * Math.sin(G.t * 0.09);
         ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(e.x, e.y, r * 0.1, e.x, e.y, r * 1.2); g.addColorStop(0, `rgba(140,50,200,${0.5 * pu})`); g.addColorStop(1, 'rgba(60,10,90,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(e.x, e.y, r * 1.2, r * 0.42, 0, 0, 6.283); ctx.fill();
-        ctx.strokeStyle = `rgba(190,110,255,${0.55 * pu})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(e.x, e.y, r * (0.8 + 0.1 * Math.sin(G.t * 0.07)), r * 0.28, 0, 0, 6.283); ctx.stroke(); ctx.restore(); }
+        /* r3.196.0：拿掉紫色實線橢圓，只留柔光 */ ctx.restore(); }
       return do0.apply(this, arguments); };
     const fx0 = G.drawFx; G.drawFx = function () { const r = fx0.apply(this, arguments); try { if (SC.id === ID) drawFx(); } catch (x) { console.warn('hw7fx', x); } return r; };
     const tp0 = G.PARTY.tap; G.PARTY.tap = function (p) { if (W.on && SC.id === ID && !G.DLG.active()) for (let i = W.bt.length - 1; i >= 0; i--) { const b = W.bt[i]; if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) { b.f(); return true; } } return tp0.call(this, p); }; })();

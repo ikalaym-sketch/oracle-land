@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 162_fx3.js
- * Version : r3.189.0  (2026-11-28)　r3.189.0：秘傳招名提示改成演出的一部分（左下大字滑入＋上方黑邊中央），不再被黑邊蓋住
+ * Version : r3.196.0  (2026-11-28)　r3.196.0：妖怪倒下散灰燼；秘傳演出時傷害改成右側累計數字
+ * 舊版    : r3.189.0  (2026-11-28)　r3.189.0：秘傳招名提示改成演出的一部分（左下大字滑入＋上方黑邊中央），不再被黑邊蓋住
  * 舊版    : r3.184.0  (2026-11-28)　上下黑邊只在秘傳、奧義演出時出現，一般技能與特技不出現
  * 舊版    : r3.177.0  (2026-11-28)　r3.177.0：秘傳演出時上下黑邊
  * 舊版    : r3.176.0  (2026-11-28)　r3.176.0：鐵砲命中也有受擊染色
@@ -39,6 +40,19 @@
       else if (!hd) ttl.a = null; }
     return r; };
   const ttl = { a: null, t0: 0, n: '', sub: '' };
+  /* r3.196.0：妖怪倒下時從腳邊往上散一陣灰燼與塵（原本只有整隻淡出） */
+  (function ash() { if (!G.drawOni) return setTimeout(ash, 50); const d1 = G.drawOni; G.drawOni = function (e) { if (e && e.st === 'dead' && !e._ash && !e.boss && G.KF && G.KF.use) { e._ash = 1; const x = e.x, y = e.y, r = e.ratio || 1; G.STORY.later(10, () => { try { G.KF.use('lance', () => { G.KF.puff(x, y, 0.8 * r, 26); G.KF.motes(x, y, 0.3 * r, 10, { up: 1.4, sp: 0.5, life: 44, rx: 0.5 * r }); }); G.KF.use('ember', () => G.KF.embers(x, y, 0.3 * r, 5, { sp: 0.5, life: 40 })); } catch (x2) {} }); } return d1.apply(this, arguments); }; })();
+  /* r3.196.0：秘傳演出時，一顆顆傷害數字改成右側一個累計數字（原本疊在一起、被黑邊蓋住） */
+  const acc = { a: null, v: 0, n: 0, t: 0, crit: 0, end: 0 };
+  (function accHk() { if (!G.damageOni) return setTimeout(accHk, 50); const dm1 = G.damageOni; G.damageOni = function (e) { const A = G.H.act, hd = A && A.mvx && A.mvx.hd && G.mode === 'play', hp0 = e ? e.hp : 0, n0 = G.NUMS.length, r = dm1.apply(this, arguments);
+      if (hd && e && e.hp < hp0) { if (acc.a !== A) { acc.a = A; acc.v = 0; acc.n = 0; } acc.v += hp0 - Math.max(0, e.hp); acc.n++; acc.t = G.t; const nm = G.NUMS[G.NUMS.length - 1]; if (nm && nm.crit && (G.NUMS.length > n0 || nm.pop === G.t)) acc.crit = G.t; acc.end = G.t + 70;
+        for (let i = G.NUMS.length - 1; i >= 0; i--) { const n = G.NUMS[i]; if (!n.hurt && !n.gold && !n.heal) G.NUMS.splice(i, 1); } }
+      return r; };
+    const ud1 = G.UI.draw; G.UI.draw = function () { const r = ud1.apply(this, arguments); if (!(acc.end > G.t) || !acc.n) return r; const pop = Math.max(0, 1 - (G.t - acc.t) / 6), a = Math.min(1, (acc.end - G.t) / 14), x = G.LW - 150, y = G.LH * 0.42, cr = G.t - acc.crit < 20;
+      ctx.save(); ctx.globalAlpha = a; const g = ctx.createLinearGradient(x - 110, 0, x + 60, 0); g.addColorStop(0, 'rgba(5,4,6,0)'); g.addColorStop(0.5, 'rgba(5,4,6,0.6)'); g.addColorStop(1, 'rgba(5,4,6,0)'); ctx.fillStyle = g; ctx.fillRect(x - 110, y - 34, 170, 58);
+      G.txt(acc.n + ' 連擊', x, y - 20, 11, '#e8c878', 'center', G.FONT_S, 900); ctx.translate(x, y + 10); ctx.scale(1 + 0.25 * pop, 1 + 0.25 * pop); ctx.rotate(-0.06);
+      ctx.font = `900 30px ${G.FONT_S}`; ctx.textAlign = 'center'; ctx.lineJoin = 'round'; const tx = G.fmtN ? G.fmtN(Math.round(acc.v)) : String(Math.round(acc.v)); ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(70,10,6,.92)'; ctx.strokeText(tx, 0, 0); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,240,200,.9)'; ctx.strokeText(tx, 0, 0);
+      const g2 = ctx.createLinearGradient(0, -26, 0, 2); g2.addColorStop(0, '#fff2b0'); g2.addColorStop(0.45, cr ? '#ffc23a' : '#ffe08a'); g2.addColorStop(1, cr ? '#ff5a2a' : '#f0a040'); ctx.fillStyle = g2; ctx.fillText(tx, 0, 0); ctx.restore(); return r; }; })();
   const d0 = G.drawOni; G.drawOni = function (e) { const h = e && e._hf, age = h ? G.t - h.t : 99;
     if (!h || age < 0 || age >= LIFE || !e._fx3 || e.bb || e.st === 'dead') return d0.apply(this, arguments);
     const q = age / LIFE, a = (1 - q) * (1 - q) * (h.k || 1), pw = h.pw || 1; let im = null; try { im = tint(e._fx3[0], e._fx3[1], h.c); } catch (x) {}

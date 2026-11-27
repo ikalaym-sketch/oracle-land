@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.195.0  (2026-11-28)　會心傷害數字重做（大字、橘紅金黃漸層、斬痕、驚嘆號），跟一般數字拉開
+ * Version : r3.196.0  (2026-11-28)　受擊白閃減半、舊版預警改柔光、掉落光柱柔邊、秘傳時隱藏妖怪血條
+ * 舊版    : r3.195.0  (2026-11-28)　會心傷害數字重做（大字、橘紅金黃漸層、斬痕、驚嘆號），跟一般數字拉開
  * 舊版    : r3.190.0  (2026-11-28)　追蹤飛行物轉彎維持原速
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：夥伴特效（spr）可加發光層 glow
  * 舊版    : r3.151.0  (2026-11-27)　r3.151.0：劇情人物靜態圖站著時加呼吸起伏
@@ -367,11 +368,11 @@ G.ONI_RATIO = 1.38;
     const sc = sc0 * (rec.k || 1);
     shadow(e.x, e.y, 22 * s * e.ratio / 1.2); e._fx3 = [u, fr, sc];   /* r3.170.0：給受擊染色用（162_fx3） */
     A.draw(u, fr, e.x, e.y, sc, e.face < 0, e.alpha);
-    if (e.flash > 0) { const w = A.white(u, fr); ctx.save(); ctx.globalAlpha = e.flash / 10 * e.alpha; if (e.face < 0) { ctx.translate(e.x * 2, 0); ctx.scale(-1, 1); }
+    if (e.flash > 0) { const w = A.white(u, fr); ctx.save(); ctx.globalAlpha = Math.min(0.5, e.flash / 14) * e.alpha;   /* r3.196.0：受擊白閃減半（原本整隻變純白） */ if (e.face < 0) { ctx.translate(e.x * 2, 0); ctx.scale(-1, 1); }
       ctx.drawImage(w, e.x - fr[4] * sc, e.y - fr[5] * sc, fr[2] * sc, fr[3] * sc); ctx.restore(); }
-    if (e.st !== 'dead' && e.hp < e.hpMax) { const w = 44 * s, y = e.y - G.HERO_H * e.ratio * s - 4; ctx.fillStyle = 'rgba(10,6,6,.75)'; ctx.fillRect(e.x - w / 2 - 1, y - 1, w + 2, 5);
+    if (e.st !== 'dead' && e.hp < e.hpMax && !(G.VX && G.VX.dimT > 0 && H.act && H.act.mvx && H.act.mvx.hd)) { const w = 44 * s,   /* r3.196.0：秘傳演出時不顯示妖怪血條 */ y = e.y - G.HERO_H * e.ratio * s - 4; ctx.fillStyle = 'rgba(10,6,6,.75)'; ctx.fillRect(e.x - w / 2 - 1, y - 1, w + 2, 5);
       ctx.fillStyle = G.C.red; ctx.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp) / e.hpMax, 3); }
-    if (!G.FOEAI && e.st === 'atk' && e.t * TK < e.atkMs * 0.48) { const a = 0.35 + 0.3 * Math.sin(G.t * 0.6), rr = e.ratio / 1.38, bx = G.bodyX(e); ctx.strokeStyle = `rgba(255,90,60,${a})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(e.x + e.face * (56 * Math.min(rr, 1.05) * s + bx), e.y, Math.max(24, 46 * rr) * s, 14 * s, 0, 0, 6.283); ctx.stroke(); }
+    if (!G.FOEAI && e.st === 'atk' && e.t * TK < e.atkMs * 0.48) { const a = 0.35 + 0.3 * Math.sin(G.t * 0.6), rr = e.ratio / 1.38, bx = G.bodyX(e); { const wx = e.x + e.face * 30, rx = 40 * (e.ratio || 1); ctx.save(); ctx.translate(wx, e.y); ctx.scale(1, 0.32); const gw = ctx.createRadialGradient(0, 0, rx * 0.2, 0, 0, rx); gw.addColorStop(0, `rgba(255,90,60,0)`); gw.addColorStop(0.75, `rgba(255,90,60,${a * 0.7})`); gw.addColorStop(1, `rgba(255,90,60,0)`); ctx.fillStyle = gw; ctx.beginPath(); ctx.arc(0, 0, rx, 0, 6.283); ctx.fill(); ctx.restore(); }   /* r3.196.0：舊版預警改無外框的紅色柔光 */ ctx.strokeStyle = 'rgba(0,0,0,0)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(e.x + e.face * (56 * Math.min(rr, 1.05) * s + bx), e.y, Math.max(24, 46 * rr) * s, 14 * s, 0, 0, 6.283); ctx.stroke(); }
   };
 
   /* ---------- NPC（白丸：單張立繪＋呼吸起伏） ---------- */
@@ -422,7 +423,7 @@ G.ONI_RATIO = 1.38;
       ctx.fillStyle = 'rgba(30,20,10,.3)'; ctx.beginPath(); ctx.ellipse(l.x, l.y, 7, 2.5, 0, 0, 6.283); ctx.fill();
       if (l.kind === 'gold') { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(l.x, y, 4, 4 * Math.abs(Math.cos(G.t * 0.1 + l.x)) + 0.6, 0, 0, 6.283); ctx.fill(); continue; }
       const big = l.kind === 'item' ? [16, 24, 40, 60, 80, 100][l.it.q] || 40 : 30,   /* r3.145.0：光柱依品質拉開差距 */ g = ctx.createLinearGradient(0, y - big, 0, y);
-      g.addColorStop(0, c + '00'); g.addColorStop(1, c + 'aa'); ctx.globalAlpha = 0.6 + 0.4 * a; ctx.fillStyle = g; ctx.fillRect(l.x - 4, y - big, 8, big); ctx.globalAlpha = 1;
+      g.addColorStop(0, c + '00'); g.addColorStop(1, c + '66'); ctx.fillStyle = g; for (let i = 0; i < 4; i++) { ctx.globalAlpha = (0.6 + 0.4 * a) * (1 - i * 0.2); ctx.fillRect(l.x - 2 - i * 2, y - big * (1 - i * 0.1), 4 + i * 4, big * (1 - i * 0.1)); } ctx.globalAlpha = 1;   /* r3.196.0：掉落光柱左右淡出（原本一條硬邊方塊） */
       /* r3.87.0：拿掉掉落物腳下的品質色圈（綠色品質掉一地時變成一堆綠圈）；品質色改由光柱＋菱形表示 */
       ctx.fillStyle = c; ctx.save(); ctx.translate(l.x, y); ctx.rotate(0.785); ctx.fillRect(-4, -4, 8, 8); ctx.restore();
       if ((l.kind === 'item' && l.it.q >= 3) || l.kind === 'key') { const lab =   /* r3.145.0：只有稀品以上顯示名字 */ l.kind === 'item' ? G.RPG.name(l.it) : l.name; ctx.save(); ctx.translate(l.x, y - big - 6); ctx.scale(1 / Z, 1 / Z);

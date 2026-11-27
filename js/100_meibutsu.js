@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 100_meibutsu.js
- * Version : r3.96.0  (2026-11-26)　r3.96.0：名物掉落等級吃目前難度（原本讀不到難度）
+ * Version : r3.196.0  (2026-11-28)　r3.196.0：15 件名物各自的演出（鬼切鬼面、雷切電弧、蜻蛉細槍光、三日月金新月、岩融地裂、扇靶、稻富連爆、村正妖氣、赤糸紅絲、天狗黑羽、河童水滴、雪女雪花、九尾狐火、酒吞酒氣、鬼丸吸魂）
+ * 舊版    : r3.96.0  (2026-11-26)　r3.96.0：名物掉落等級吃目前難度（原本讀不到難度）
  * 舊版    : r3.94.0  (2026-11-26)　r3.94.0：名物增傷改增傷區相加；村正改攻擊% 相加；觸發改每次出手 1 次＋內部冷卻
  * 舊版    : r3.61.0  (2026-11-24)
  * 變更    : r3.61.0 新增。名物（獨特裝備）15 件：
@@ -58,6 +59,26 @@
   const cd = {}; const ready = (key, s) => { if ((cd[key] || 0) > G.t) return false; cd[key] = G.t + Math.round(s * 60); return true; };
   const rdmg = (e, m, big) => { if (alive(e)) G.damageOni(e, m, !!big, false, { rune: 1 }); };
   const area = (x, y, r, m, skip) => { for (const q of G.E) if (alive(q) && q !== skip && Math.hypot(q.x - x, (q.y - y) * 1.6) < r) rdmg(q, m, true); };
+  /* ====================== r3.196.0 名物演出（每件一個辨識用的小演出；觸發時才出現） ====================== */
+  const FXR = () => G.RFX || {}, KU = (pal, fn) => { const f = FXR().KU; if (f) f(pal, fn); }, KFa = (l, ly, d, st) => { const f = FXR().KFa; return f && f(l, ly, d, st); }, rgb = (c, a) => 'rgba(' + c + ',' + Math.max(0, Math.min(1, a)).toFixed(3) + ')', TAU = 6.2832, rnd = (a, b) => a + Math.random() * (b - a), kk = y => HH() * S(y);
+  const fxT = {}; const every = (id, n) => { if ((fxT[id] || 0) > G.t) return false; fxT[id] = G.t + n; return true; };
+  /* 童子切「鬼切」：一道血紅斬痕劃過，鬼面浮現後左右裂開 */
+  function oniCut(x, y) { KU('ember', () => { const K2 = G.KF; K2.qi({ x, y, z: 0.6, ang: -0.5, len: 3.2, w: 0.06, dur: 2, life: 16, motes: 6 }); K2.scar && K2.scar(x, y, 1, 2); });
+    KFa(18, 'o', (c2, u) => { const k = kk(y) * 0.3, q = u / 18, sp = u < 5 ? 0 : (u - 5) / 13, a = 0.8 * Math.min(1, u / 3) * (1 - Math.max(0, q - 0.5) / 0.5); c2.translate(x, y - kk(y) * 0.75);
+      for (const sd of [-1, 1]) { c2.save(); c2.translate(sd * k * 0.3 * sp, sd * k * 0.14 * sp); c2.rotate(sd * 0.14 * sp); c2.beginPath(); c2.rect(sd > 0 ? 0 : -k * 1.4, -k * 1.6, k * 1.4, k * 3.2); c2.clip(); c2.globalAlpha = a;
+        const face = (sc, col, al) => { c2.fillStyle = rgb(col, al); c2.beginPath(); c2.moveTo(0, -k * 0.75 * sc); c2.bezierCurveTo(k * 0.85 * sc, -k * 0.8 * sc, k * 0.9 * sc, k * 0.2 * sc, k * 0.5 * sc, k * 0.7 * sc); c2.lineTo(0, k * 0.95 * sc); c2.lineTo(-k * 0.5 * sc, k * 0.7 * sc); c2.bezierCurveTo(-k * 0.9 * sc, k * 0.2 * sc, -k * 0.85 * sc, -k * 0.8 * sc, 0, -k * 0.75 * sc); c2.fill(); };
+        for (const hd of [-1, 1]) { c2.fillStyle = rgb('40,6,6', 0.8); c2.beginPath(); c2.moveTo(hd * k * 0.34, -k * 0.62); c2.quadraticCurveTo(hd * k * 0.72, -k * 1.1, hd * k * 0.62, -k * 1.5); c2.quadraticCurveTo(hd * k * 0.42, -k * 1.1, hd * k * 0.14, -k * 0.7); c2.fill(); c2.fillStyle = rgb('255,226,190', 1); c2.beginPath(); c2.moveTo(hd * k * 0.36, -k * 0.68); c2.quadraticCurveTo(hd * k * 0.64, -k * 1.08, hd * k * 0.6, -k * 1.4); c2.quadraticCurveTo(hd * k * 0.44, -k * 1.06, hd * k * 0.2, -k * 0.72); c2.fill(); }
+        face(1.1, '40,6,6', 0.8); face(1, '196,36,30', 1); face(0.78, '236,80,60', 0.9);
+        c2.fillStyle = rgb('255,236,150', 1); for (const hd of [-1, 1]) { c2.beginPath(); c2.moveTo(hd * k * 0.14, -k * 0.2); c2.lineTo(hd * k * 0.52, -k * 0.38); c2.lineTo(hd * k * 0.46, -k * 0.12); c2.fill(); }
+        c2.fillStyle = rgb('40,6,6', 0.95); c2.beginPath(); c2.moveTo(-k * 0.38, k * 0.34); c2.quadraticCurveTo(0, k * 0.2, k * 0.38, k * 0.34); c2.quadraticCurveTo(0, k * 0.78, -k * 0.38, k * 0.34); c2.fill(); c2.fillStyle = rgb('255,250,235', 1); for (const hd of [-1, 1]) { c2.beginPath(); c2.moveTo(hd * k * 0.26, k * 0.32); c2.lineTo(hd * k * 0.18, k * 0.6); c2.lineTo(hd * k * 0.1, k * 0.3); c2.fill(); } c2.restore(); } }); }
+  /* 與一之弓：目標身上一面扇靶（紅日金扇）一閃後被射穿 */
+  function fanMark(e) { KFa(20, 'o', (c2, u) => { if (e.st === 'dead') return; const k = kk(e.y) * 0.34, a = Math.min(1, u / 3) * (1 - Math.max(0, u - 12) / 8), op = Math.min(1, u / 5); c2.translate(e.x, e.y - kk(e.y) * (e.ratio || 1) * 0.62); c2.globalAlpha = a; const a0 = -Math.PI / 2 - 1.05 * op, a1 = -Math.PI / 2 + 1.05 * op;
+      const fan = (r, col, al) => { c2.fillStyle = rgb(col, al); c2.beginPath(); c2.moveTo(0, k * 0.5); c2.arc(0, k * 0.5, r, a0, a1); c2.closePath(); c2.fill(); }; fan(k * 1.5, '50,26,6', 0.7); fan(k * 1.4, '236,196,96', 1); fan(k * 1.25, '255,236,170', 1);
+      c2.strokeStyle = rgb('150,100,30', 0.8); c2.lineWidth = Math.max(0.6, k * 0.04); for (let i = 0; i <= 6; i++) { const an = a0 + (a1 - a0) * i / 6; c2.beginPath(); c2.moveTo(0, k * 0.5); c2.lineTo(Math.cos(an) * k * 1.4, k * 0.5 + Math.sin(an) * k * 1.4); c2.stroke(); }
+      c2.fillStyle = rgb('120,10,10', 0.8); c2.beginPath(); c2.arc(0, -k * 0.34, k * 0.36, 0, TAU); c2.fill(); c2.fillStyle = rgb('226,40,34', 1); c2.beginPath(); c2.arc(0, -k * 0.34, k * 0.31, 0, TAU); c2.fill(); c2.fillStyle = rgb('50,26,6', 1); c2.beginPath(); c2.arc(0, k * 0.5, k * 0.1, 0, TAU); c2.fill(); });
+    KU('holy', () => G.KF.glint(e.x, e.y, (e.ratio || 1) * 0.62, 0.5, 12)); }
+  /* 往上飄的氣（酒氣、妖氣）：幾縷有尾焰的火形 */
+  function vapor(pal, n, life, sz) { const W8 = []; for (let i = 0; i < n; i++) W8.push([rnd(-1, 1), rnd(0.6, 1.2), rnd(0, 6), rnd(0, 0.5)]); KFa(life, 'o', (c2, u) => { const k = kk(H.y), w = FXR().wisp; if (!w) return; for (const v of W8) w(c2, H.x + v[0] * k * 0.3 + Math.sin(u * 0.18 + v[2]) * k * 0.08, H.y - k * (0.25 + v[3] + u * 0.03 * v[1]), -Math.PI / 2, k * (sz || 0.09), pal, Math.min(1, u / 4) * (1 - u / life), 0, v[2]); }); }
   let shots = 0; const fox = [];
   const do0 = G.damageOni; G.damageOni = function (e, mult, big, fc, opt) {
     const hero = e && e.st !== 'dead' && !(opt && (opt.party || opt.rune)) && !G._bleedTick && !e.kz;
@@ -66,40 +87,46 @@
     if (on('dojigiri') && ONI.test(e.type || '')) up += 0.4 * k(ON.dojigiri);
     if (on('shuten') && lo) up += 0.4 * k(ON.shuten);
     if (on('yukionna') && e.st2 && e.st2.frz > 0) up += 0.3 * k(ON.yukionna);
-    if (on('yoichi') && !e._yoichi) { e._yoichi = 1; fc = true; up += 0.5 * k(ON.yoichi); }
+    if (on('yoichi') && !e._yoichi) { e._yoichi = 1; fc = true; up += 0.5 * k(ON.yoichi); try { fanMark(e); } catch (x) {} }
     G.DZ.add(up);
     const n0 = G.NUMS.length, h0 = e.hp, r = do0.call(this, e, m, big, fc, opt); if (!(e.hp < h0)) return r;
     const nm = G.NUMS[G.NUMS.length - 1], crit = G.NUMS.length > n0 && nm && nm.crit, V = VX();
     try {
-      if (on('dojigiri') && big && G.PROC('m_doji', 30) && Math.random() < 0.25) { V.ring && V.ring({ x: e.x, y: e.y, r1: 1.6, life: 16, col: '255,90,70', lw: 0.12 }); area(e.x, e.y, HH() * 1.3, 2.0 * k(ON.dojigiri)); }
-      if (on('raikiri') && crit && G.PROC('m_rai', 0) && ready('rai', 1)) { V.bolt && V.bolt({ x0: e.x, y0: e.y - HH() * 3, x1: e.x, y1: e.y - HH() * 0.5, col: '200,220,255', life: 12 }); rdmg(e, 1.8 * k(ON.raikiri), true); }
-      if (on('tonbo') && G.PROC('m_tonbo', 15)) { const f = Math.sign(e.x - H.x) || H.face; let b = null, bd = 99; for (const q of G.E) if (alive(q) && q !== e && (q.x - e.x) * f > 0 && Math.abs(q.x - e.x) < bd && Math.abs(q.y - e.y) < 30) { bd = Math.abs(q.x - e.x); b = q; } if (b) rdmg(b, 0.6 * k(ON.tonbo)); }
-      if (on('mikazuki') && crit && G.PROC('m_mika', 30) && Math.random() < 0.2) G.STORY.later(6, () => rdmg(e, 1.0 * k(ON.mikazuki), true));
-      if (on('iwatoshi') && big && G.PROC('m_iwa', 0) && ready('iwa', 4)) { V.crack && V.crack({ x: e.x, y: e.y, r: 1.3 }); area(e.x, e.y, HH() * 1.4, 2.2 * k(ON.iwatoshi)); }
-      if (on('inatomi') && G.PROC('m_ina', 0) && ++shots % 5 === 0) { G.VX && G.VX.s2 && G.VX.s2('fx_blast', { x: e.x, y: e.y, k: 1.2, life: 26 }); area(e.x, e.y, HH() * 1.2, 3.0 * k(ON.inatomi)); }
-      if (on('yukionna') && G.PROC('m_yuki', 30, e) && Math.random() < 0.2 && G.RUNE && G.RUNE.frost) G.RUNE.frost(e);
+      if (on('dojigiri') && big && G.PROC('m_doji', 30) && Math.random() < 0.25) { oniCut(e.x, e.y); area(e.x, e.y, HH() * 1.3, 2.0 * k(ON.dojigiri)); }
+      if (on('raikiri') && crit && G.PROC('m_rai', 0) && ready('rai', 1)) { KU('moon', () => { const K2 = G.KF, kq = kk(e.y), hq = kk(H.y); K2.bolt(e.x + rnd(-0.4, 0.4) * kq, e.y - 6 * kq, e.x, e.y - 0.2 * kq, 16, 3, 3); K2.light(e.x, e.y, 1.4, 16, 0.7, 0.5); K2.puff(e.x, e.y, 0.9); K2.scar && K2.scar(e.x, e.y, 1, 1.5); for (let i = 0; i < 4; i++) K2.bolt(H.x + H.face * rnd(0.2, 0.9) * hq, H.y - rnd(0.4, 0.9) * hq, H.x + H.face * rnd(0.3, 1.1) * hq, H.y - rnd(0.3, 1.0) * hq, 14, 0.9, 1); }); rdmg(e, 1.8 * k(ON.raikiri), true); }   /* 雷切：粗雷落下＋刀上殘留電弧 */
+      if (on('tonbo') && G.PROC('m_tonbo', 15)) { const f = Math.sign(e.x - H.x) || H.face; let b = null, bd = 99; for (const q of G.E) if (alive(q) && q !== e && (q.x - e.x) * f > 0 && Math.abs(q.x - e.x) < bd && Math.abs(q.y - e.y) < 30) { bd = Math.abs(q.x - e.x); b = q; } if (b) { rdmg(b, 0.6 * k(ON.tonbo)); if (every('tonbo', 6)) { const x0 = e.x, x1 = b.x, y0 = e.y, z = 0.55; KU('lance', () => { const K2 = G.KF; K2.qi({ x: (x0 + x1) / 2, y: y0, z, ang: 0, len: Math.abs(x1 - x0) / kk(y0) + 0.8, w: 0.045, dur: 2, life: 10, motes: 2 }); K2.pierce && K2.pierce(x1 + f * 0.25 * kk(y0), y0 - z * kk(y0), f, 0, 0.7); }); } } }   /* 蜻蛉切：一道細槍光穿過目標刺進後面那隻 */
+      if (on('mikazuki') && crit && G.PROC('m_mika', 30) && Math.random() < 0.2) G.STORY.later(6, () => { if (!alive(e)) return; KU('lance', () => { const K2 = G.KF, f = Math.sign(e.x - H.x) || 1; K2.smear({ x: e.x - f * 0.9 * kk(e.y), y: e.y, f, cy: 0.6, r: 1.2, sq: 0.9, a0: -1.2, a1: 1.2, w: 0.42, dur: 3, life: 18, tier: 2, trail: 2.4 }); K2.glint(e.x, e.y, 0.6, 0.45, 12); }); rdmg(e, 1.0 * k(ON.mikazuki), true); });   /* 三日月：追加的一斬是金色新月 */
+      if (on('iwatoshi') && big && G.PROC('m_iwa', 0) && ready('iwa', 4)) { KU('lance', () => { const K2 = G.KF, kq = kk(e.y); K2.crack(e.x, e.y, 2.0, 90, true); K2.rocks(e.x, e.y, 22, 2.0); for (let i = 0; i < 8; i++) { const an = i / 8 * TAU; K2.puff(e.x + Math.cos(an) * 1.4 * kq, e.y + Math.sin(an) * 0.55 * kq, 1.4); } K2.light(e.x, e.y, 2, 18, 0.5, 0.2); }); SC.shake = Math.max(SC.shake || 0, 9); area(e.x, e.y, HH() * 1.4, 2.2 * k(ON.iwatoshi)); }   /* 岩融：比震地更大的地裂、岩塊、塵柱 */
+      if (on('inatomi') && G.PROC('m_ina', 0) && ++shots % 5 === 0) { const bx = e.x, by = e.y, B = G.KF && G.KF.boom; if (B) { B(null, bx, by, 1.5); for (let i = 0; i < 3; i++) G.STORY.later(3 + i * 3, () => B(null, bx + rnd(-1, 1) * kk(by), by + rnd(-0.3, 0.3) * kk(by), 0.9)); } else G.VX && G.VX.s2 && G.VX.s2('fx_blast', { x: bx, y: by, k: 1.2, life: 26 }); area(e.x, e.y, HH() * 1.2, 3.0 * k(ON.inatomi)); }   /* 稻富：火藥連環引爆 */
+      if (on('yukionna') && G.PROC('m_yuki', 30, e) && Math.random() < 0.2 && G.RUNE && G.RUNE.frost) { G.RUNE.frost(e); if (every('yuki', 12)) { const hx = H.x + H.face * kk(H.y) * 0.4, hy = H.y - kk(H.y) * 0.6, Fl = []; for (let i = 0; i < 6; i++) Fl.push([rnd(-0.3, 0.3), rnd(-0.3, 0.3), rnd(0, 6)]); KFa(26, 'o', (c2, u) => { const kq = kk(H.y), sn = FXR().snow; if (!sn) return; for (const fl of Fl) sn(c2, hx + fl[0] * kq + H.face * u * kq * 0.012, hy + fl[1] * kq + u * kq * 0.008, kq * 0.06, u * 0.08 + fl[2], Math.min(1, u / 4) * (1 - u / 26)); }); KU('moon', () => G.KF.puff(hx, H.y, 0.5, 22)); } }   /* 雪女：手邊飄出雪花與白息 */
     } catch (x) { console.warn('meibutsu', x); }
+    try {
+      if (on('muramasa') && every('mura', 40)) vapor('mura', 4, 26, 0.08);   /* 村正：出手時刀身帶暗紅妖氣 */
+    } catch (x) { console.warn('meibutsu fx', x); }
     return r; };
   /* ---------- 受傷 ---------- */
   const hh0 = G.hurtHero; G.hurtHero = function (atk, srcX) { if (on('muramasa')) atk *= 1.15; if (on('shuten') && H.hp < H.hpMax * 0.4) atk *= 0.75;
     const h0 = H.hp, r = hh0.call(this, atk, srcX);
     if (on('akaito') && H.hp < h0) { let b = null, bd = 200; for (const q of G.E) if (alive(q)) { const d = Math.abs(q.x - (srcX === undefined ? H.x : srcX)) + Math.abs(q.y - H.y); if (d < bd) { bd = d; b = q; } }
-      if (b) { rdmg(b, 0.6 * k(ON.akaito) * (h0 - H.hp) / Math.max(1, R.S.atk)); VX().ring && VX().ring({ x: H.x, y: H.y, r1: 1.0, life: 14, col: '255,120,90', lw: 0.1 }); } }
+      if (b) { rdmg(b, 0.6 * k(ON.akaito) * (h0 - H.hp) / Math.max(1, R.S.atk)); { const tx = b.x, ty = b.y; KFa(14, 'o', (c2, u) => { const kq = kk(H.y), x0 = H.x, y0 = H.y - kq * 0.6, x1 = tx, y1 = ty - kq * 0.5, q = Math.min(1, u / 5), a = 1 - Math.max(0, u - 6) / 8, ex = x0 + (x1 - x0) * q, ey = y0 + (y1 - y0) * q; c2.lineCap = 'round'; for (const [w, col, al] of [[0.07, '50,6,6', 0.6], [0.04, '226,40,40', 1], [0.014, '255,220,200', 1]]) { c2.strokeStyle = rgb(col, al * a); c2.lineWidth = Math.max(0.8, w * kq); c2.beginPath(); c2.moveTo(x0, y0); c2.quadraticCurveTo((x0 + ex) / 2, Math.min(y0, ey) - kq * 0.35 * Math.sin(u * 0.5), ex, ey); c2.stroke(); } c2.fillStyle = rgb('226,40,40', a); for (let i = 1; i < 4; i++) { const v = i / 4; c2.beginPath(); c2.arc(x0 + (ex - x0) * v, y0 + (ey - y0) * v - kq * 0.17 * Math.sin(v * Math.PI), Math.max(1, kq * 0.03), 0, TAU); c2.fill(); } }); KU('ember', () => G.KF.glint(H.x, H.y, 0.6, 0.5, 10)); } } }   /* 赤糸威：鎧上的紅絲射向攻擊者 */
+    if (on('muramasa') && H.hp < h0 && every('mura2', 20)) vapor('mura', 6, 22, 0.1);   /* 村正：受傷時妖氣反噬 */
     return r; };
   /* ---------- 擊殺 ---------- */
-  let oniSt = 0; const ok0 = R.onKill; R.onKill = function (e) { ok0.apply(this, arguments); if (!on('onimaru') || (e && e.kz)) return; H.hp = Math.min(H.hpMax, H.hp + H.hpMax * 0.05);
+  let oniSt = 0; const ok0 = R.onKill; R.onKill = function (e) { ok0.apply(this, arguments); if (!on('onimaru') || (e && e.kz)) return; H.hp = Math.min(H.hpMax, H.hp + H.hpMax * 0.05); try { if (e) { const sx = e.x, sy = e.y - kk(e.y) * 0.5; KFa(18, 'o', (c2, u) => { const w = FXR().wisp; if (!w) return; const q = u / 18, e2 = q * q, tx = H.x + H.face * kk(H.y) * 0.4, ty = H.y - kk(H.y) * 0.6, x = sx + (tx - sx) * e2, y = sy + (ty - sy) * e2 - Math.sin(q * Math.PI) * kk(H.y) * 0.5; w(c2, x, y, Math.atan2(ty - sy, tx - sx), kk(H.y) * 0.1, 'sake', 1 - Math.max(0, q - 0.8) / 0.2, 0, sx); }); G.STORY.later(18, () => KU('ember', () => { G.KF.glint(H.x + H.face * kk(H.y) * 0.4, H.y, 0.6, 0.4 + 0.12 * oniSt, 12); G.KF.light(H.x, H.y, 0.9, 14, 0.5, 0.6); })); } } catch (x) {}   /* 鬼丸：魂被吸進刀身，刀上一閃（層數越多越亮） */
     oniSt = (G.BUFF.get('atk') > 0 && oniSt < 3) ? oniSt + 1 : 1; G.BUFF.v.atk = 0; G.BUFF.add('atk', Math.round(12 * oniSt * k(ON.onimaru)), 480); };
   /* ---------- 每格：天狗、河童、九尾 ---------- */
   let wasDodge = false, tk = 0;
   const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0(); tk++; if (G.mode !== 'play' || !Object.keys(ON).length) return;
-    const dg = !!(H.act && /dodge|dash/.test(H.act.kind || '')); if (dg && !wasDodge && on('tengu')) { G.BUFF.add('mspd', Math.round(30 * k(ON.tengu)), 180); G.BUFF.add('nextCrit', 100, 180); } wasDodge = dg;
-    if (on('kappa') && tk % 300 === 0 && H.hp > 0 && H.hp < H.hpMax) { const v = Math.round(H.hpMax * 0.03 * k(ON.kappa)); H.hp = Math.min(H.hpMax, H.hp + v); G.NUMS.push({ x: H.x, y: H.y - HH() - 10, v: '+' + v, heal: true, t: 0 }); }
+    const dg = !!(H.act && /dodge|dash/.test(H.act.kind || '')); if (dg && !wasDodge && on('tengu')) { G.BUFF.add('mspd', Math.round(30 * k(ON.tengu)), 180); G.BUFF.add('nextCrit', 100, 180); try { const x0 = H.x, y0 = H.y, Ft = []; for (let i = 0; i < 7; i++) Ft.push([rnd(0, TAU), rnd(0.3, 0.9), rnd(0, 6)]); KU('gale', () => { G.KF.puff(x0, y0, 1.0, 20); G.KF.leaves(x0, y0, 0.3, 6, { sp: 2, life: 26 }); }); KFa(30, 'o', (c2, u) => { const kq = kk(y0), ft = FXR().feather; if (!ft) return; for (const v of Ft) { const an = v[0] + u * 0.14, r = kq * v[1] * (0.4 + u * 0.03); ft(c2, x0 + Math.cos(an) * r, y0 - kq * (0.2 + u * 0.022) + Math.sin(an) * r * 0.35, an + v[2], kq * 0.09, Math.min(1, u / 3) * (1 - u / 30)); } }); } catch (x) {} }   /* 天狗：閃避後腳下旋風捲起黑羽 */ wasDodge = dg;
+    if (on('kappa') && tk % 300 === 0 && H.hp > 0 && H.hp < H.hpMax) { const v = Math.round(H.hpMax * 0.03 * k(ON.kappa)); H.hp = Math.min(H.hpMax, H.hp + v); G.NUMS.push({ x: H.x, y: H.y - HH() - 10, v: '+' + v, heal: true, t: 0 }); try { const Dp = []; for (let i = 0; i < 5; i++) Dp.push([rnd(-0.25, 0.25), i * 3]); KFa(30, 'o', (c2, u) => { const kq = kk(H.y), dr = FXR().droplet; if (!dr) return; for (const d of Dp) { const t = u - d[1]; if (t < 0 || t > 14) continue; dr(c2, H.x + d[0] * kq, H.y - kq * (1.5 - t * 0.04), kq * 0.05, 1 - Math.max(0, t - 10) / 4); } }); G.VX && G.VX.ring && G.VX.ring({ x: H.x, y: H.y, r0: 0.1, r1: 0.9, life: 26, col: '150,225,240', lw: 0.08 }); } catch (x) {} }   /* 河童：頭上水滴落下，腳邊一圈水紋 */
+    if (on('shuten') && H.hp > 0 && H.hp < H.hpMax * 0.4 && tk % 24 === 0) vapor('sake', 3, 30, 0.085);   /* 酒吞：低血時身上酒氣蒸騰 */
     if (on('kyubi') && tk % 480 === 0 && G.E.some(alive)) for (let i = 0; i < 3; i++) fox.push({ x: H.x, y: H.y - HH() * 0.8, t: 0, i, e: null });
     for (let i = fox.length - 1; i >= 0; i--) { const f = fox[i]; f.t++; if (!alive(f.e)) { let b = null, bd = 600; for (const q of G.E) if (alive(q)) { const d = Math.hypot(q.x - f.x, q.y - f.y); if (d < bd) { bd = d; b = q; } } f.e = b; }
       if (!f.e || f.t > 120) { fox.splice(i, 1); continue; } const tx = f.e.x, ty = f.e.y - HH() * 0.5 * S(f.e.y), a = Math.min(1, 0.05 + f.t * 0.01); if (f.t < 14) { f.x += Math.cos(f.i * 2.1) * 3; f.y -= 2; } else { f.x += (tx - f.x) * a; f.y += (ty - f.y) * a; }
       if (Math.hypot(tx - f.x, ty - f.y) < 14) { rdmg(f.e, 1.2 * k(ON.kyubi)); fox.splice(i, 1); } } };
   const df0 = G.drawFx; G.drawFx = function (Z) { const r = df0.apply(this, arguments); if (fox.length) { ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      for (const f of fox) { const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 10); g.addColorStop(0, 'rgba(255,240,200,.95)'); g.addColorStop(0.5, 'rgba(120,180,255,.7)'); g.addColorStop(1, 'rgba(80,120,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, 10, 0, 6.283); ctx.fill(); } ctx.restore(); }
+      ctx.globalCompositeOperation = 'source-over'; for (const f of fox) { const w = FXR().wisp, an = f.e ? Math.atan2((f.e.y - HH() * 0.5 * S(f.e.y)) - f.y, f.e.x - f.x) : -Math.PI / 2; if (w) w(ctx, f.x, f.y, f.t < 14 ? -Math.PI / 2 : an, kk(f.y) * 0.1, 'kyubi', 1, 1, f.i * 2); }   /* r3.196.0：九尾狐火＝青白、有狐耳狐眼、拖尾焰（原本一顆光點） */
+      ctx.restore(); }
     return r; };
   if (G.GROW && G.GROW.spdBonus) { const sb0 = G.GROW.spdBonus; G.GROW.spdBonus = function () { return sb0.apply(this, arguments) + (G.BUFF ? G.BUFF.get('mspd') : 0); }; }
   /* ---------- 來源 ---------- */

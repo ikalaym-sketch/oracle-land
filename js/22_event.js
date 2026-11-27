@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 22_event.js
- * Version : r3.168.0  (2026-11-27)　r3.168.0：精英血條縮短（頭目不變）、詞綴圖示與護盾移到血條旁；世界事件長條改到右上面板
+ * Version : r3.196.0  (2026-11-28)　可互動物件地光改柔邊光暈＋上升光點
+ * 舊版    : r3.168.0  (2026-11-27)　r3.168.0：精英血條縮短（頭目不變）、詞綴圖示與護盾移到血條旁；世界事件長條改到右上面板
  * 舊版    : r3.153.0  (2026-11-27)　r3.153.0：世界事件提醒移到小地圖下方
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：菁英／章節頭目血條移到上方中央，菁英在畫面外不顯示
  * 舊版    : r3.113.0  (2026-11-26)　r3.113.0：匯出事件工具 EV.H（140_events 新世界事件用）
@@ -68,7 +69,7 @@
       if (n.op > 90) { G.NPC = G.NPC.filter(q => q !== n); EV.props = EV.props.filter(q => q !== n); return; } }
     else if (n.alpha < 1) n.alpha = Math.min(1, n.alpha + 0.05);
     ctx.fillStyle = 'rgba(30,20,10,.3)'; ctx.beginPath(); ctx.ellipse(n.x, n.y, f[2] * sc * 0.42, f[2] * sc * 0.12, 0, 0, 6.283); ctx.fill();
-    if (n.glow) { const a = 0.35 + 0.25 * Math.sin(G.t * 0.12); ctx.fillStyle = `rgba(255,220,120,${a})`; ctx.beginPath(); ctx.ellipse(n.x, n.y, f[2] * sc * 0.7, f[2] * sc * 0.22, 0, 0, 6.283); ctx.fill(); }
+    if (n.glow) { const a = 0.35 + 0.25 * Math.sin(G.t * 0.12); const rx = f[2] * sc * 0.8; ctx.save(); ctx.translate(n.x, n.y); ctx.scale(1, 0.32); const gg = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); gg.addColorStop(0, `rgba(255,224,130,${a})`); gg.addColorStop(0.6, `rgba(255,214,120,${a * 0.5})`); gg.addColorStop(1, 'rgba(255,214,120,0)'); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, rx, 0, 6.283); ctx.fill(); ctx.restore(); if (G.t % 14 === 0 && G.KF && G.KF.use) G.KF.use('holy', () => G.KF.motes(n.x + (Math.random() - 0.5) * rx, n.y, 0.05, 1, { up: 1.2, sp: 0.15, life: 36, sz: 0.7 })); }   /* r3.196.0：可互動物件地光改柔邊光暈＋上升光點 */
     G.ANIM.draw(PR, f, n.x, n.y, sc, false, n.alpha); };
   /* ---------- 事件定義（野外隨機） ---------- */
   const SPEC = { 1: ['竹林騷動', ['bamboo', 'kodama'], 'yamawaro'], 2: ['河童鬧水', ['aokappa', 'akakappa'], 'mizuchi'], 3: ['狐火夜行', ['kitsunebi', 'chadanuki', 'baketanuki'], 'nekomata'],
