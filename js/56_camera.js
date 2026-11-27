@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 56_camera.js
- * Version : r3.56.0  (2026-11-24)　r3.56.0：G.CAMLOOK 時拉遠
+ * Version : r3.173.0  (2026-11-28)　r3.173.0：G.CAMFOCUS 演出鏡頭（期間內鏡頭對準指定點）
+ * 舊版    : r3.56.0  (2026-11-24)　r3.56.0：G.CAMLOOK 時拉遠
  * 舊版    : r3.17.0  (2026-11-14)
  * 變更    : r3.17.0 新增。鏡頭三項優化：
  *           A. 依地圖調預設距離：城鎮／神社（hub_、T_）自動拉近 18%；「遠／中／近」仍可手動切換（在各地圖基準上再調）。
@@ -29,7 +30,8 @@
   SC.zoom = function () { return G.LH / (st.vis || baseVis()); };
   const ct0 = SC.camTarget.bind(SC);
   SC.camTarget = function () { const { vw, vh } = SC.view(), d = SC.def; if (!d) return ct0();
-    const x = H.x + st.lead * vw, y = H.y - 40 + st.leadY * vh;
+    const F = G.CAMFOCUS && G.t < G.CAMFOCUS.until && G.mode === 'play' ? G.CAMFOCUS : null;   /* r3.173.0：演出鏡頭（秘傳） */
+    const x = F ? F.x : H.x + st.lead * vw, y = F ? F.y : H.y - 40 + st.leadY * vh;
     return { x: vw >= d.w ? d.w / 2 : Math.max(vw / 2, Math.min(d.w - vw / 2, x)), y: vh >= d.h ? d.h / 2 : Math.max(vh / 2, Math.min(d.h - vh / 2, y)) }; };
   const sn0 = SC.snapCam.bind(SC);
   SC.snapCam = function () { st.vis = targetVis(); st.lead = 0; st.leadY = 0; sn0(); };

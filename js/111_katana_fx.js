@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 111_katana_fx.js
- * Version : r3.172.0  (2026-11-28)　r3.172.0：技／秘傳刀光多停留 50%、突刺光加粗、「架」字加墨底圓牌（打刀）
+ * Version : r3.173.0  (2026-11-28)　r3.173.0：雷光加粗、墨邊、白熱芯（打刀）
+ * 舊版    : r3.172.0  (2026-11-28)　r3.172.0：技／秘傳刀光多停留 50%、突刺光加粗、「架」字加墨底圓牌（打刀）
  * 舊版    : r3.170.0  (2026-11-27)　r3.170.0：特效第三版（打刀樣板）：襯底暗影、墨邊、白熱亮芯、筆觸紋理、火花描墨邊、受擊染色與壓扁、地面刀痕；新增櫻色盤
  * 舊版    : r3.79.0  (2026-11-25)
  * 變更    : r3.79.0 槍色盤改白金；槍的突刺改由 116 槍影元件（KF.spear）畫。
@@ -159,12 +160,14 @@
   function frost(e, life) { const C = cur; add(life, 'o', (ctx, u) => { if (!e || e.st === 'dead' || !G.E.includes(e)) return; const k = K(e.y), a = Math.min(1, u / 4) * Math.min(1, (life - u) / 10); ctx.globalCompositeOperation = 'screen'; spr(ctx, C.T.gd, e.x, e.y - 0.1 * k, k * 0.9, k * 0.3, 0.35 * a);
       for (let i = 0; i < 7; i++) { const ph = ((u * 0.025 + i / 7) % 1); spr(ctx, C.T.mote, e.x + Math.sin(i * 2.4) * 0.3 * k, e.y - ph * 0.9 * k, k * 0.07 * (1 - ph), 0, a * (1 - ph)); } }); }
   /* ---------- 雷：鋸齒漸細＋外暈；每 2 格重抖 ---------- */
-  function bolt(x0, y0, x1, y1, life, w, br) { const C = cur; const segs = 9, len = Math.hypot(x1 - x0, y1 - y0); let pts = null, seed = -1;
+  function bolt(x0, y0, x1, y1, life, w, br) { const C = cur, x3 = X3(); if (x3) w = (w || 3) * 1.8;   /* r3.173.0：雷光加粗＋墨邊＋白熱芯（原本細到看不見） */ const segs = 9, len = Math.hypot(x1 - x0, y1 - y0); let pts = null, seed = -1;
     add(life, 'o', (ctx, u, q) => { const sd = Math.floor(u / 2); if (sd !== seed || !pts) { seed = sd; pts = []; for (let i = 0; i <= segs; i++) { const t = i / segs, j = (i === 0 || i === segs) ? 0 : rnd(-1, 1) * len * 0.07; pts.push([x0 + (x1 - x0) * t + j, y0 + (y1 - y0) * t + j * 0.3]); } }
       const a = (u < 2 ? 1 : 1 - eo3(q)) * (0.75 + 0.25 * Math.sin(u * 2.3)); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       ctx.globalCompositeOperation = 'screen'; for (let i = 0; i < segs; i += 2) spr(ctx, C.T.gd, pts[i][0], pts[i][1], (w || 3) * 9, 0, 0.35 * a);
-      ctx.globalCompositeOperation = 'source-over'; for (let i = 0; i < segs; i++) { const t = i / segs, lw = (w || 3) * (1.6 - t * 1.1); ctx.strokeStyle = 'rgba(' + C.mid + ',' + (0.8 * a).toFixed(3) + ')'; ctx.lineWidth = lw * 1.8; ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i + 1][0], pts[i + 1][1]); ctx.stroke();
-        ctx.strokeStyle = 'rgba(' + C.lite + ',' + a.toFixed(3) + ')'; ctx.lineWidth = lw * 0.6; ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i + 1][0], pts[i + 1][1]); ctx.stroke(); }
+      ctx.globalCompositeOperation = 'source-over'; if (x3) { ctx.strokeStyle = 'rgba(' + C.ink + ',' + (0.55 * a).toFixed(3) + ')'; ctx.lineWidth = (w || 3) * 3.2; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i <= segs; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke(); }
+      for (let i = 0; i < segs; i++) { const t = i / segs, lw = (w || 3) * (1.6 - t * 1.1); ctx.strokeStyle = 'rgba(' + C.mid + ',' + (0.8 * a).toFixed(3) + ')'; ctx.lineWidth = lw * 1.8; ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i + 1][0], pts[i + 1][1]); ctx.stroke();
+        ctx.strokeStyle = 'rgba(' + C.lite + ',' + a.toFixed(3) + ')'; ctx.lineWidth = lw * 0.6; ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i + 1][0], pts[i + 1][1]); ctx.stroke();
+        if (x3) { ctx.strokeStyle = 'rgba(' + C.hot + ',' + a.toFixed(3) + ')'; ctx.lineWidth = Math.max(1, lw * 0.22); ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i + 1][0], pts[i + 1][1]); ctx.stroke(); } }
       if (br) for (let b = 1; b <= br; b++) { const i = Math.min(segs - 1, b * 3), p = pts[i], d = rnd(-1, 1) > 0 ? 1 : -1, ex = p[0] + d * len * 0.15, ey = p[1] + len * 0.1; ctx.strokeStyle = 'rgba(' + C.mid + ',' + (0.55 * a).toFixed(3) + ')'; ctx.lineWidth = (w || 3) * 0.5; ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo((p[0] + ex) / 2 + rnd(-4, 4), (p[1] + ey) / 2); ctx.lineTo(ex, ey); ctx.stroke(); } }); }
   /* ---------- 刀鍔閃：拔刀／收刀那一點光 ---------- */
   function glint(x, y, z, sz, life) { const C = cur; const k = K(y); life = life || 10; add(life, 'o', (ctx, u, q) => { ctx.globalCompositeOperation = 'screen'; const e = u < 2 ? u / 2 : 1 - eo3(q), s = (sz || 0.35) * k;
