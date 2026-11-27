@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 16_growth.js
- * Version : r3.142.0  (2026-11-27)　r3.142.0：普攻連段加成（WPN.CMB）
+ * Version : r3.147.0  (2026-11-27)　r3.147.0：修練頁改版（兩欄卡片＋右側說明與升級鈕，等級用圓點，鎖住的排後面）；職業頁拿掉開發用說明
+ * 舊版    : r3.142.0  (2026-11-27)　r3.142.0：普攻連段加成（WPN.CMB）
  * 舊版    : r3.140.0  (2026-11-27)　r3.140.0：普攻節奏：武器倍率（WPN.RHY）×（1＋攻速%），可快可慢；慢下來的武器普攻傷害 ×1/倍率
  * 舊版    : r3.125.0  (2026-11-26)　r3.125.0：第 1 章路線清單加入新插入的地圖
  * 舊版    : r3.103.0  (2026-11-26)　r3.103.0：設定格可帶圖示（第 4 欄，難度用）
@@ -332,14 +333,13 @@
     const skinOn = (j.skin || 'samurai') === job.id; button(cx + cw - bw - 12, yy + 26, bw, 26, skinOn ? '外觀使用中' : '換此外觀', ok && L ? () => GR.setSkin(job.id) : null, skinOn ? 'main' : ok && L ? '' : 'off');
     yy += 66; ctx.font = `700 ${11 * fs()}px ${G.FONT}`; G.wrap('特性【' + job.trait[0] + '】' + job.trait[1] + '（只在此職業生效）', cw - 28).forEach(l => { G.txt(l, cx + 14, yy, 11, C.ink, 'left', G.FONT, 700); yy += 20 * fs(); }); yy += 4;
     for (const a of job.ab) { const lr = L >= a[0], na = a[4].na; G.txt('Lv' + a[0] + '　' + a[1], cx + 14, yy, 11, lr ? C.gold : C.dim, 'left', G.FONT, 700);
-      G.txt('【' + a[2] + '】' + a[3] + (na ? '（未生效）' : ''), cx + 90, yy, 11, lr ? (na ? C.dim : C.ink) : C.dim, 'left', G.FONT, 500); yy += 24 * fs(); }
+      G.txt('【' + a[2] + '】' + a[3], cx + 90, yy, 11, lr ? (na ? C.dim : C.ink) : C.dim, 'left', G.FONT, 500); yy += 24 * fs(); }
     G.txt('基本＝永久生效（換職保留）；特殊＝本職全開＋外掛格；極意／覺醒＝本職限定', cx + 14, yy, 10, C.dim, 'left', G.FONT, 500); yy += 26 * fs();
     if (isCur) { G.txt('外掛特殊能力（' + ext + ' 格，3 格同系觸發共鳴：光 受傷 −8%／闇 傷害 +8%）' + (GR.F.reso ? '　共鳴中：' + GR.F.reso : ''), cx + 14, yy, 11, C.gold, 'left', G.FONT, 700); yy += 24 * fs();
       const list = GR.extList();
       for (let i = 0; i < ext; i++) { const k = j.ext[i] && list.includes(j.ext[i]) ? j.ext[i] : null; const lab = k ? (() => { const [jb, a] = GR.abOf(k); return jb.n + '・' + a[2]; })() : '（空）';
         button(cx + 14, yy - 11, Math.min(320, cw - 28), 24, '格 ' + (i + 1) + '：' + lab + (list.length ? '　›' : ''), list.length ? () => { const cands = [null].concat(list.filter(c => !j.ext.includes(c) || c === k)); const n = cands[(cands.indexOf(k) + 1) % cands.length]; j.ext[i] = n; R().recalc(); G.SAVE.markDirty(); } : null, list.length ? '' : 'off'); yy += 28 * fs(); }
       if (!list.length) { G.txt('其他職業學會「特殊」能力後可掛在這裡', cx + 14, yy, 10, C.dim, 'left', G.FONT, 500); yy += 22; } }
-    G.txt('外觀：目前只有待機／走路的職業圖，攻擊與技能仍用武士圖（之後補）', cx + 14, yy + 6, 10, C.dim, 'left', G.FONT, 500);
     ctx.restore();
   };
   M.OPTS = M.OPTS || {};
@@ -347,19 +347,34 @@
   M.OPTS['修練'] = { list: () => TCAT, get: () => M.sel.tcat || 0, set: j => { M.sel.tcat = j; M.scroll.train = 0; } };
   M.OPTS['背包'] = { list: () => [['全部', '#e3c27a'], ['武器', '#e0866a'], ['頭', '#6fb0f0'], ['胴', '#86cf8f'], ['手', '#c095f0'], ['足', '#e0c068'], ['御守', '#7fd6e6']],
     get: () => M.filter + 1, set: j => { M.filter = j - 1; M.scroll.bag = 0; } };
+  /* r3.147.0：修練頁改版——左邊兩欄卡片（名稱、等級圓點、每級效果、Lv5 效果），右邊說明＋升級按鈕；鎖住的變暗排後面 */
+  const cut = (t, mw, px) => { ctx.font = `500 ${px * fs()}px ${G.FONT}`; if (ctx.measureText(t).width <= mw) return t; let s = t; while (s.length > 1 && ctx.measureText(s + '…').width > mw) s = s.slice(0, -1); return s + '…'; };
+  const pips = (x, y, n, mx, r) => { for (let i = 0; i < mx; i++) { ctx.beginPath(); ctx.arc(x + i * (r * 2 + 3) + r, y, r, 0, 6.283); ctx.fillStyle = i < n ? (i >= 5 ? '#f0ad52' : '#f3d98a') : 'rgba(255,255,255,.14)'; ctx.fill(); } };
   M.PAGE['修練'] = function (x, y, w, h) {
-    const { box, button, scrollArea, clip } = ui(), r = d(), RH = 50 * fs(), cats = [TCAT[M.sel.tcat || 0][0]];
-    box(x, y, w, h); G.txt('共用技能點 ' + r.sp + '（對所有武器有效）' + ((r.pk || 0) > 0 ? '　巔峰點數 ' + (r.pp || 0) + '（6～10 級每級 2 點）' : ''), x + 14, y + 16, 12, r.sp ? '#8fd38f' : C.sub, 'left', G.FONT, 700);
-    const c = GR.tResetCost(); button(x + w - 150, y + 4, 136, 26, '重置' + (c ? '（' + c + ' 錢）' : '（首次免費）'), () => GR.tReset());
-    const off = scrollArea('train', x, y + 34, w, h - 38, TRAIN.filter(q => q.cat === cats[0]).length * RH + 20); clip(x, y + 34, w, h - 38); let yy = y + 42 + off;
-    for (const cat of cats) {
-      for (const t of TRAIN.filter(q => q.cat === cat)) { const lv = GR.tLv(t.id), lock = r.lv < t.req;
-        ctx.fillStyle = 'rgba(255,255,255,.03)'; ctx.fillRect(x + 6, yy - 4, w - 12, RH - 4);
-        G.txt(t.n + '　Lv ' + lv + '／' + (GR.tMax ? GR.tMax() : 5) + (t.na ? '（未生效）' : '') + (lock ? '　角色 Lv' + t.req + ' 解鎖' : ''), x + 16, yy + RH * 0.18, 13, lock || t.na ? C.dim : C.ink, 'left', G.FONT_S, 900);
-        G.txt('每級：' + t.d1 + '　｜　Lv5：' + t.d5 + (lv >= 5 && GR.tMax && GR.tMax() > 5 ? '　｜　6～9 半效・10 極翻倍' : ''), x + 16, yy + RH * 0.58, 11, lv >= 5 ? '#f3d98a' : C.sub, 'left', G.FONT, 500);
-        const mx = GR.tMax ? GR.tMax() : 5, pk = lv >= 5, can = lv < mx && !lock && !t.na, bwd = pk && lv < mx ? 64 : 50;   // r3.99.0：6～10 級用巔峰點數（每級 2）
-        button(x + w - 14 - bwd, yy + 2, bwd, RH - 14, lv >= mx ? '滿' : pk ? '巔峰 +1' : '+1', can ? () => GR.tLearn(t.id) : null, can && (pk ? (r.pp || 0) >= 2 : r.sp) ? 'main' : 'off'); yy += RH; } yy += 4; }
+    const { box, button, scrollArea, clip, hit } = ui(), r = d(), cat = TCAT[M.sel.tcat || 0][0], mx = GR.tMax ? GR.tMax() : 5;
+    const L = TRAIN.filter(q => q.cat === cat).slice().sort((a, b) => (r.lv < a.req) - (r.lv < b.req) || a.req - b.req);
+    if (!L.some(t => t.id === M.sel.tal)) M.sel.tal = L[0] && L[0].id; const T = TRAIN.find(t => t.id === M.sel.tal);
+    const lw = Math.round(w * 0.62), cw = (lw - 18) / 2, CH = 66 * fs(), rx = x + lw + 10, rw = w - lw - 10;
+    box(x, y, lw, h); G.txt('剩餘點數 ' + r.sp + ((r.pk || 0) > 0 ? '　巔峰點數 ' + (r.pp || 0) : ''), x + 14, y + 16, 13, r.sp ? '#8fd38f' : C.sub, 'left', G.FONT_S, 900);
+    const c = GR.tResetCost(); button(x + lw - 104, y + 4, 92, 26, '重置' + (c ? ' ' + c + ' 錢' : ''), () => GR.tReset());
+    const rows = Math.ceil(L.length / 2), off = scrollArea('train', x, y + 34, lw, h - 38, rows * (CH + 6) + 10); clip(x, y + 34, lw, h - 38);
+    L.forEach((t, i) => { const lv = GR.tLv(t.id), lock = r.lv < t.req, dim = lock || t.na, cx = x + 6 + (i % 2) * (cw + 6), cy = y + 38 + Math.floor(i / 2) * (CH + 6) + off, on = t.id === M.sel.tal;
+      if (cy > y + h || cy + CH < y + 34) return;
+      ctx.fillStyle = on ? 'rgba(120,80,30,.45)' : 'rgba(255,255,255,.04)'; G.rr(cx, cy, cw, CH, 8); ctx.fill(); if (on) { ctx.strokeStyle = 'rgba(243,217,138,.8)'; ctx.lineWidth = 1.2; G.rr(cx + .5, cy + .5, cw - 1, CH - 1, 8); ctx.stroke(); }
+      G.txt(t.n, cx + 10, cy + 14 * fs(), 13, dim ? C.dim : C.ink, 'left', G.FONT_S, 900);
+      if (lock) G.txt('需 Lv' + t.req, cx + cw - 10, cy + 14 * fs(), 10, C.dim, 'right', G.FONT, 700); else pips(cx + cw - 10 - mx * 9, cy + 14 * fs(), lv, mx, 3);
+      G.txt(cut('每級 ' + t.d1, cw - 20, 11), cx + 10, cy + 34 * fs(), 11, dim ? C.dim : C.sub, 'left', G.FONT, 500);
+      G.txt(cut('Lv5 ' + t.d5, cw - 20, 11), cx + 10, cy + 52 * fs(), 11, dim ? C.dim : lv >= 5 ? '#f3d98a' : '#b9a57a', 'left', G.FONT, 500);
+      const can = !lock && !t.na && lv < mx && (lv >= 5 ? (r.pp || 0) >= 2 : r.sp > 0); if (can) { ctx.fillStyle = '#8fd38f'; ctx.beginPath(); ctx.arc(cx + cw - 6, cy + 6, 3.5, 0, 6.283); ctx.fill(); }   // 可升級小點
+      hit(cx, Math.max(cy, y + 34), cw, CH, () => { M.sel.tal = t.id; }); });
     ctx.restore();
+    /* 右邊：說明＋升級 */
+    box(rx, y, rw, h); if (!T) return; const lv = GR.tLv(T.id), lock = r.lv < T.req, pk = lv >= 5; let yy = y + 20;
+    G.txt(T.n, rx + 14, yy, 16, C.gold, 'left', G.FONT_S, 900); yy += 22 * fs(); pips(rx + 15, yy, lv, mx, 4); G.txt('Lv ' + lv + '／' + mx, rx + 22 + mx * 11, yy + 1, 11, C.sub, 'left', G.FONT, 700); yy += 22 * fs();
+    ctx.font = `500 ${12 * fs()}px ${G.FONT}`; const para = (t, col) => { G.wrap(t, rw - 28).forEach(l => { G.txt(l, rx + 14, yy, 12, col, 'left', G.FONT, 500); yy += 18 * fs(); }); yy += 6; };
+    para('每級：' + T.d1, C.ink); para('Lv5：' + T.d5, pk ? '#f3d98a' : '#b9a57a'); if (mx > 5) para('Lv6～10 用巔峰點數（每級 2 點），效果減半，Lv10 翻倍', C.sub);
+    const can = !lock && !T.na && lv < mx && (pk ? (r.pp || 0) >= 2 : r.sp > 0), lab = lock ? '角色 Lv' + T.req + ' 解鎖' : lv >= mx ? '已滿級' : pk ? '升級（巔峰 2 點）' : '升級（1 點）';
+    button(rx + 14, y + h - 46, rw - 28, 34, lab, can ? () => GR.tLearn(T.id) : null, can ? 'main' : 'off');
   };
   /* 地圖：據點（神社・城鎮）不屬章節；每章只能傳送到該章第一張地圖 */
   const HUBS = ['hub_shrine', 'hub_mountain', 'W_R01_01', 'T_ashihomura', 'W_R05_05', 'hub_city', 'T_akebi'], ROUTE1 = ['hub_shrine', 'W_R01_01', 'W_R01_02', 'W_R01_03', 'W_R01_04', 'W_R01_05', 'W_R01_05B', 'W_R01_06', 'W_R01_07'];

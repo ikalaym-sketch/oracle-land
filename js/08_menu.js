@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 08_menu.js
- * Version : r3.99.0  (2026-11-26)　r3.99.0：技能 6～10 級按鈕顯示巔峰點數費用
+ * Version : r3.147.0  (2026-11-27)　r3.147.0：背包改版（預設選第一件、排序、等級／▲／新物品紅點／鎖定標記、鎖定與分解按鈕）
+ * 舊版    : r3.99.0  (2026-11-26)　r3.99.0：技能 6～10 級按鈕顯示巔峰點數費用
  * 舊版    : r3.62.0  (2026-11-24)　r3.62.0：角色頁稱號可點選更換、寶珠碎片進度　舊版 r3.57.0  (2026-11-24)  r3.57.0：物品卡說明區可滑動、套裝／靈紋折疊　r3.54.0：巔峰等級　r3.40.0：物品卡加靈紋、套裝 4 件招式、神器招式
  * 舊版    : r3.31.0  （r3.31.0：裝備格圖示依武器道具自己的種類，不再一律顯示目前武器）
  * 舊版    : r3.19.3  （r3.19.3：主角稱號改「流浪劍客」）
@@ -48,6 +49,8 @@
   function clip(x, y, w, h) { ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip(); }
   function statLine(k, v) { const a = R().AFF[k]; return (R().STATN[k] || k) + '　+' + v + (a ? a[2] : ''); }
 
+  /* r3.147.0：新拿到的裝備標記（背包紅點，點過消失） */
+  { const ai = G.RPG && G.RPG.addItem; if (ai) G.RPG.addItem = function (it) { const r = ai.apply(this, arguments); if (r && it) it.nw = 1; return r; }; }
   M.PAGE = null; M.ui = { box, button, scrollArea, clip, hit, tile, itemCard: (...a) => itemCard(...a) };   // 供 14_cheat 等擴充分頁使用
   /* ---------- 物品資訊卡 ---------- */
   function itemCard(x, y, w, h, it, cmp, actions) {
@@ -120,22 +123,33 @@
       if (cand) itemCard(cx, y, cw, h, cand, d.eq[sl], [['裝備', () => { if (Rr.equip(ci)) { M.sel.cand = null; G.UI.toast('已裝備'); } }, 'main'], ['分解', () => { const g = Rr.salvage(ci); M.sel.cand = null; G.UI.toast('分解　錢 +' + g); }], ['取消', () => { M.sel.cand = null; }]]);
       else itemCard(cx, y, cw, h, d.eq[sl], null, sl === 'weapon' || !d.eq[sl] ? [] : [['卸下', () => Rr.unequip(sl)]]);
     },
-    背包(x, y, w, h) {
-      const Rr = R(), d = Rr.d(), lw = Math.min(370, w * 0.56), ts = 44 * fs(), gap = 6, cols = Math.max(3, Math.floor((lw - 20 + gap) / (ts + gap)));
+    背包(x, y, w, h) {   /* r3.147.0：預設選第一件；格子標等級、比身上強 ▲、新物品紅點、鎖定；可排序；鎖定的不會被分解 */
+      const Rr = R(), d = Rr.d(), lw = Math.min(390, w * 0.58), ts = 46 * fs(), gap = 6, cols = Math.max(3, Math.floor((lw - 20 + gap) / (ts + gap)));
       box(x, y, lw, h);
-      const cy0 = y - 22;   // 部位篩選移到上方子選項列（17_menu2 M.OPTS.背包）
+      const SO = [['q', '品質'], ['lv', '等級'], ['sl', '部位'], ['new', '最新']], so = M.sel.bagSort || 'q';
+      let sx = x + 10; G.txt('排序', sx, y + 17, 11, C.sub, 'left', G.FONT, 700); sx += 32;
+      for (const [k, n] of SO) { const bw = 44; button(sx, y + 5, bw, 24, n, () => { M.sel.bagSort = k; M.scroll.bag = 0; }, so === k ? 'main' : ''); sx += bw + 4; }
+      const pw = it => Rr.power(it), eqP = sl => d.eq[sl] ? pw(d.eq[sl]) : 0, SI = Rr.SLOT;
       const list = d.bag.map((it, i) => [it, i]).filter(([it]) => M.filter < 0 || Rr.TPL[it.t].slot === Rr.SLOT[M.filter]);
-      const gy = cy0 + 32, gh = y + h - gy - 44, rows = Math.ceil(list.length / cols), off = scrollArea('bag', x, gy, lw, gh, rows * (ts + gap));
+      list.sort((a, b) => so === 'lv' ? b[0].lv - a[0].lv || b[0].q - a[0].q : so === 'sl' ? SI.indexOf(Rr.TPL[a[0].t].slot) - SI.indexOf(Rr.TPL[b[0].t].slot) || b[0].q - a[0].q : so === 'new' ? b[1] - a[1] : b[0].q - a[0].q || b[0].lv - a[0].lv);
+      if (list.length && !list.some(([it]) => it.u === M.sel.bag)) M.sel.bag = list[0][0].u;
+      const gy = y + 36, gh = y + h - gy - 44, rows = Math.ceil(list.length / cols), off = scrollArea('bag', x, gy, lw, gh, rows * (ts + gap));
       clip(x, gy, lw, gh);
       list.forEach(([it, i], k) => { const tx = x + 10 + (k % cols) * (ts + gap), ty = gy + Math.floor(k / cols) * (ts + gap) + off; if (ty > gy + gh || ty + ts < gy) return;
-        tile(tx, ty, ts, it, M.sel.bag === it.u); hit(tx, Math.max(ty, gy), ts, ts, () => { M.sel.bag = it.u; }); });
+        tile(tx, ty, ts, it, M.sel.bag === it.u); G.txt(String(it.lv), tx + ts - 4, ty + ts - 8, 9, '#d8cbb0', 'right', G.FONT, 700);
+        if (pw(it) > eqP(Rr.TPL[it.t].slot)) G.txt('▲', tx + 5, ty + 9, 10, '#8fd38f', 'left', G.FONT, 900);
+        if (it.nw) { ctx.fillStyle = '#e8584a'; ctx.beginPath(); ctx.arc(tx + ts - 6, ty + 6, 3.5, 0, 6.283); ctx.fill(); }
+        if (it.lk) G.txt('鎖', tx + 5, ty + ts - 8, 9, '#f3d98a', 'left', G.FONT_S, 900);
+        hit(tx, Math.max(ty, gy), ts, ts, () => { M.sel.bag = it.u; }); });
       if (!list.length) G.txt('空空如也。打倒妖怪會掉落裝備。', x + lw / 2, gy + 40, 11, C.dim, 'center');
       ctx.restore();
       G.txt(d.bag.length + '／' + d.bagMax, x + 12, y + h - 22, 11, C.sub, 'left', G.FONT, 700);
-      button(x + lw - 150, y + h - 36, 140, 28, '分解凡品・良品', () => { const g = Rr.salvageBelow(1); G.UI.toast(g ? '分解完成　錢 +' + g : '沒有可分解的凡品、良品（套裝不分解）'); });
+      button(x + lw - 150, y + h - 36, 140, 28, '分解凡品・良品', () => { const g = Rr.salvageBelow(1); G.UI.toast(g ? '分解完成　錢 +' + g : '沒有可分解的凡品、良品（套裝、鎖定的不分解）'); });
       const bi = d.bag.findIndex(it => it.u === M.sel.bag), it = bi >= 0 ? d.bag[bi] : null, cx = x + lw + 10, cw = w - lw - 10;
-      if (it) itemCard(cx, y, cw, h, it, d.eq[Rr.TPL[it.t].slot], [['裝備', () => { if (Rr.equip(bi)) { M.sel.bag = null; G.UI.toast('已裝備'); } }, 'main'], ['分解', () => { const g = Rr.salvage(bi); M.sel.bag = null; G.UI.toast('分解　錢 +' + g); }]]);
-      else { box(cx, y, cw, h); G.txt('點選左側裝備查看', cx + cw / 2, y + h / 2, 12, C.dim, 'center'); }
+      if (it) { if (it.nw) { it.nw = 0; G.SAVE.markDirty(); }
+        itemCard(cx, y, cw, h, it, d.eq[Rr.TPL[it.t].slot], [['裝備', () => { if (Rr.equip(bi)) { M.sel.bag = null; G.UI.toast('已裝備'); } }, 'main'], [it.lk ? '解鎖' : '鎖定', () => { it.lk = !it.lk; G.SAVE.markDirty(); }],
+          ['分解', () => { if (it.lk) { G.UI.toast('已鎖定，先解鎖才能分解'); return; } const g = Rr.salvage(bi); M.sel.bag = null; G.UI.toast('分解　錢 +' + g); }, it.lk ? 'off' : '']]); }
+      else { box(cx, y, cw, h); G.txt('背包是空的', cx + cw / 2, y + h / 2, 12, C.dim, 'center'); }
     },
     武器(x, y, w, h) {
       const W = G.WPN, L = W.LIST, lw = Math.min(300, w * 0.48), RH = 40 * fs(), cur = W.curId();

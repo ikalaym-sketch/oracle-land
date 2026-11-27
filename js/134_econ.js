@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 134_econ.js
- * Version : r3.145.0  (2026-11-27)　r3.145.0：掉落裝備只有稀品以上顯示名字
+ * Version : r3.147.0  (2026-11-27)　r3.147.0：素材頁改版（三類卡片、數量 0 變暗、點卡片看用途與取得方式）
+ * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：掉落裝備只有稀品以上顯示名字
  * 舊版    : r3.106.0  (2026-11-26)
  * 變更    : r3.106.0 新增。平衡第 10 步（經濟）＋掉落物改圖。
  *           ・收入：打怪錢不依等級差遞減（使用者決議）；頭目擊敗另掉「30 隻同級怪」的錢（分 6 堆）；巔峰每 1 級，打怪與頭目的錢 +0.5%。
@@ -88,15 +89,33 @@
       return r; }; })();
   /* ---------- 選單 › 裝備 › 素材 ---------- */
   (function hookMenu() { const M = G.MENU; if (!M || !M.PAGE || !M.PAGE['素材']) return setTimeout(hookMenu, 80); const T = G.txt, C = G.C;
-    M.PAGE['素材'] = function (x, y, w, h) { const d = R.d(), U = M.ui; U.box(x, y, w, h); let cols = w >= 520 ? 3 : 2, cw = (w - 32 - 8 * (cols - 1)) / cols; const RH = 46;
-      const cell = (i, y0, ic, nm, n, col) => { const bx = x + 16 + (i % cols) * (cw + 8), by = y0 + Math.floor(i / cols) * (RH + 6); ctx.fillStyle = 'rgba(255,255,255,.045)'; G.rr(bx, by, cw, RH, 8); ctx.fill();
-        const iw = ic && ((ic.startsWith('mat_') && G.ICO && G.ICO.drawC(ic, bx + 22, by + RH / 2, 34)) || (!ic.startsWith('mat_') && G.drawIcon(ic, bx + 6, by + 6, 34))) ? 40 : 6;
-        T(nm, bx + 8 + iw, by + 16, 12, col || C.ink, 'left', G.FONT_S, 900); T('× ' + n, bx + 8 + iw, by + 33, 13, C.ink, 'left', G.FONT, 700); };
-      T('打造素材', x + 16, y + 22, 14, C.gold, 'left', G.FONT_S, 900); const MI = { iron: 'item_material_tamahagane', bone: 'item_material_ceramic', cloth: 'item_material_fiber', jade: 'item_key_jade_light', ember: 'item_material_ember' };
-      const L1 = Object.keys(R.MATS).map(k => [MI[k], R.MATS[k].n, d.mats[k] || 0, R.MATS[k].c]).concat([['item_key_jade_water', '妖玉', d.yg || 0, '#9fe0ef'], ['item_material_radiance', '精煉石', (d.fm && d.fm.stone) || 0, '#cfd8e0']]);
-      L1.forEach((q, i) => cell(i, y + 34, q[0], q[1], q[2], q[3])); let yy = y + 34 + Math.ceil(L1.length / cols) * (RH + 6) + 10;
-      T('難度素材（強化 +21 以上、高階勾玉用）', x + 16, yy + 8, 14, C.gold, 'left', G.FONT_S, 900); yy += 20;
-      cols = w >= 520 ? 4 : 2; cw = (w - 32 - 8 * (cols - 1)) / cols; Object.keys(DM).forEach((k, i) => cell(i, yy, DM[k][1], DM[k][0], dm()[k] || 0, DM[k][2]));
-      yy += Math.ceil(4 / cols) * (RH + 6) + 6; if (yy + 6 < y + h - 4) T('靈砂：普通以上　妖晶：困難以上　修羅之魂：修羅以上　無間之核：無間頭目', x + 16, yy + 6, 10, C.dim, 'left', G.FONT, 500); }; })();
+    /* r3.147.0：素材頁改版——三類卡片（打造素材／通用材料／難度素材），數量 0 的變暗排後面；點卡片看用途與來源 */
+    const MI = { iron: 'item_material_tamahagane', bone: 'item_material_ceramic', cloth: 'item_material_fiber', jade: 'item_key_jade_light', ember: 'item_material_ember' };
+    const INFO = { iron: ['強化、打造、升級鍛冶鋪', '各章野外的妖怪（打倒時約一半機率掉素材）、寶箱'], bone: ['強化、打造、升級鍛冶鋪', '各章野外的妖怪、寶箱'], cloth: ['強化、打造、升級鍛冶鋪', '各章野外的妖怪、寶箱'],
+      jade: ['強化、打造、升級鍛冶鋪', '各章野外的妖怪、寶箱'], ember: ['強化、打造、升級鍛冶鋪', '野外寶箱'], yg: ['妖玉交換所、重鑄詞條、商店立即換貨', '世界事件、世界頭目、合戰'],
+      stone: ['強化 +11 以上', '分解精品以上的裝備、鍛冶鋪購買'], reisa: ['強化 +21 以上、高階勾玉', '普通以上難度的頭目'], yosho: ['強化 +21 以上、高階勾玉', '困難以上難度的頭目'],
+      shura: ['強化 +21 以上、高階勾玉', '修羅以上難度的頭目'], mugen: ['強化 +21 以上、高階勾玉', '無間難度的頭目'] };
+    M.PAGE['素材'] = function (x, y, w, h) { const d = R.d(), U = M.ui, lw = Math.round(w * 0.64), rx = x + lw + 10, rw = w - lw - 10;
+      const CATS = [['打造素材', Object.keys(R.MATS).map(k => [k, MI[k], R.MATS[k].n, d.mats[k] || 0, R.MATS[k].c])],
+        ['通用材料', [['yg', 'item_key_jade_water', '妖玉', d.yg || 0, '#9fe0ef'], ['stone', 'item_material_radiance', '精煉石', (d.fm && d.fm.stone) || 0, '#cfd8e0']]],
+        ['難度素材', Object.keys(DM).map(k => [k, DM[k][1], DM[k][0], dm()[k] || 0, DM[k][2]])]];
+      for (const c of CATS) c[1].sort((a, b) => (b[3] > 0) - (a[3] > 0));
+      const all = [].concat(...CATS.map(c => c[1])); if (!all.some(q => q[0] === M.sel.mat)) M.sel.mat = all[0][0]; const S1 = all.find(q => q[0] === M.sel.mat);
+      U.box(x, y, lw, h); const cols = lw >= 480 ? 3 : 2, cw = (lw - 24 - 8 * (cols - 1)) / cols, RH = 50, icon = (ic, cx, cy, sz, a) => !!ic && ((ic.startsWith('mat_') && G.ICO && G.ICO.drawC(ic, cx, cy, sz, a)) || (!ic.startsWith('mat_') && G.drawIcon(ic, cx - sz / 2, cy - sz / 2, sz, a)));
+      let tot = 0; for (const c of CATS) tot += 26 + Math.ceil(c[1].length / cols) * (RH + 6) + 4;
+      const off = U.scrollArea('mats', x, y + 4, lw, h - 8, tot + 8); U.clip(x, y + 4, lw, h - 8); let yy = y + 10 + off;
+      for (const [cn, L] of CATS) { T(cn, x + 14, yy + 10, 13, C.gold, 'left', G.FONT_S, 900); yy += 24;
+        L.forEach((q, i) => { const [k, ic, nm, n, col] = q, bx = x + 12 + (i % cols) * (cw + 8), by = yy + Math.floor(i / cols) * (RH + 6), on = k === M.sel.mat, z = n <= 0;
+          ctx.fillStyle = on ? 'rgba(120,80,30,.45)' : 'rgba(255,255,255,.045)'; G.rr(bx, by, cw, RH, 8); ctx.fill(); if (on) { ctx.strokeStyle = 'rgba(243,217,138,.8)'; ctx.lineWidth = 1.2; G.rr(bx + .5, by + .5, cw - 1, RH - 1, 8); ctx.stroke(); }
+          const iw = icon(ic, bx + 22, by + RH / 2, 32, z ? 0.4 : 1) ? 40 : 8;
+          T(nm, bx + 6 + iw, by + 16, 12, z ? C.dim : (col || C.ink), 'left', G.FONT_S, 900); T('× ' + n, bx + cw - 10, by + 16, 12, z ? C.dim : C.ink, 'right', G.FONT, 700);
+          T(INFO[k] ? INFO[k][0].split('、')[0] + (INFO[k][0].includes('、') ? '…' : '') : '', bx + 6 + iw, by + 35, 10, C.dim, 'left', G.FONT, 500);
+          if (by + RH > y + 4 && by < y + h - 4) U.hit(bx, Math.max(by, y + 4), cw, RH, () => { M.sel.mat = k; }); });
+        yy += Math.ceil(L.length / cols) * (RH + 6) + 4; }
+      ctx.restore();
+      U.box(rx, y, rw, h); if (!S1) return; const [k, ic, nm, n, col] = S1; let ty = y + 20;
+      if (icon(ic, rx + rw / 2, ty + 26, 52, 1)) ty += 60; T(nm, rx + rw / 2, ty, 16, col || C.gold, 'center', G.FONT_S, 900); ty += 22; T('持有 × ' + n, rx + rw / 2, ty, 12, C.ink, 'center', G.FONT, 700); ty += 26;
+      ctx.font = `500 ${12 * G.FS()}px ${G.FONT}`; const para = (lab, t) => { T(lab, rx + 14, ty, 12, C.gold, 'left', G.FONT_S, 900); ty += 18; for (const l of G.wrap(t, rw - 28)) { T(l, rx + 14, ty, 12, C.ink, 'left', G.FONT, 500); ty += 18; } ty += 8; };
+      if (INFO[k]) { para('用途', INFO[k][0]); para('哪裡取得', INFO[k][1]); } }; })();
   G.ECON = { DM, dm, have, name, dmOk, dmPay, dmTxt, enDM, gemDM };
 })();

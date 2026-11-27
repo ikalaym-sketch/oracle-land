@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 129_magatama.js
- * Version : r3.106.0  (2026-11-26)　r3.106.0：難度素材接入：淬鍊 Lv4／5、升品傳說以上、7～9 階勾玉操作；新配方穿玉錐（無間之核 2）
+ * Version : r3.147.0  (2026-11-27)　r3.147.0：提示文字改成玩家用語
+ * 舊版    : r3.106.0  (2026-11-26)　r3.106.0：難度素材接入：淬鍊 Lv4／5、升品傳說以上、7～9 階勾玉操作；新配方穿玉錐（無間之核 2）
  * 舊版    : r3.104.0  (2026-11-26)　r3.104.0：元素勾玉屬性傷害依妖怪屬性相剋（131_foes elK：對立 ×1.5、同屬 ×0.5）
  * 舊版    : r3.103.0  (2026-11-26)　r3.103.0：勾玉、道具、未淨化勾玉改用 Gemini 圖（130_icons；圖沒載好時照舊程式畫）；燃燒／冰凍／落雷／映鏡／鬼哭冥殺觸發加特效零件
  * 舊版    : r3.102.0  (2026-11-26)
@@ -112,7 +113,7 @@
     for (let j = 0; j < n; j++) { const pool = (Math.random() < sp ? SPK : BASEA).filter(k => k !== main && !A.some(a => a[0] === k)); if (!pool.length) break; A.push([pick(pool), Math.round(rnd(0.8, 1.2) * 100) / 100]); }
     return A; }
   function give(g, quiet) { const m = data();
-    if (!m.on) { if (m.un.length < CAP) m.un.push(g); if (!quiet) G.UI.toast('獲得 未淨化勾玉（之後找神社小雪淨化）'); }
+    if (!m.on) { if (m.un.length < CAP) m.un.push(g); if (!quiet) G.UI.toast('獲得未淨化勾玉，可到神社請小雪淨化'); }
     else if (m.inv.length >= CAP) { const n = dustOf(g); m.dust += n; G.UI.toast('玉匣已滿，' + gName(g) + ' 自動分解：玉屑 +' + n); }
     else { m.inv.push(g); if (!quiet) G.UI.toast('獲得 ' + gName(g) + '（' + TN[g.t] + '階・' + R.QUAL[g.q].n + '）' + (g.m ? '・玉銘 ' + INSB[g.m][2] : '')); }
     dirty(); }

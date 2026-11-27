@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 105_forge2.js
- * Version : r3.101.0  (2026-11-26)　r3.101.0：強化改制：+1～20 每級 +4%、+21～50 每級 +2%（只加攻防血，詞條不成長）；里程碑 +10／+30 孔、+20 極壹、+40 極貳、+50 神鍛；+21 起失敗掉級
+ * Version : r3.147.0  (2026-11-27)　r3.147.0：批次賣出／分解視窗加 ✕，點視窗外也會關閉
+ * 舊版    : r3.101.0  (2026-11-26)　r3.101.0：強化改制：+1～20 每級 +4%、+21～50 每級 +2%（只加攻防血，詞條不成長）；里程碑 +10／+30 孔、+20 極壹、+40 極貳、+50 神鍛；+21 起失敗掉級
  * 舊版    : r3.94.0  (2026-11-26)　r3.94.0：極 +10% 改增傷區（G.DZ）
  * 舊版    : r3.63.0  (2026-11-24)
  * 變更    : r3.63.0 新增。強化／賣出分解／商店補強。
@@ -79,9 +80,10 @@
   F.sellBar = function (L, y, w) { const d = rd(), n = d.bag.filter(it => it.lk).length;
     U.act(L + 10, y - 4, w - 20, 40, '批次賣出／分解…', '依品質、等級、部位篩選' + (n ? '・鎖定 ' + n + ' 件不會被選到' : ''), () => { B.on = true; B.arm = 0; }, true, true); };
   function drawBatch() { const { box } = M.ui, d = rd(), w = Math.min(620, G.LW - 40), h = Math.min(330, G.LH - 30), x = (G.LW - w) / 2, y = (G.LH - h) / 2, L = pick();
-    ctx.fillStyle = 'rgba(5,3,6,.7)'; ctx.fillRect(0, 0, G.LW, G.LH); M.hits = [{ x: 0, y: 0, w: G.LW, h: G.LH, f: () => {} }]; box(x, y, w, h);
+    ctx.fillStyle = 'rgba(5,3,6,.7)'; ctx.fillRect(0, 0, G.LW, G.LH); M.hits = [{ x: 0, y: 0, w: G.LW, h: G.LH, f: () => { B.on = false; } }]; box(x, y, w, h); M.hits.push({ x, y, w, h, f: () => {} });   /* r3.147.0：點視窗外關閉 */
+    M.ui.button(x + w - 44, y + 8, 34, 28, '✕', () => { B.on = false; });
     U.T('批次' + (B.mode === 'salv' ? '分解' : '賣出'), x + 16, y + 22, 16, U.GOLD, 'left', G.FONT_S);
-    U.chips(x + w - 150, y + 8, 136, [['sell', '賣錢'], ['salv', '分解']], k => B.mode === k, k => { B.mode = k; B.arm = 0; }, 28);
+    U.chips(x + w - 190, y + 8, 136, [['sell', '賣錢'], ['salv', '分解']], k => B.mode === k, k => { B.mode = k; B.arm = 0; }, 28);
     const lab = (t, yy) => U.T(t, x + 16, yy + 14, 11, U.DIM); let yy = y + 44;
     lab('品質', yy); U.chips(x + 64, yy, w - 80, [0, 1, 2, 3, 4, 5].map(q => [q, R.QUAL[q].n, U.QC(q)]), q => !!B.q[q], q => { B.q[q] = !B.q[q]; B.arm = 0; }, 28); yy += 36;
     lab('等級', yy); U.chips(x + 64, yy, Math.min(300, w - 80), [[0, '全部'], [1, '低 5 級'], [2, '低 10 級'], [3, '低 20 級']], k => B.lv === k, k => { B.lv = k; B.arm = 0; }, 28); yy += 36;

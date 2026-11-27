@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 07_rpg.js
- * Version : r3.105.0  (2026-11-26)　r3.105.0：裝備基礎屬性 100 級以後每級 +1.2%（原本 +4%）
+ * Version : r3.147.0  (2026-11-27)　r3.147.0：一鍵分解跳過鎖定的裝備
+ * 舊版    : r3.105.0  (2026-11-26)　r3.105.0：裝備基礎屬性 100 級以後每級 +1.2%（原本 +4%）
  * 舊版    : r3.101.0  (2026-11-26)　r3.101.0：屬性初始值加新詞條（減傷、招式減傷、增傷、對頭目、對精英）
  * 舊版    : r3.99.0  (2026-11-26)　r3.99.0：巔峰升級改給巔峰點數 d.pp
  * 舊版    : r3.94.0  (2026-11-26)　r3.94.0：攻擊% 改同區相加（s._atkP，R.addAtkP 給後掛模組用）
@@ -116,7 +117,7 @@
       d.bag.splice(i, 1); if (d.eq[t.slot]) d.bag.push(d.eq[t.slot]); d.eq[t.slot] = it; R.recalc(); G.SAVE.markDirty(); return true; },
     unequip(slot) { const d = R.d(); if (!d.eq[slot] || slot === 'weapon') return; if (d.bag.length >= d.bagMax) { G.UI.toast('背包已滿'); return; } d.bag.push(d.eq[slot]); d.eq[slot] = null; R.recalc(); G.SAVE.markDirty(); },
     salvage(i) { const d = R.d(), it = d.bag[i]; if (!it) return 0; const g = R.value(it); d.bag.splice(i, 1); d.gold += g; G.SAVE.markDirty(); return g; },
-    salvageBelow(q) { const d = R.d(); let g = 0; d.bag = d.bag.filter(it => { if (it.q <= q && !it.set) { g += R.value(it); return false; } return true; }); d.gold += g; G.SAVE.markDirty(); return g; },
+    salvageBelow(q) { const d = R.d(); let g = 0; d.bag = d.bag.filter(it => { if (it.q <= q && !it.set && !it.lk) {   /* r3.147.0：鎖定的不分解 */ g += R.value(it); return false; } return true; }); d.gold += g; G.SAVE.markDirty(); return g; },
     /* 敵人死亡結算 */
     onKill(e) { const lv = e.lv || 1, d = R.d();
       R.gainExp(Math.round(10 + lv * 6)); G.WPN.gainProf(5 + lv);

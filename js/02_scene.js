@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 02_scene.js
- * Version : r3.19.1  （r3.19.1：清怪後 25 秒才再生）
+ * Version : r3.147.0  (2026-11-27)　r3.147.0：提示文字去掉開發用語
+ * 舊版    : r3.19.1  （r3.19.1：清怪後 25 秒才再生）
  * 舊版    : r3.10.1  (2026-11-13)
  * 變更    : r3.10.1 出口加頭目戰鎖（G.EV.bossLock）。
  * 變更    : r3.5.1 修正：地圖圖還沒載入時不呼叫 drawImage（原本讀舊檔進世界地圖時每格報錯、畫面全黑）。
@@ -59,7 +60,7 @@ G.SC = {
       else { const [[lx, ya], [, yb]] = p.line, inY = H.y >= Math.min(ya, yb) - 12 && H.y <= Math.max(ya, yb) + 12;
         inside = inY && (p.id === 'west' ? H.x < lx + 22 : H.x > lx - 22); }
       if (!inside) continue;
-      const why = this.lock[p.id] || (G.EV && G.EV.bossLock && G.EV.bossLock()) || (!G.D.scenes[p.to] ? '前方的路尚未開放（之後的批次會接上）' : null);
+      const why = this.lock[p.id] || (G.EV && G.EV.bossLock && G.EV.bossLock()) || (!G.D.scenes[p.to] ? '前方的路尚未開放' : null);
       if (why) { G.UI.toast(why); if (p.rect) H.y -= 8; else H.x += p.id === 'west' ? 6 : -6; return; }
       const back = G.D.scenes[p.to].portals.find(q => q.to === this.id);
       this.trans = { t: 0, to: p.to, at: back ? back.arrival : null };
