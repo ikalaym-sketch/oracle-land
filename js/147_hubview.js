@@ -1,17 +1,19 @@
 /* =====================================================================
  * 147_hubview.js
- * 版本    : r3.129.0  (2026-11-27)
+ * 版本    : r3.158.0  (2026-11-27)　r3.158.0：新增戰場版兩岸城外觀與專屬可走範圍
+ * 舊版    : r3.129.0  (2026-11-27)
  * 說明    : 兩岸城外觀切換（白天／夜間／戰火／重建，四張圖同配置、共用可走遮罩）。
  *           ‧ 規則：結局後＝重建；第 11 章起（黃泉漫進城）＝戰火；祭典或第 8 章夜市旗標＝夜間；其他＝白天。
  *           ‧ G.HUBV.force 可由劇情暫時指定（祭典、夜市演出），設 null 回到自動。
  *           ‧ 戰火：下方木橋已斷，橋面設為不可走（只能走上方橋過河）。
  *           ‧ 只在進入兩岸城時判斷一次（包裝 G.ASSET.img），不做每幀檢查。
+ * 變更    : r3.158.0 新增「戰場」外觀（a/m/hub_city_war.webp＋可走範圍 walk.json hub_city_war）；目前只在測試頁切換，劇情接入待第 11～12 章攻防。
  * 依賴    : 01_assets（G.ASSET.img）、25_walk（G.WALK）、18_world（進場載圖）
  * ===================================================================== */
 (function () {
   const ID = 'hub_city', F = () => (G.SAVE.data && G.SAVE.data.flags) || {};
   const V = G.HUBV = { force: null, cur: null,
-    opts: [['自動', null], ['白天', ''], ['夜間', 'night'], ['戰火', 'ruin'], ['重建', 'rebuild']],
+    opts: [['自動', null], ['白天', ''], ['夜間', 'night'], ['戰火', 'ruin'], ['戰場', 'war'], ['重建', 'rebuild']],
     state() { if (V.force != null) return V.force; const f = F();
       if (f.end || f.ending) return 'rebuild';
       if (f.ch11) return 'ruin';
@@ -23,8 +25,9 @@
   const BROKEN = [[1100, 598], [1372, 598], [1372, 682], [1100, 682]];
   function mask(s) { const W = G.WALK, k = W && W.M[ID]; if (!k) return;
     if (!k.m0) k.m0 = k.m.slice();
-    const want = s === 'ruin' ? 'ruin' : ''; if (k._st === want) return; k._st = want;
-    k.m.set(k.m0);
+    const want = s === 'ruin' || s === 'war' ? s : ''; if (k._st === want) return; k._st = want;
+    const wk = W.M[ID + '_war']; k.m.set(want === 'war' && wk && wk.m.length === k.m.length ? wk.m : k.m0);   /* r3.158.0：戰場版（燒毀街區＝開闊焦土）用自己的可走範圍 */
+    if (want === 'war') { k.d = W.dist(k.m, k.w, k.h); return; }
     if (want) for (let j = 0; j < k.h; j++) for (let i = 0; i < k.w; i++) if (G.inPoly((i + 0.5) * k.s, (j + 0.5) * k.s, BROKEN)) k.m[j * k.w + i] = 0;
     k.d = W.dist(k.m, k.w, k.h); }
   const img0 = G.ASSET.img.bind(G.ASSET);
