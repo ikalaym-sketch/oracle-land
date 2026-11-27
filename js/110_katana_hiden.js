@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 110_katana_hiden.js
- * Version : r3.173.0  (2026-11-28)　r3.173.0：五招秘傳加演出鏡頭（對準敵人群／挑飛高度）；返脈・雷的天雷連落三道
+ * Version : r3.177.0  (2026-11-28)　r3.177.0：月下分身重做：象牙白大滿月高掛、月暈、夜色加深、最後一斬把月亮斬開
+ * 舊版    : r3.173.0  (2026-11-28)　r3.173.0：五招秘傳加演出鏡頭（對準敵人群／挑飛高度）；返脈・雷的天雷連落三道
  * 舊版    : r3.73.0  (2026-11-24)
  * 變更    : r3.73.0 特效全部改用 111_katana_fx：起手聚氣、霧改柔光貼圖、一閃與千鳥的直線改成雙尖劍氣（qi）、雷改漸細鋸齒、光柱改柔邊貼圖；移除所有地面圈與描邊線；命中回饋移到 111。
  *           r3.72.0 新增。打刀秘傳 5 招重做（殘月藍配色，三段演出：起手→主體→收尾），並加上「擊飛」看得到的浮空。
@@ -87,10 +88,19 @@
         if (t === 42) { for (const an of [0.75, -0.75, 0.05]) KF().qi({ x: cx, y: cy, z: 0.55, ang: an, len: 2.8, w: 0.13, dur: 3, life: 18, motes: 6 }); KF().light(cx, cy, 1.6, 24, 0.6, 0.55);
           for (const q of foes(cx, cy, 1.4 * k)) hitE(c, q, 2.3, { crit: true }); dust(cx, cy, 0.5, 22, 2.0, 40); SC.shake = Math.max(SC.shake || 0, 7); stop(12); } } },
     k_bunshin: { T: 68, run(c, t) { const m = c.a.mvx, k = c.hh;
-        if (t === 1) { intro(c, 68); const e = tgt(c, 6); m.e = e; if (e) focus(c, e.x - c.f * 0.3 * k, e.y, 0.7, 68); m.p = e ? [e.x, e.y] : [c.x + c.f * 1.4 * k, c.y]; const [px, py] = m.p;   // 滿月
-          VX.custom((o, ctx) => { const s = S(py), kk = HH() * s, a = Math.min(1, o.t / 14) * Math.min(1, (o.life - o.t) / 10), R = 0.62 * kk, mx = px, my = py - (1.55 + 0.2 * Math.min(1, o.t / 20)) * kk, fl = o.t > 52 && o.t < 58 ? 1.6 : 1;
-              ctx.save(); ctx.shadowColor = 'rgba(' + BL.deep + ',' + a + ')'; ctx.shadowBlur = 16 * s * fl; const g = ctx.createRadialGradient(mx - R * 0.25, my - R * 0.25, R * 0.1, mx, my, R); g.addColorStop(0, 'rgba(190,212,255,' + 0.6 * a + ')'); g.addColorStop(0.7, 'rgba(' + BL.mid + ',' + 0.42 * a + ')'); g.addColorStop(1, 'rgba(' + BL.deep + ',' + 0.15 * a + ')');
-              ctx.fillStyle = g; ctx.beginPath(); ctx.arc(mx, my, R, 0, TAU); ctx.fill(); ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(40,70,150,' + 0.18 * a + ')'; for (const [dx, dy, r] of [[-0.3, 0.1, 0.18], [0.25, -0.2, 0.12], [0.1, 0.35, 0.1]]) { ctx.beginPath(); ctx.arc(mx + dx * R, my + dy * R, r * R, 0, TAU); ctx.fill(); } ctx.restore(); }, 68, 'g'); }
+        if (t === 1) { intro(c, 68); const e = tgt(c, 6); m.e = e; if (e) focus(c, e.x - c.f * 0.3 * k, e.y, 1.5, 68); m.p = e ? [e.x, e.y] : [c.x + c.f * 1.4 * k, c.y]; const [px, py] = m.p;   // 滿月
+          VX.dim && VX.dim(68, 0.74);   /* r3.177.0：月下分身重做——夜色更深、象牙白大滿月從敵人身後高處升起（半徑 1.5 身高、月心離地 2.9 身高）、月暈＋光芒、最後一斬把月亮斬開 */
+          VX.custom((o, ctx) => { const s = S(py), kk = HH() * s, rise = KF().eo3(Math.min(1, o.t / 16)), a = Math.min(1, o.t / 10) * Math.min(1, (o.life - o.t) / 10), R = 1.5 * kk, mx = px - c.f * 0.2 * kk, my = py - (1.9 + 0.6 * rise) * kk, cut = o.t >= 56, fl = o.t > 52 && o.t < 60 ? 1.5 : 1;
+              ctx.save(); ctx.globalCompositeOperation = 'screen';
+              const h = ctx.createRadialGradient(mx, my, R * 0.8, mx, my, R * 2.6); h.addColorStop(0, 'rgba(150,185,255,' + 0.5 * a * fl + ')'); h.addColorStop(0.4, 'rgba(70,110,220,' + 0.22 * a + ')'); h.addColorStop(1, 'rgba(40,70,180,0)'); ctx.fillStyle = h; ctx.fillRect(mx - R * 2.6, my - R * 2.6, R * 5.2, R * 5.2);
+              ctx.globalCompositeOperation = 'source-over';
+              const g = ctx.createRadialGradient(mx - R * 0.3, my - R * 0.3, R * 0.05, mx, my, R); g.addColorStop(0, 'rgba(255,253,240,' + a + ')'); g.addColorStop(0.6, 'rgba(238,236,222,' + a + ')'); g.addColorStop(0.92, 'rgba(196,208,236,' + a + ')'); g.addColorStop(1, 'rgba(150,175,235,' + 0.9 * a + ')');
+              ctx.fillStyle = g; ctx.beginPath(); ctx.arc(mx, my, R, 0, TAU); ctx.fill();
+              ctx.fillStyle = 'rgba(150,160,190,' + 0.22 * a + ')'; for (const [dx, dy, r] of [[-0.35, 0.05, 0.22], [0.2, -0.3, 0.15], [0.12, 0.38, 0.13], [0.48, 0.12, 0.09], [-0.1, -0.5, 0.08]]) { ctx.beginPath(); ctx.arc(mx + dx * R, my + dy * R, r * R, 0, TAU); ctx.fill(); }
+              ctx.globalCompositeOperation = 'screen'; ctx.strokeStyle = 'rgba(190,215,255,' + 0.1 * a + ')'; ctx.lineWidth = 2; for (let i = 0; i < 12; i++) { const an = i * TAU / 12 + o.t * 0.004; ctx.beginPath(); ctx.moveTo(mx + Math.cos(an) * R * 1.12, my + Math.sin(an) * R * 1.12); ctx.lineTo(mx + Math.cos(an) * R * (1.7 + 0.3 * (i % 3)), my + Math.sin(an) * R * (1.7 + 0.3 * (i % 3))); ctx.stroke(); }
+              if (cut) { const q = Math.min(1, (o.t - 56) / 4), L = R * 1.5 * q; ctx.globalCompositeOperation = 'source-over'; ctx.translate(mx, my); ctx.rotate(-0.42 * c.f); ctx.fillStyle = 'rgba(8,10,28,' + 0.9 * a + ')'; ctx.beginPath(); ctx.moveTo(-L, 0); ctx.quadraticCurveTo(0, -R * 0.07, L, 0); ctx.quadraticCurveTo(0, R * 0.07, -L, 0); ctx.fill();
+                ctx.fillStyle = 'rgba(' + BL.lite + ',' + a + ')'; ctx.beginPath(); ctx.moveTo(-L, 0); ctx.quadraticCurveTo(0, -R * 0.02, L, 0); ctx.quadraticCurveTo(0, R * 0.02, -L, 0); ctx.fill(); }
+              ctx.restore(); }, 68, 'g'); }
         const [px, py] = m.p || [c.x, c.y], e = m.e && m.e.st !== 'dead' ? m.e : null;
         if (t >= 8 && t <= 44) { for (let i = 0; i < 3; i++) { const an = i * TAU / 3 + (t - 8) * 0.17, x = px + Math.cos(an) * 1.25 * k, y = py + Math.sin(an) * 0.42 * k; if (t % 2 === 0) ghostAt(x, y, Math.cos(an) > 0 ? -1 : 1, 8);
             if ((t - 8 - i * 2) % 6 === 0 && t > 10) { arcBlade(x, y, 0.55, Math.cos(an) > 0 ? -1 : 1, 0.8, -1.5, 0.9, 12, 0.14, 0); for (const q of foes(px, py, 1.0 * k)) hitE(c, q, 0.32); m.hit = 1; } } }

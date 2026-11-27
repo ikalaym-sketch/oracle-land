@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 162_fx3.js
- * Version : r3.176.0  (2026-11-28)　r3.176.0：鐵砲命中也有受擊染色
+ * Version : r3.177.0  (2026-11-28)　r3.177.0：秘傳演出時上下黑邊
+ * 舊版    : r3.176.0  (2026-11-28)　r3.176.0：鐵砲命中也有受擊染色
  * 舊版    : r3.170.0  (2026-11-27)
  * 變更    : r3.170.0 新增。特效第三版的受擊反應（先套打刀當樣板；111_katana_fx 命中時寫入 e._hf）。
  *           ・染色外光：被打的瞬間，妖怪身後多一圈武器色的輪廓光（放大 6% 的剪影），0.15 秒淡掉。
@@ -19,6 +20,9 @@
   /* r3.176.0：鐵砲（沒有走 111 的命中轉接）也有受擊染色——主角出招中命中時補上火藥色 */
   (function hk() { const VX = G.VX; if (!VX || !VX.impact) return setTimeout(hk, 60); const im = VX.impact; VX.impact = function (e) { const r = im.apply(this, arguments);
       try { if (e && G.H.act && G.WPN.curId() === 'teppo' && !(e._hf && e._hf.t === G.t)) e._hf = { t: G.t, c: '240,128,48', pw: 1.2, d: G.H.face }; } catch (x) {} return r; }; })();
+  /* r3.177.0：秘傳演出時上下出現黑邊（電影寬螢幕感），演完收回 */
+  let bar = 0; const ud0 = G.UI.draw; G.UI.draw = function () { const r = ud0.apply(this, arguments); const on = G.mode === 'play' && G.H.act && G.H.act.mvx && G.H.act.mvx.hiden ? 1 : 0; bar += (on - bar) * 0.18;
+    if (bar > 0.02) { const h = 30 * bar; ctx.fillStyle = '#050406'; ctx.fillRect(0, 0, G.LW, h); ctx.fillRect(0, G.LH - h, G.LW, h); } return r; };
   const d0 = G.drawOni; G.drawOni = function (e) { const h = e && e._hf, age = h ? G.t - h.t : 99;
     if (!h || age < 0 || age >= LIFE || !e._fx3 || e.bb || e.st === 'dead') return d0.apply(this, arguments);
     const q = age / LIFE, a = (1 - q) * (1 - q) * (h.k || 1), pw = h.pw || 1; let im = null; try { im = tint(e._fx3[0], e._fx3[1], h.c); } catch (x) {}

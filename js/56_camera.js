@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 56_camera.js
- * Version : r3.176.0  (2026-11-28)　r3.176.0：秘傳通用演出鏡頭（主角與敵人群中間、挑飛時上移）
+ * Version : r3.177.0  (2026-11-28)　r3.177.0：秘傳時鏡頭拉遠 22%
+ * 舊版    : r3.176.0  (2026-11-28)　r3.176.0：秘傳通用演出鏡頭（主角與敵人群中間、挑飛時上移）
  * 舊版    : r3.173.0  (2026-11-28)　r3.173.0：G.CAMFOCUS 演出鏡頭（期間內鏡頭對準指定點）
  * 舊版    : r3.56.0  (2026-11-24)　r3.56.0：G.CAMLOOK 時拉遠
  * 舊版    : r3.17.0  (2026-11-14)
@@ -20,6 +21,7 @@
   const baseVis = () => G.ZOOMS[G.SAVE.data.zoom].vis * mapK();
   /* 目標可視高度：基準 × 情境係數 */
   function targetVis() { const b = baseVis();
+    if (H.act && H.act.mvx && H.act.mvx.hiden) return b * 1.22;   /* r3.177.0：秘傳時鏡頭拉遠，演出放得下 */
     if (G.CAMLOOK) return b * 1.3;   // r3.56.0：看向指定點（封印石）時拉遠，人和石頭都入鏡
     if (G.STORY && G.STORY.cut) return b;
     if (G.DLG && G.DLG.active()) return b * TALK;
