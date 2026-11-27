@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 95_board.js
- * Version : r3.133.0  (2026-11-27)　r3.133.0：各章「探索區討伐」支線改成公告板的指名委託（完成前常駐，最多 2 張）
+ * Version : r3.167.0  (2026-11-27)　r3.167.0：公告板改成全畫面木板＋和紙委託籤（種類朱印、地點、目標、預估報酬、接下）；進行中列在下方（進度條、放棄要按兩次）；指名委託要走進過該章地圖才貼
+ * 舊版    : r3.133.0  (2026-11-27)　r3.133.0：各章「探索區討伐」支線改成公告板的指名委託（完成前常駐，最多 2 張）
  * 舊版    : r3.104.2  (2026-11-26)　r3.104.2：公告板貼地（補回圖下緣透明邊）、影子改柔邊、不畫互動光暈；發光標記改柔邊
  * 舊版    : r3.56.0  (2026-11-24)　r3.56.0：聚落公告板移到路邊
  * 舊版    : r3.55.0  (2026-11-23)
@@ -41,10 +42,13 @@
     for (let i = 0; i < 8 && b.offer.length < 3; i++) { const o = make(); if (o && !b.offer.some(x => x.map === o.map && x.t === o.t)) b.offer.push(o); } named(b); G.SAVE.markDirty(); }
   /* r3.133.0：指名委託——原本各章的「探索區討伐」支線（104_side s2_a）改貼在公告板上，完成前一直都在（最多 2 張） */
   function named(b) { const S = G.SIDE2 && G.SIDE2.SIDE, F = G.SAVE.data.flags, P = Math.min(12, HUB.cur()); if (!S) return; let n = 0;
-    for (const [c, ua, na, ta, la, ra] of S) { if (c > P || n >= 2) continue; const ex = 'E' + String(c).padStart(2, '0') + '_' + (c % 2 ? 1 : 2), d = G.D.scenes[ex], key = 's2a' + c;
+    const seen = G.SAVE.data.seen || {}, reached = c => c <= 1 || (G.WORLD.chapters[c] || []).some(id => seen[id]); b.offer = b.offer.filter(x => !x.s2a || reached(x.s2a));   // r3.167.0：走進過該章地圖才貼（原本打完上一章頭目就提早出現）
+    for (const [c, ua, na, ta, la, ra] of S) { if (c > P || n >= 2 || !reached(c)) continue; const ex = 'E' + String(c).padStart(2, '0') + '_' + (c % 2 ? 1 : 2), d = G.D.scenes[ex], key = 's2a' + c;
       if (!d || F['s2a_' + c] || (Q.state && Q.state('c' + c + '_s2_a')) || b.act.some(x => x.s2a === c)) continue; n++; if (b.offer.some(x => x.s2a === c)) continue;
       const xn = d.name.replace(/^探索・/, ''); b.offer.unshift({ id: key, t: 'kill', map: ex, lv: Math.max(1, d.lv || 1), k: 0, n: 8, s2a: c, who: na, reply: ra, ask: la, title: '指名：' + ta, desc: na + '：「' + la + '」（探索區「' + xn + '」打倒 8 隻）' }); } }
   /* ---------- 結算 ---------- */
+  function est(o) { const lv = Math.max(o.lv, Math.min(G.RPG.d().lv, o.lv + 6)), k = o.t === 'elite' ? 16 : o.t === 'gather' ? 12 : o.t === 'deliver' ? 8 : 10 + o.n * 0.4;
+    return { exp: Math.round((10 + lv * 6) * k), gold: Math.round((20 + lv * 8) * (k / 3)), gear: o.t === 'elite' ? '必得精品裝備' : o.t === 'gather' ? '可能有裝備' : '' }; }
   function reward(o) { const lv = Math.max(o.lv, Math.min(G.RPG.d().lv, o.lv + 6)), k = o.t === 'elite' ? 16 : o.t === 'gather' ? 12 : o.t === 'deliver' ? 8 : 10 + o.n * 0.4, d = G.RPG.d();
     const exp = Math.round((10 + lv * 6) * k), gold = Math.round((20 + lv * 8) * (k / 3)); R.gainExp(exp); d.gold += gold; const mk = Object.keys(R.MATS), m = rnd(mk); d.mats[m] = (d.mats[m] || 0) + 2 + Math.floor(lv / 10);
     let tx = '經驗 +' + exp + '　錢 +' + gold + '　' + R.MATS[m].n;
@@ -70,11 +74,52 @@
   /* ---------- 公告板 ---------- */
   let BU = null; G.ANIM.load('pr_village').then(u => { BU = u; }, () => 0);
   function spot() { const o = POS[SC.id]; if (!o) return null; return (SC.snap && SC.snap(o[0], o[1], 'open', 160)) || o; }
-  function openBoard() { refresh(); const b = BD(), L = []; named(b);
-    for (const o of b.offer) L.push({ label: '【接】' + o.title + '　' + o.desc, then: [act(() => { if (b.act.length >= MAX) return G.UI.toast('最多同時接 ' + MAX + ' 張委託'); b.offer = b.offer.filter(x => x !== o); b.act.push(o); G.SAVE.markDirty(); G.UI.banner('接下委託', o.desc); setup(); })] });
-    for (const o of b.act) L.push({ label: '【放棄】' + o.title + '（' + o.k + '／' + o.n + '）', then: [act(() => { b.act = b.act.filter(x => x !== o); HUB.marks = HUB.marks.filter(m => m.bq !== o.id); G.SAVE.markDirty(); G.UI.toast('已放棄：' + o.title); })] });
-    const left = Math.max(0, Math.ceil((LIFE - (Date.now() - b.gen)) / 60000));
-    G.DLG.start([say('', '（委託公告板。進行中 ' + b.act.length + '／' + MAX + '　約 ' + left + ' 分鐘後換新。）'), { choice: L.slice(0, 6).concat([{ label: '離開', then: [] }]) }]); }
+  /* r3.167.0：公告板改成全畫面木板＋和紙委託籤（行旅繪圖同款），取代原本一長串對話選項 */
+  const M = G.MENU, ctx = G.ctx, C = G.C, PAPER = '#efe4cb', PAPER2 = '#dccdab', INK = '#2a1d16', INK2 = '#5b4636', SHU = '#b8322a', GOLD = C.gold;
+  const SEAL = { kill: '討', gather: '採', elite: '精', deliver: '送' }, GOAL = o => o.t === 'kill' ? '打倒妖怪 ' + o.n + ' 隻' : o.t === 'gather' ? '找到 ' + o.n + ' 處' + o.kind[0] : o.t === 'elite' ? '打倒精英 1 隻' : '交給' + (o.to || '居民');
+  let BV = { pick: null };
+  function openBoard() { refresh(); named(BD()); BV.pick = null; M.board = 1; M.show(); }
+  const cl0 = M.close.bind(M); M.close = function () { M.board = 0; cl0(); };
+  function take(o) { const b = BD(); if (b.act.length >= MAX) return G.UI.toast('最多同時接 ' + MAX + ' 張委託'); b.offer = b.offer.filter(x => x !== o); b.act.push(o); G.SAVE.markDirty(); G.UI.toast('接下委託：' + o.title); setup(); }
+  function drop(o) { const b = BD(); b.act = b.act.filter(x => x !== o); HUB.marks = HUB.marks.filter(m => m.bq !== o.id); G.SAVE.markDirty(); G.UI.toast('已放棄：' + o.title); BV.pick = null; }
+  function lines(t, w, f, max) { ctx.font = `800 ${f * G.FS()}px ${G.FONT}`; const L = G.wrap(t, w); if (L.length > max) { L.length = max; L[max - 1] = L[max - 1].slice(0, -1) + '…'; } return L; }
+  function slip(o, x, y, w, h, i) { const { button, hit } = M.ui, nm2 = !!o.s2a, full = BD().act.length >= MAX, r = est(o), tilt = ((i * 37) % 5 - 2) * 0.006;
+    ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate(tilt); ctx.translate(-w / 2, -h / 2);
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; G.rr(3, 4, w, h, 3); ctx.fill();
+    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, PAPER); g.addColorStop(1, PAPER2); ctx.fillStyle = g; G.rr(0, 0, w, h, 3); ctx.fill();
+    ctx.strokeStyle = nm2 ? SHU : 'rgba(107,74,44,.5)'; ctx.lineWidth = nm2 ? 2 : 1; G.rr(.5, .5, w - 1, h - 1, 3); ctx.stroke();
+    ctx.fillStyle = '#7a1e18'; ctx.beginPath(); ctx.arc(w / 2, 7, 4, 0, 6.283); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(w / 2 - 1.2, 5.8, 1.3, 0, 6.283); ctx.fill();
+    const p = 10; ctx.fillStyle = SHU; G.rr(p, 16, 24, 24, 4); ctx.fill(); G.txt(nm2 ? '指' : SEAL[o.t], p + 12, 29, 14, '#fbf0dc', 'center', G.FONT_S, 900);
+    G.txt('Lv ' + o.lv, w - p, 28, 10, INK2, 'right', G.FONT, 800);
+    let yy = 52; for (const l of lines(o.title.replace(/^[^：]*：/, ''), w - p * 2, 13, 2)) { G.txt(l, p, yy, 13, INK, 'left', G.FONT_S, 900); yy += 17; }
+    if (nm2) { G.txt('委託人　' + o.who, p, yy + 2, 10, SHU, 'left', G.FONT, 800); yy += 16; }
+    ctx.strokeStyle = 'rgba(107,74,44,.3)'; ctx.beginPath(); ctx.moveTo(p, yy); ctx.lineTo(w - p, yy); ctx.stroke(); yy += 14;
+    G.txt('◇ ' + nm(o.map), p, yy, 11, INK, 'left', G.FONT, 800); yy += 17; G.txt('◇ ' + GOAL(o), p, yy, 11, INK, 'left', G.FONT, 800); yy += 20;
+    G.txt('經驗 ' + r.exp + '　錢 ' + r.gold, p, yy, 10, '#6b4a1c', 'left', G.FONT, 800); yy += 15; if (r.gear) G.txt(r.gear, p, yy, 10, '#3f6a9a', 'left', G.FONT, 800);
+    ctx.restore();
+    const bh = 30, bx = x + p, by = y + h - bh - 8, bw = w - p * 2; ctx.fillStyle = full ? 'rgba(107,90,70,.5)' : SHU; G.rr(bx, by, bw, bh, 5); ctx.fill();
+    G.txt(full ? '已接滿' : '接下', bx + bw / 2, by + bh / 2 + 1, 13, '#fbeee0', 'center', G.FONT_S, 900); if (!full) hit(bx, by, bw, bh, () => take(o)); }
+  const dr0 = M.draw; M.draw = function () { if (!M.board) return dr0.apply(this, arguments); const { button, hit } = M.ui; M.hits = []; M.area = []; const b = BD();
+    ctx.fillStyle = 'rgba(10,7,9,.95)'; ctx.fillRect(0, 0, G.LW, G.LH);
+    const L = 12 + G.SAFE.l, T = 12 + G.SAFE.t, B = G.LH - 12 - G.SAFE.b, Rt = G.LW - 12 - G.SAFE.r, SH = 34 * G.FS(), left = Math.max(0, Math.ceil((LIFE - (Date.now() - b.gen)) / 60000));
+    G.txt('委託公告板', L + 6, T + SH / 2 + 1, 18, GOLD, 'left', G.FONT_S, 900); ctx.font = `900 ${18 * G.FS()}px ${G.FONT_S}`; G.txt('約 ' + left + ' 分鐘後換新', L + 20 + ctx.measureText('委託公告板').width, T + SH / 2 + 2, 11, C.sub, 'left', G.FONT, 600);
+    button(Rt - 84, T, 84, SH, '✕ 離開', () => M.close());
+    const ah = b.act.length ? 58 : 0, top = T + SH + 10, bot = B - (ah ? ah + 10 : 0), w = Rt - L, h = bot - top;
+    /* 木板 */
+    const wg = ctx.createLinearGradient(L, top, L, bot); wg.addColorStop(0, '#5a3d26'); wg.addColorStop(1, '#3a2716'); ctx.fillStyle = wg; G.rr(L, top, w, h, 8); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; for (let k = 1; k < 4; k++) { const yy = top + h * k / 4; ctx.beginPath(); ctx.moveTo(L + 6, yy); ctx.lineTo(L + w - 6, yy); ctx.stroke(); }
+    ctx.strokeStyle = '#2a1a0e'; ctx.lineWidth = 3; G.rr(L + 1.5, top + 1.5, w - 3, h - 3, 8); ctx.stroke();
+    const of = b.offer.slice(0, 5), n = Math.max(3, of.length), gap = 12, sw = Math.min(200, (w - 24 - gap * (n - 1)) / n), tot = of.length * sw + (of.length - 1) * gap, x0 = L + (w - tot) / 2;
+    if (!of.length) G.txt('目前沒有新的委託', L + w / 2, top + h / 2, 14, 'rgba(240,225,200,.7)', 'center', G.FONT_S, 900);
+    of.forEach((o, i) => slip(o, x0 + i * (sw + gap), top + 14, sw, h - 28, i));
+    /* 進行中 */
+    if (ah) { const y = B - ah; G.txt('進行中 ' + b.act.length + '／' + MAX, L + 4, y + ah / 2, 12, GOLD, 'left', G.FONT_S, 900); const cx0 = L + 84, cw = (Rt - cx0 - 8 * (MAX - 1)) / MAX;
+      b.act.forEach((o, i) => { const x = cx0 + i * (cw + 8); ctx.fillStyle = 'rgba(40,28,22,.95)'; G.rr(x, y, cw, ah, 6); ctx.fill(); ctx.strokeStyle = o.s2a ? SHU : 'rgba(227,194,122,.35)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, cw - 1, ah - 1, 6); ctx.stroke();
+        ctx.fillStyle = SHU; G.rr(x + 8, y + 8, 18, 18, 3); ctx.fill(); G.txt(o.s2a ? '指' : SEAL[o.t], x + 17, y + 17.5, 11, '#fbf0dc', 'center', G.FONT_S, 900);
+        const tl = lines(o.title.replace(/^[^：]*：/, ''), cw - 100, 12, 1)[0]; G.txt(tl, x + 32, y + 17, 12, C.ink, 'left', G.FONT_S, 900);
+        const pw = cw - 100, py = y + 38; ctx.fillStyle = 'rgba(255,255,255,.1)'; G.rr(x + 10, py, pw, 6, 3); ctx.fill(); ctx.fillStyle = GOLD; G.rr(x + 10, py, Math.max(6, pw * o.k / o.n), 6, 3); ctx.fill();
+        G.txt(o.k + '／' + o.n + '　' + nm(o.map), x + 10, py + 14, 9, C.sub, 'left', G.FONT, 700);
+        const conf = BV.pick === o.id; button(x + cw - 82, y + 12, 74, ah - 24, conf ? '確定放棄' : '放棄', () => { if (conf) drop(o); else BV.pick = o.id; }); }); } };
   function place() { const id = SC.id; if (!POS[id]) return; if (!G.SAVE.data.flags.prologue) return; const p = spot(); if (!p || !HUB.marks) return;
     HUB.marks = HUB.marks.filter(m => m.id !== 'board'); HUB.marks.push({ id: 'board', x: p[0], y: p[1] + 6, label: '委託公告板', kind: 'look', main: false, _obj: 1, run: openBoard }); }   // r3.104.2：_obj＝不畫地上光暈（公告板本身就是物件）
   /* r3.104.2：圖格下緣到最低不透明像素的距離（只算一次，存在格資料上） */
