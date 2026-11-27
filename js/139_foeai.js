@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 139_foeai.js
- * Version : r3.198.0  (2026-11-28)　r3.198.0：地面預警減量（普通攻擊改身上起手閃光、招式預警出手前才出現、同色重疊合併、底色變淡）
+ * Version : r3.199.0  (2026-11-28)　r3.199.0：箭雨的箭改手繪箭矢
+ * 舊版    : r3.198.0  (2026-11-28)　r3.198.0：地面預警減量（普通攻擊改身上起手閃光、招式預警出手前才出現、同色重疊合併、底色變淡）
  * 舊版    : r3.197.0  (2026-11-28)　r3.197.0：敵人招式改播手繪素材（近戰爪痕／揮擊弧光、法球、地爆、重踩震波）
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：重擊時一般妖怪後仰約 0.2 秒；妖怪互相推開（被吸住、擊退中先不推，結束後才散開）
  * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：預警調淡（底色約減半、圖示平常 30%，出手前才亮）
@@ -175,7 +176,7 @@
     return false; }
   /* ---------- 箭雨、法球、爆裂（程式繪製：漸層柔邊，不畫外框線） ---------- */
   function fall(x, y, n, k) { const VX = G.VX; if (!VX || !VX.custom) return; for (let i = 0; i < 3; i++) { const ox = rnd(-0.15, 0.15) * k, dl = i * 2;
-      VX.custom((q, c) => { if (q.t < dl) return; const u = Math.min(1, (q.t - dl) / (n - dl)), z = (1 - u) * k * 2.2; c.save(); c.translate(x + ox, y - z); c.rotate(1.5708); if (VX.arrow2) VX.arrow2(c, k * 0.55, '', false); c.restore(); }, n, 'o'); } }
+      VX.custom((q, c) => { if (q.t < dl) return; const u = Math.min(1, (q.t - dl) / (n - dl)), z = (1 - u) * k * 2.2; if (G.AFX && G.AFX.fr('x2_core', 'fx_arrow_s', 0, x + ox, y - z, { size: k * 0.75, by: 'w', ang: 1.5708 })) return;   /* r3.199.0：箭雨的箭＝手繪箭矢 */ c.save(); c.translate(x + ox, y - z); c.rotate(1.5708); if (VX.arrow2) VX.arrow2(c, k * 0.55, '', false); c.restore(); }, n, 'o'); } }
   function orb(e, a) { const k = HH() * S(e.y); ORB.push({ e, x: e.x + e.face * k * 0.3, y: e.y, z: k * 0.6, a, sp: k * 0.04, t: 0, life: 200, atk: e.atk, tr: [] }); }
   function boomFx(x, y, r) { const VX = G.VX; G.SC.shake = Math.max(G.SC.shake || 0, 4); if (G.ICO && G.ICO.burst) G.ICO.burst({ x, y }, 'fxp_talisman', 5, { z: 0.2 });
     if (AX() && AX().play('b_doma', 'domac_devouring_domain_fx', { x, y, size: r * 3, by: 'w', anc: [0.5, 0.8], tpf: 3 })) return;   /* 地爆＝道摩的手繪咒域 */

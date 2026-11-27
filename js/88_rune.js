@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 88_rune.js
- * Version : r3.197.0  (2026-11-28)　r3.197.0：靈紋／套裝／神器改播手繪素材（風刃、叢雲、斬月、震地、落雷、感電、潮浪、狐火、鬼火、穿雲、鏡返、日鏡、勾玉光線、凍結）；新增手繪素材播放器 G.AFX
+ * Version : r3.199.0  (2026-11-28)　r3.199.0：破甲標記、風球（軌道有變化）、怒氣結束震波、冰緩冰晶改播手繪素材
+ * 舊版    : r3.197.0  (2026-11-28)　r3.197.0：靈紋／套裝／神器改播手繪素材（風刃、叢雲、斬月、震地、落雷、感電、潮浪、狐火、鬼火、穿雲、鏡返、日鏡、勾玉光線、凍結）；新增手繪素材播放器 G.AFX
  * 舊版    : r3.196.0  (2026-11-28)　r3.196.0：靈紋／套裝／神器的幾何圖形全部換成有主題的分層畫法（風刃、斬月、震地、落雷、狐火、光箭、感電、破甲、鏡返、潮浪、鬼火、天光、日鏡、勾玉光線）
  * 舊版    : r3.195.0  (2026-11-28)　r3.195.0：霜結腳下的藍色實線圈改成霜霧
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：冰緩狀態不再畫整片白色橢圓 → 身邊飄冰晶＋腳下淡藍霜圈
@@ -131,6 +132,8 @@
   G.FLAMES = flames;
   function frostMotes(e, k, n) { const sc = S(e.y), h = HH() * (e.ratio || 1) * sc, t = G.t, seed = e._fs || (e._fs = Math.random()), m = Math.min(5, 2 + n);
     ctx.save(); { const rx = h * 0.42 * k; ctx.save(); ctx.translate(e.x, e.y); ctx.scale(1, 0.3); const gg = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); gg.addColorStop(0, 'rgba(225,245,255,' + (0.3 + 0.08 * n) + ')'); gg.addColorStop(0.6, 'rgba(170,220,255,' + (0.16 + 0.05 * n) + ')'); gg.addColorStop(1, 'rgba(170,220,255,0)'); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, rx, 0, TAU); ctx.fill(); ctx.restore(); }   /* r3.195.0：腳下不畫藍色實線圈，改一小片霜霧（層數越多越濃） */
+    /* r3.199.0：冰緩＝3～5 根細小、尖端朝下的手繪冰晶繞著身體轉（轉到背後的較淡） */
+    if (AFX.ok('fx_common', 'skill_ice_shard_a')) { for (let i = 0; i < m; i++) { const a = t * 0.045 + i * TAU / m + seed * 6, bk = Math.sin(a) < 0; AFX.fr('fx_common', 'skill_ice_shard_a', Math.floor(t / 4 + i) % 4, e.x + Math.cos(a) * h * 0.4 * k, e.y - h * (0.62 + 0.08 * Math.sin(t * 0.06 + i * 1.9)) + Math.sin(a) * h * 0.09, { size: Math.max(14, h * 0.24), by: 'w', ang: Math.PI / 2, sy: 0.6, a: bk ? 0.5 : 0.95 }); } ctx.restore(); return; }
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < m; i++) { const a = t * 0.035 + i * TAU / m + seed * 6, ph = (t * 0.012 + i * 0.29 + seed) % 1, x = e.x + Math.cos(a) * h * 0.28 * k, y = e.y - h * (0.15 + 0.7 * ph), r = (2.2 + (i % 2)) * Math.max(0.7, sc), al = Math.sin(ph * Math.PI) * 0.9;
       ctx.strokeStyle = 'rgba(150,215,255,' + al + ')'; ctx.lineWidth = 1; ctx.beginPath();
@@ -194,7 +197,7 @@
       if (s.frz > 0) VX.draw2 && VX.draw2(ctx, 'fx_ice_shell', 0, e.x, e.y - HH() * S(e.y) * k * 0.62, k, { a: 0.85 });
       else if (s.fr > 0) frostMotes(e, k, s.fr);   // r3.166.0：原本整片白色橢圓 → 改成身邊飄的冰晶＋腳下霜圈
       if (s.sk > 0) { const hh = HH() * (e.ratio || 1) * S(e.y); if (!AFX.fr('b_raiju', 'raijuo_electric_burst', 1 + Math.floor((G.t + e.x) / 4) % 3, e.x, e.y - hh * 0.5, { size: hh * 1.15, a: 0.9 })) arcs(ctx, e); }   /* r3.197.0：感電＝雷獸的手繪電光 */   /* r3.196.0：感電＝身上爬的電弧（原本一條閃爍的紫色折線） */
-      if (s.ha > 0) brokenPlate(ctx, e.x, e.y - HH() * (e.ratio || 1) * S(e.y) * 1.2, Math.max(6, HH() * S(e.y) * 0.075), G.t); } }   /* 破甲＝裂開剝落的甲片（原本一道紅折線＋圓圈） */
+      if (s.ha > 0) { const px = e.x, py = e.y - HH() * (e.ratio || 1) * S(e.y) * 1.06 + Math.sin(G.t * 0.1 + e.x) * 2; if (!AFX.fr('b_oni', 'oniking_club_shards', 0, px, py, { size: Math.max(26, HH() * S(e.y) * 0.5), a: Math.min(1, s.ha / 12) })) brokenPlate(ctx, e.x, e.y - HH() * (e.ratio || 1) * S(e.y) * 1.2, Math.max(6, HH() * S(e.y) * 0.075), G.t); } } }   /* r3.199.0：破甲標記＝手繪的碎片 */   /* 破甲＝裂開剝落的甲片（原本一道紅折線＋圓圈） */
 
   /* ======================= 爆氣 ======================= */
   const QI = { t: 0, max: 1, big: false, end: null };
@@ -261,7 +264,7 @@
     const r = hh0.apply(this, arguments);
     if (H.hp <= 0) { if (ON.jg.komakin && ready('yata', 60)) { H.hp = 1; H.inv = 90; sunMirror(); } else if (lvOf('mi') && ready('mi', 90)) { H.hp = 1; H.inv = 90; s2('shiki_doll', { x: H.x, y: H.y, k: 1, life: 36 }); G.UI.banner('紙人替身', '替你擋下了致命一擊'); } }
     else if (H.hp < H.hpMax * 0.5 && lvOf('goho') && ready('goho', 30)) { const B = BUF(); if (B) B.add('dr', 50, sec(6)); E.push({ k: 'goho', t: 0, life: sec(6) }); G.UI.toast('護法童子：6 秒減傷 50%'); }
-    if (H.hp > 0 && H.hp < H.hpMax * 0.3 && lvOf('ikari') && QI.t <= 0 && ready('ikari', 60)) { const L = LVM[lvOf('ikari')]; burst(8, 25, 20, true, () => { { const x0 = H.x, y0 = H.y; KU('ember', () => { const K2 = G.KF, k = HH() * S(y0); K2.burst(x0, y0, 0.5, 3.2); K2.crack(x0, y0, 1.6, 70, true); K2.embers(x0, y0, 0.4, 16, { sp: 1.6, life: 34 }); for (let i = 0; i < 8; i++) { const an = i / 8 * TAU; K2.puff(x0 + Math.cos(an) * 1.6 * k, y0 + Math.sin(an) * 0.6 * k, 1.1); } }); }   /* r3.196.0：怒氣結束的震波＝焰色爆開＋地裂＋火星＋塵柱 */ for (const n of near(H.x, H.y, HH() * 2.2)) dmg(n, 2.0 * L, true); }); }
+    if (H.hp > 0 && H.hp < H.hpMax * 0.3 && lvOf('ikari') && QI.t <= 0 && ready('ikari', 60)) { const L = LVM[lvOf('ikari')]; burst(8, 25, 20, true, () => { { const x0 = H.x, y0 = H.y; KU('ember', () => { const K2 = G.KF, k = HH() * S(y0); /* r3.199.0：怒氣結束＝雷獸的手繪衝擊波往外擴 */ if (!AFX.play('b_raiju', 'raijuo_shock_wave', { x: x0, y: y0, size: u => k * (2.4 + u * 0.13), by: 'w', layer: 'g', tpf: 4 })) { K2.burst(x0, y0, 0.5, 3.2); K2.crack(x0, y0, 1.6, 70, true); for (let i = 0; i < 8; i++) { const an = i / 8 * TAU; K2.puff(x0 + Math.cos(an) * 1.6 * k, y0 + Math.sin(an) * 0.6 * k, 1.1); } } K2.embers(x0, y0, 0.4, 16, { sp: 1.6, life: 34 }); K2.light(x0, y0, 1.8, 16, 0.5, 0.3); }); }   /* r3.196.0：怒氣結束的震波＝焰色爆開＋地裂＋火星＋塵柱 */ for (const n of near(H.x, H.y, HH() * 2.2)) dmg(n, 2.0 * L, true); }); }
     return r; };
 
   /* ======================= 招式本體 ======================= */
@@ -283,7 +286,7 @@
   const PET = { crane: [], fox: null, mag: [], ball: [], ballT: 0 };
   /* r3.197.0：身上帶著的靈紋／套裝／神器用到的手繪素材先備好（每半秒檢查一次，已載入的不會重讀） */
   function afxPre() { const L = []; if (lvOf('kaze')) L.push('lv_windslash'); if (lvOf('zan')) L.push('b_yoshitsune'); if (lvOf('shin')) L.push('b_ezo'); if (lvOf('rai') || ON.set.thunder || ON.set.onibi) L.push('b_izanami'); if (lvOf('den')) L.push('b_raiju'); if (lvOf('un')) L.push('p_hayate_fx'); if (lvOf('hyo')) L.push('p_shion_fx');
-    if (ON.jg.akaorochi) L.push('b_mb_akaorochi'); if (ON.set.tide) L.push('b_kappa'); if (ON.set.foxfire) L.push('b_kyubi'); if (ON.set.mirror || ON.jg.komakin || ON.jg.kinhannya) L.push('b_mb_komakin'); AFX.pre(L); }
+    if (ON.jg.akaorochi) L.push('b_mb_akaorochi'); if (ON.set.tide) L.push('b_kappa'); if (ON.set.foxfire) L.push('b_kyubi'); if (ON.set.mirror || ON.jg.komakin || ON.jg.kinhannya) L.push('b_mb_komakin'); if (lvOf('ha')) L.push('b_oni'); if (ON.set.wind) L.push('b_susanoo'); if (lvOf('ikari')) L.push('b_raiju'); if (lvOf('hyo')) L.push('fx_common'); AFX.pre(L); }
   function petSync() { const want = { crane: lvOf('tsuru') ? 3 : 0, fox: !!lvOf('kitsu'), mag: ON.jg.kinhannya ? 3 : 0, ball: ON.set.wind ? 3 : 0 };
     while (PET.crane.length < want.crane) PET.crane.push({ a: PET.crane.length * TAU / 3, cd: 30 + PET.crane.length * 24, x: H.x, y: H.y, st: 0 }); PET.crane.length = want.crane;
     if (want.fox && !PET.fox) PET.fox = { x: H.x - 30, y: H.y + 8, cd: 60, st: 0, f: 1 }; if (!want.fox) PET.fox = null;
@@ -298,8 +301,9 @@
       else { const e = fx.tg; fx.k++; if (!alive(e) || fx.k > 50) { fx.st = 0; } else { const tx = e.x - Math.sign(e.x - fx.x) * 10, ty = e.y; fx.f = Math.sign(e.x - fx.x) || fx.f; fx.x += (tx - fx.x) * 0.22; fx.y += (ty - fx.y) * 0.22;
           if (Math.hypot(tx - fx.x, ty - fx.y) < 10) { RD(e, 'kitsu', 0.7, true); VX.impact && VX.impact({ x: e.x, y: e.y, z: 0.4, big: 1 }); fx.st = 0; } } } }
     for (const m of PET.mag) { m.a += 0.03; if (--m.cd <= 0) { m.cd = sec(2); const e = nearest(hx, hy, hz * 5); if (e) { const mx = hx + Math.cos(m.a) * hz * 0.75, my = hy - hz * 1.0 + Math.sin(m.a) * hz * 0.2; E.push({ k: 'ray', x0: mx, y0: my, x1: e.x, y1: chest(e), t: 0, life: 10 }); dmg(e, 0.5); } } }
-    if (ON.set.wind) { if (!PET.ball.length) { if (++PET.ballT >= sec(8)) { PET.ballT = 0; PET.ball = [0, 1, 2].map(i => ({ a: i * TAU / 3 })); } }
-      for (const b of PET.ball) { b.a += 0.06; const bx = hx + Math.cos(b.a) * hz * 0.95, by = hy - hz * 0.45 + Math.sin(b.a) * hz * 0.3; b.x = bx; b.y = by;
+    if (ON.set.wind) { if (!PET.ball.length) { if (++PET.ballT >= sec(8)) { PET.ballT = 0; PET.ball = [0, 1, 2].map(i => ({ a: i * TAU / 3, i, u: 0 })); } }
+      /* r3.199.0：風球軌道有變化——每顆的轉速忽快忽慢、半徑一伸一縮、高度上下飄，三顆不同步（原本固定一圈等速） */
+      for (const b of PET.ball) { const bi = b.i || 0; b.u = (b.u || 0) + 1; b.a += 0.045 + 0.03 * Math.sin(b.u * 0.031 + bi * 2.1); const rr = 0.78 + 0.32 * Math.sin(b.u * 0.047 + bi * 1.7), zz = 0.5 + 0.28 * Math.sin(b.u * 0.039 + bi * 2.9), bx = hx + Math.cos(b.a) * hz * rr, by = hy - hz * zz + Math.sin(b.a) * hz * 0.3; b.x = bx; b.y = by;
         const e = foes().find(e => Math.hypot(e.x - bx, (e.y - hy) * 1.4) < hz * 0.45); if (e) { dmg(e, 1.0, true); VX.wind && VX.wind({ x: bx, y: hy, r: 0.6, n: 3, life: 14, col: '200,255,235', face: 1, spin: 0.4 }); b.dead = 1; } }
       PET.ball = PET.ball.filter(b => !b.dead); }
     if (ON.set.thunder && t % sec(10) === 0) { const L = near(hx, hy, hz * 4.5); for (let i = 0; i < 3 && L.length; i++) { const e = L[i % L.length]; G.STORY.later(i * 10, () => { if (!alive(e)) return; strike(e.x, e.y, 6); VX.sigil && VX.sigil({ x: e.x, y: e.y, kind: 'raiden', r: 0.7, life: 22 }); dmg(e, 1.2, true); }); } }
@@ -348,7 +352,8 @@
     for (const c of PET.crane) sp('shiki_crane', Math.floor(G.t / 6) % 4, c.x, c.y, 0.9, { flip: (c.st ? (c.tg && c.tg.x < c.x) : Math.sin(c.a) > 0) });
     if (PET.fox) sp('shiki_fox', PET.fox.st ? 4 + Math.floor(G.t / 5) % 4 : Math.floor(G.t / 8) % 4, PET.fox.x, PET.fox.y, 0.55, { flip: PET.fox.f < 0 });
     for (const m of PET.mag) sp('fx_magatama', 0, H.x + Math.cos(m.a) * hz * 0.75, H.y - hz * 1.0 + Math.sin(m.a) * hz * 0.2, 0.9, { add: 1 });
-    for (const b of PET.ball) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, hz * 0.22); g.addColorStop(0, 'rgba(240,255,250,.9)'); g.addColorStop(0.5, 'rgba(150,240,210,.55)'); g.addColorStop(1, 'rgba(150,240,210,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, hz * 0.22, 0, TAU); ctx.fill();
+    for (const b of PET.ball) { if (AFX.fr('b_susanoo', 'fx_wind_gather', 1 + Math.floor((G.t + (b.i || 0) * 3) / 5) % 2, b.x, b.y, { size: hz * 0.85, flip: Math.sin(b.a) < 0 })) continue;   /* r3.199.0：風球＝須佐之男的手繪旋風 */
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, hz * 0.22); g.addColorStop(0, 'rgba(240,255,250,.9)'); g.addColorStop(0.5, 'rgba(150,240,210,.55)'); g.addColorStop(1, 'rgba(150,240,210,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, hz * 0.22, 0, TAU); ctx.fill();
       ctx.strokeStyle = 'rgba(220,255,245,.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(b.x, b.y, hz * 0.15, b.a * 3, b.a * 3 + 3.6); ctx.stroke(); ctx.restore(); } }
 
   /* ======================= 增益圖示（HUD：名字右邊） ======================= */
