@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 13_weapons.js
- * Version : r3.0.4  (2026-11-12)
+ * Version : r3.140.0  (2026-11-27)　r3.140.0：普攻節奏 W.RHY（每把武器普攻播放倍率，慢下來的武器傷害 ×1/倍率；16_growth 套用）
+ * 舊版    : r3.0.4  (2026-11-12)
  * 變更    : r3.0.4 加入招式（組合技 3 鍵，每武器 12 招，熟練度解鎖）與身法（2 鍵：閃身／後跳／瞬步／滑行／空蟬）；
  *           進化／極意效果由說明解析成實際效果（範圍、多段、劍氣、持續傷害、暈眩、必暴擊、回復、穿透、拉近）；屬性特效對照。
  * 變更    : r3.0.0 新增。10 種武器資料（普攻連段、技×4、特技×4、奧義×1）與熟練度。
@@ -17,6 +18,8 @@
   const BY = {}; for (const w of LIST) { BY[w.id] = w; w.SK = {}; for (const s of w.sk) w.SK[s.id] = s; Object.assign(w, EXTRA[w.id]); w.MV = {}; for (const m of w.mv) w.MV[m.id] = m; w.BD = {}; for (const b of w.body) w.BD[b.id] = b; }
   const PROF_MAX = 12, profNeed = lv => 40 + lv * 40;
   const W = G.WPN = { LIST, BY, PROF_MAX, profNeed,
+    /* r3.140.0：普攻節奏（實測每下間隔→目標）：打刀 14→20、野太刀 26→32、薙刀 23→24、槍 20→24、和弓 17→28、鐵砲 1 */
+    RHY: { katana: 0.7, nodachi: 0.81, naginata: 0.96, yari: 0.83, yumi: 0.61, teppo: 1 },
     curId() { const d = G.RPG.d(); return d && BY[d.weapon] ? d.weapon : 'katana'; },
     cur() { return BY[W.curId()]; },
     prof(w) { const d = G.RPG.d(); w = w || W.curId(); d.wp = d.wp || {}; return d.wp[w] || (d.wp[w] = { lv: 1, exp: 0 }); },

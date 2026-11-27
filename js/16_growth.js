@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 16_growth.js
- * Version : r3.125.0  (2026-11-26)　r3.125.0：第 1 章路線清單加入新插入的地圖
+ * Version : r3.140.0  (2026-11-27)　r3.140.0：普攻節奏：武器倍率（WPN.RHY）×（1＋攻速%），可快可慢；慢下來的武器普攻傷害 ×1/倍率
+ * 舊版    : r3.125.0  (2026-11-26)　r3.125.0：第 1 章路線清單加入新插入的地圖
  * 舊版    : r3.103.0  (2026-11-26)　r3.103.0：設定格可帶圖示（第 4 欄，難度用）
  * 舊版    : r3.99.0  (2026-11-26)　r3.99.0：修練 6～10 級（巔峰點數）：效果走 GR.tEff、上限 GR.tMax（126_peak）
  * 舊版    : r3.94.0  (2026-11-26)　r3.94.0：增傷全部改相加（G.DZ），攻擊% 改 s._atkP；夥伴、觸發傷害不吃主角增傷與招式連鎖
@@ -229,7 +230,9 @@
       if (F.fireaura && ++st.auraT >= 60) { st.auraT = 0; for (const e of G.E) if (e.st !== 'dead' && e.st !== 'hurt' && Math.abs(e.x - H.x) < G.HERO_H * 1.6 && Math.abs(e.y - H.y) < 30) { G.damageOni(e, 1.0, false); if (st.berserk > 0) { e.db = e.db || {}; e.db.def = Math.max(e.db.def || 0, 20); } } }
       /* 攻速：普攻動作多走一格（事件用 >= 判定，不會漏） */
       const as = Math.min(50, (R().S.aspd || 0) + G.BUFF.get('aspd') + st.stacks + (st.berserk > 0 ? 20 : 0));
-      if (as > 0 && H.act && H.act.kind === 'atk') { st.as += as / 100; if (st.as >= 1) { st.as -= 1; H.t++; } }
+      if (H.act && H.act.kind === 'atk') { const rk = (G.WPN.RHY && G.WPN.RHY[G.WPN.curId()]) || 1;   // r3.140.0：武器普攻節奏
+        if (!H.act._rk) { H.act._rk = 1; if (rk < 1) H.act.mult = (H.act.mult || 1) / rk; } if (H.act.mvx && H.act.mvx.norm && !H.act.mvx._rk) { H.act.mvx._rk = 1; H.act.mvx.mul = H.act.mult || 1; }   // 85_normal 普攻用 mvx.mul（不論先後都對齊 act.mult）   // 變慢的武器補傷害（每秒輸出不變）
+        st.as += rk * (1 + as / 100) - 1; if (st.as >= 1) { st.as -= 1; H.t++; } else if (st.as <= -1) { st.as += 1; if (H.t > 1) H.t--; } } else st.as = 0;
       if (F.magnet) for (const l of G.LOOT) if (l.t >= 24) { l.x += (H.x - l.x) * 0.08; l.y += (H.y - l.y) * 0.08; } },
     spdBonus() { const F = GR.F, st = GR.st; let v = 0; if (F.sprint && st.combatT > 180) v += 20; if (F.qiFullSpd && d().qi >= 100) v += 10; if (F.touki && st.toukiT > 0) v += 20; return v; },
     /* ---------- 轉職／外觀 ---------- */
