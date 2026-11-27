@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 109_katana.js
- * Version : r3.171.0  (2026-11-27)　r3.171.0：普攻第 4 段（迴旋收尾）補上殘月藍刀光（原本漏改，還是白色月牙）
+ * Version : r3.174.0  (2026-11-28)　r3.174.0：招式傷害分級調高（起約 1.2 倍普攻、連 1.5 倍、收 2.2 倍）；落斬收勢擊暈 1→0.5 秒並可砸落空中敵人；開架改「見切」；納刀退氣 +10→+5；一息截隙打斷回饋加強
+ * 舊版    : r3.171.0  (2026-11-27)　r3.171.0：普攻第 4 段（迴旋收尾）補上殘月藍刀光（原本漏改，還是白色月牙）
  * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：完美閃避記時間（H._pfT），打刀特性「反擊 +30%」用
  * 舊版    : r3.74.0  (2026-11-24)
  * 變更    : r3.74.0 普攻換成殘月藍（新增 MV2.N.katana：出手時間與倍率照動作圖事件，刀光改實心藍月牙、命中改藍色）。
@@ -55,45 +56,50 @@
   const near = (c, R) => { let b = null, bd = 1e9; for (const e of G.E) { if (e.st === 'dead' || e.delay > 0) continue; const dx = (e.x - c.x) * c.f, d = Math.hypot(e.x - c.x, (e.y - c.y) * 1.5); if (dx > -0.3 * c.hh && d < R * c.hh && d < bd) { bd = d; b = e; } } return b; };
   function pass(c, x1, y1) { const s = 8; for (let i = 1; i <= s; i++) { const x = H.x + (x1 - H.x) / (s - i + 1), y = H.y + (y1 - H.y) / (s - i + 1); if (ok(x, y)) { H.x = x; H.y = y; } else break; } }   // 穿越（不受敵人阻擋）
   /* 架：期間被打→counter；沒被打→收架補斬 */
-  const guardRun = (o) => function (c, t) { if (t === 1) stance(c.a.T - 6); if (t === c.a.T - 6 && !c.a.mvx.ctr) { sl(c, { a0: -2.0, a1: 0.8, r: 1.15, m: 0.6 }); fx(c, 0.6, 0.9, 0, 1); } };
+  const guardRun = (o) => function (c, t) { if (t === 1) stance(c.a.T - 6); if (t === c.a.T - 6 && !c.a.mvx.ctr) { sl(c, { a0: -2.0, a1: 0.8, r: 1.15, m: 1.0 }); fx(c, 0.6, 0.9, 0, 1); } };
   const D = {
     step_cut: { n: '踏步引刃', cat: '起', cd: 24, T: 26, d: '踏步突進斬，拉近距離', run(c, t) { const s = ST(c); if (t >= 1 && t < s) { c.move(1.2 / (s - 1), 0); if (t % 2) c.ghost(10); }
-        if (t === s) { sl(c, { a0: -2.0, a1: 0.8, sq: 0.7, rot: -0.35, m: 1.0, kb: 1.0 }); fx(c, 0.7, 1.0, -0.35, 1); } } },
+        if (t === s) { sl(c, { a0: -2.0, a1: 0.8, sq: 0.7, rot: -0.35, m: 1.7, kb: 1.0 }); fx(c, 0.7, 1.0, -0.35, 1); } } },
     diagonal_lane: { n: '斜線截路', cat: '起', cd: 30, T: 30, d: '斜向穿過敵人到另一側，路徑上全部斬中（推搖桿上下決定方向）', run(c, t) { const s = ST(c), m = c.a.mvx;
         if (t === 1) { m.p0 = [c.x, c.y]; m.dy = (G.IN.my || 0) > 0.2 ? 1 : (G.IN.my || 0) < -0.2 ? -1 : (c.y > (SC.y0 + SC.y1) / 2 ? -1 : 1); m.sk = []; }
         if (t >= 2 && t <= s) { const k = c.hh; pass(c, H.x + c.f * 2.2 * k / (s - 1), H.y + m.dy * 0.45 * k / (s - 1)); c.ghost(8); for (const e of G.E) if (e.st !== 'dead' && e.delay <= 0 && !m.sk.includes(e) && Math.hypot(e.x - H.x, (e.y - H.y) * 1.5) < 0.85 * k) m.sk.push(e); }
-        if (t === s) { for (const e of m.sk) if (e.st !== 'dead') { G.damageOni(e, 1.1 * c.mul, false); VX.impact && VX.impact(e, 'mid', 'cut'); c.a.mvx.hit = 1; } if (m.sk.length) MV2.onHit && MV2.onHit(c.a); const [x0, y0] = m.p0, L = Math.hypot(H.x - x0, (H.y - y0)), an = Math.atan2(H.y - y0, H.x - x0); scar((x0 + H.x) / 2, (y0 + H.y) / 2, 0.5, an, L / c.hh, 30); dust(H.x, H.y, 0.5, 6, 1); } } },
-    low_probe: { n: '低探', cat: '起', cd: 24, T: 24, d: '下段刺，命中敵人緩速 40%（腳下冰藍圈）', run(c, t) { const s = ST(c);
+        if (t === s) { for (const e of m.sk) if (e.st !== 'dead') { G.damageOni(e, 1.8 * c.mul, false); VX.impact && VX.impact(e, 'mid', 'cut'); c.a.mvx.hit = 1; } if (m.sk.length) MV2.onHit && MV2.onHit(c.a); const [x0, y0] = m.p0, L = Math.hypot(H.x - x0, (H.y - y0)), an = Math.atan2(H.y - y0, H.x - x0); scar((x0 + H.x) / 2, (y0 + H.y) / 2, 0.5, an, L / c.hh, 30); dust(H.x, H.y, 0.5, 6, 1); } } },
+    low_probe: { n: '低探', cat: '起', cd: 24, T: 24, d: '下段刺，命中敵人緩速 40%', run(c, t) { const s = ST(c);
         if (t === s) { KF().stab({ x: c.x, y: c.y, f: c.f, len: 1.6, w: 0.11, cy: 0.3, dur: 2, life: 12 });
-          const hs = c.hit({ shape: 'line', len: 1.75, w: 0.4, m: 0.8, slow: 40, lv: 'light', kind: 'pierce' }); for (const e of hs) { KF().frost(e, 120); tag(e, '緩速', '#9fd0ff'); } dust(c.x + c.f * 1.2 * c.hh, c.y, 0.25, 4, 0.7); } } },
-    rising_disrupt: { n: '挑刃散勢', cat: '連', cd: 30, T: 28, d: '由下往上挑，把敵人挑上空中', run(c, t) { const s = ST(c);
-        if (t === s) { sl(c, { a0: 1.2, a1: -1.35, sq: 1, r: 1.1, m: 1.0, launch: 50 }); dust(c.x + c.f * 0.6 * c.hh, c.y, 0.9, 8, 1.2); } } },
+          const hs = c.hit({ shape: 'line', len: 1.75, w: 0.4, m: 1.5, slow: 40, lv: 'light', kind: 'pierce' }); for (const e of hs) { KF().frost(e, 120); tag(e, '緩速', '#9fd0ff'); } dust(c.x + c.f * 1.2 * c.hh, c.y, 0.25, 4, 0.7); } } },
+    rising_disrupt: { n: '挑刃散勢', cat: '連', cd: 30, T: 28, d: '由下往上挑，把敵人挑上空中（接「落斬收勢」可把空中的敵人砸回地面）', run(c, t) { const s = ST(c);
+        if (t === s) { sl(c, { a0: 1.2, a1: -1.35, sq: 1, r: 1.1, m: 1.9, launch: 50 }); dust(c.x + c.f * 0.6 * c.hh, c.y, 0.9, 8, 1.2); } } },
     turning_sweep: { n: '回身分月', cat: '連', cd: 30, T: 32, d: '原地迴身一圈，前後敵人同時斬中', run(c, t) { const s = ST(c);
-        if (t === s) { sl(c, { a0: Math.PI, a1: -Math.PI * 1.02, shape: 'circle', hr: 1.45, sw: 7, life: 16, trail: 3.6, m: 1.0 }); crescent(c.x + c.f * 0.6 * c.hh, c.y, 0.5, c.f, 1.1, 0, 16); crescent(c.x - c.f * 0.6 * c.hh, c.y, 0.5, -c.f, 1.1, 0, 16); dust(c.x, c.y, 0.5, 8, 1.3); } } },
+        if (t === s) { sl(c, { a0: Math.PI, a1: -Math.PI * 1.02, shape: 'circle', hr: 1.45, sw: 7, life: 16, trail: 3.6, m: 2.1 }); crescent(c.x + c.f * 0.6 * c.hh, c.y, 0.5, c.f, 1.1, 0, 16); crescent(c.x - c.f * 0.6 * c.hh, c.y, 0.5, -c.f, 1.1, 0, 16); dust(c.x, c.y, 0.5, 8, 1.3); } } },
     arc_step: { n: '弧步', cat: '連', cd: 30, T: 30, d: '弧線繞到敵人背後再斬，背擊傷害 ×1.3', run(c, t) { const s = ST(c), m = c.a.mvx;
         if (t === 1) { const e = near(c, 2.8); m.e = e; m.p0 = [c.x, c.y]; m.p1 = e ? [e.x + c.f * 0.75 * c.hh, e.y] : [c.x + c.f * 1.5 * c.hh, c.y]; m.side = (G.IN.my || 0) > 0 ? 1 : -1; }
         if (t >= 1 && t < s) { const u = t / (s - 1), [x0, y0] = m.p0, [x1, y1] = m.p1, x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u + m.side * Math.sin(u * Math.PI) * 0.55 * c.hh; if (ok(x, y)) { H.x = x; H.y = y; } if (t % 2) c.ghost(10); }
-        if (t === s) { if (m.e) { H.face = -c.a.face0; c.a.face0 = H.face; } sl(c, { a0: -1.8, a1: 1.0, sq: 0.55, r: 1.2, m: m.e ? 1.3 : 1.0, crit: !!m.e }); fx(c, 0.6, 1.0, 0.2, 1); if (m.e) tag(m.e, '背擊', '#ffd76a'); } } },
+        if (t === s) { if (m.e) { H.face = -c.a.face0; c.a.face0 = H.face; } sl(c, { a0: -1.8, a1: 1.0, sq: 0.55, r: 1.2, m: m.e ? 2.5 : 1.9, crit: !!m.e }); fx(c, 0.6, 1.0, 0.2, 1); if (m.e) tag(m.e, '背擊', '#ffd76a'); } } },
     return_weave: { n: '返織', cat: '連', cd: 30, T: 30, d: '往返兩斬，第二斬破防 15%', run(c, t) { const s = ST(c);
-        if (t === s - 4) { sl(c, { a0: -2.0, a1: 0.9, sq: 0.8, rot: -0.45, m: 0.6 }); crescent(c.x + c.f * 0.6 * c.hh, c.y, 0.6, c.f, 0.9, -0.45, 14); }
-        if (t === s + 3) { sl(c, { a0: 2.0, a1: -0.9, sq: 0.8, rot: 0.45, m: 0.7, def: 15, cutAng: 0.6 }); crescent(c.x + c.f * 0.6 * c.hh, c.y, 0.5, c.f, 0.9, 0.45, 14); dust(c.x + c.f * 0.6 * c.hh, c.y, 0.5, 5, 0.9); } } },
-    downward_finish: { n: '落斬收勢', cat: '收', cd: 48, T: 38, d: '躍起下劈，擊倒敵人並留下刀痕', run(c, t) { const s = ST(c);
+        if (t === s - 4) { sl(c, { a0: -2.0, a1: 0.9, sq: 0.8, rot: -0.45, m: 1.0 }); crescent(c.x + c.f * 0.6 * c.hh, c.y, 0.6, c.f, 0.9, -0.45, 14); }
+        if (t === s + 3) { sl(c, { a0: 2.0, a1: -0.9, sq: 0.8, rot: 0.45, m: 1.2, def: 15, cutAng: 0.6 }); crescent(c.x + c.f * 0.6 * c.hh, c.y, 0.5, c.f, 0.9, 0.45, 14); dust(c.x + c.f * 0.6 * c.hh, c.y, 0.5, 5, 0.9); } } },
+    downward_finish: { n: '落斬收勢', cat: '收', cd: 48, T: 38, d: '躍起下劈，擊暈 0.5 秒；空中的敵人額外受一次會心並被砸回地面', run(c, t) { const s = ST(c);
         if (t >= 2 && t < s - 2) c.move(0.5 / (s - 4), 0); if (t === 3) c.ghost(14);
-        if (t === s) { sl(c, fin(c, { a0: -2.1, a1: 0.95, sq: 1, r: 1.3, w: 0.42, m: 1.6, lv: 'heavy', stun: 60, kb: 0.6, sw: 4 })); const x = c.x + c.f * 0.75 * c.hh;
+        if (t === s) { sl(c, fin(c, { a0: -2.1, a1: 0.95, sq: 1, r: 1.3, w: 0.42, m: 3.2, lv: 'heavy', stun: 30, kb: 0.6, sw: 4 })); const x = c.x + c.f * 0.75 * c.hh;
+          for (const e of G.E) if (e.st !== 'dead' && e.lz > 0 && Math.hypot(e.x - x, (e.y - c.y) * 1.5) < 1.7 * c.hh) { G.damageOni(e, 1.4 * c.mul, true); e.lzv = -14; tag(e, '墜', '#ffd76a'); KF().burst(e.x, e.y, 0.5 * (e.ratio || 1) + e.lz / (HH() * S(e.y)), 2); }   /* r3.174.0：挑飛的後續 */
           crescent(x, c.y, 0.7, c.f, 1.3, 1.25, 22, 0); scar(x, c.y, 0.02, 0.15 * c.f, 1.4, 40); dust(x, c.y, 0.2, 12, 1.4); KF().puff(x, c.y, 1.2); SC.shake = Math.max(SC.shake || 0, 4); stop(5); } } },
     leaving_cut: { n: '離刃', cat: '收', cd: 48, T: 38, d: '斬完立刻後退，0.4 秒後原地月牙爆裂', run(c, t) { const s = ST(c), m = c.a.mvx;
-        if (t === s) { sl(c, fin(c, { a0: -2.5, a1: 1.2, r: 1.35, w: 0.36, m: 0.8, sw: 5, arc: 2.8 })); m.p = [c.x + c.f * 0.85 * c.hh, c.y]; crescent(m.p[0], c.y, 0.55, c.f, 0.6, 0, 26, 0); }
+        if (t === s) { sl(c, fin(c, { a0: -2.5, a1: 1.2, r: 1.35, w: 0.36, m: 1.2, sw: 5, arc: 2.8 })); m.p = [c.x + c.f * 0.85 * c.hh, c.y]; crescent(m.p[0], c.y, 0.55, c.f, 0.6, 0, 26, 0); }
         if (t > s && t <= s + 9) c.move(-0.12, 0); if (t === s + 2) c.ghost(12);
         if (t === s + 24) { const [x, y] = m.p; crescent(x, y, 0.5, c.f, 1.4, 0, 20, 0); crescent(x, y, 0.5, -c.f, 1.4, 0, 20, 0); dust(x, y, 0.5, 14, 1.6); KF().puff(x, y, 1); KF().light(x, y, 1.2, 16, 0.5, 0.5);
-          c.hit(fin(c, { shape: 'circle', x, y, r: 1.0, m: 1.2, lv: 'heavy', kind: 'cut' })); stop(4); } } },
-    sheathed_retreat: { n: '納刀退', cat: '收', cd: 48, T: 40, d: '一刀後退步收刀：下一擊必暴、氣 +10', run(c, t) { const s = ST(c);
+          c.hit(fin(c, { shape: 'circle', x, y, r: 1.0, m: 2.0, lv: 'heavy', kind: 'cut' })); stop(4); } } },
+    sheathed_retreat: { n: '納刀退', cat: '收', cd: 48, T: 40, d: '一刀後退步收刀：下一擊必暴、氣 +5', run(c, t) { const s = ST(c);
         if (t < s && t <= 10) c.move(-0.07, 0);
-        if (t === s) { sl(c, fin(c, { a0: -0.4, a1: 0.3, sq: 0.25, r: 1.6, w: 0.18, m: 0.7, sw: 2 })); scar(c.x + c.f * 0.9 * c.hh, c.y, 0.5, 0, 1.5, 22); }
-        if (t === c.a.T - 6) { G.BUFF.add('nextCrit', 100, 300); const d = G.RPG.d(); d.qi = Math.min(100, (d.qi || 0) + 10); KF().glint(c.x + c.f * 0.15 * c.hh, c.y, 0.45, 0.3, 12); dust(c.x + c.f * 0.15 * c.hh, c.y, 0.45, 6, 0.6); G.NUMS.push({ x: H.x, y: H.y - HH() * S(H.y) - 10, v: '下一擊必暴', t: 0, col: '#ffd76a' }); } } },
+        if (t === s) { sl(c, fin(c, { a0: -0.4, a1: 0.3, sq: 0.25, r: 1.6, w: 0.18, m: 2.2, sw: 2 })); scar(c.x + c.f * 0.9 * c.hh, c.y, 0.5, 0, 1.5, 22); }
+        if (t === c.a.T - 6) { G.BUFF.add('nextCrit', 100, 300); const d = G.RPG.d(); d.qi = Math.min(100, (d.qi || 0) + 5); KF().glint(c.x + c.f * 0.15 * c.hh, c.y, 0.45, 0.3, 12); dust(c.x + c.f * 0.15 * c.hh, c.y, 0.45, 6, 0.6); G.NUMS.push({ x: H.x, y: H.y - HH() * S(H.y) - 10, v: '下一擊必暴', t: 0, col: '#ffd76a' }); } } },
     blade_receive: { n: '交鋒返脈', cat: '架', cd: 36, T: 34, d: '架刀：被打→反擊斬並擊暈；沒被打→收架補斬', run: guardRun({}),
-      counter(c, e) { c.a.mvx.ctr = 1; sl(c, { a0: -2.4, a1: 1.1, r: 1.4, w: 0.45, m: 1.6, lv: 'heavy', stun: 40, sw: 3 }); fx(c, 0.6, 1.3, 0, 2); tag(e, '返', '#bfe0ff'); stop(8); } },
-    open_guard: { n: '開架', cat: '架', cd: 36, T: 36, d: '開架：被打→反擊並讓下一擊必暴；沒被打→收架補斬', run: guardRun({ col: '190,215,255' }),
-      counter(c, e) { c.a.mvx.ctr = 1; G.BUFF.add('nextCrit', 100, 300); sl(c, { a0: -2.0, a1: 0.9, r: 1.25, m: 1.0 }); fx(c, 0.6, 1.0, 0, 1); tag(e, '見破', '#bfe0ff'); stop(10); } }
+      counter(c, e) { c.a.mvx.ctr = 1; sl(c, { a0: -2.4, a1: 1.1, r: 1.4, w: 0.45, m: 3.0, lv: 'heavy', stun: 40, sw: 3 }); fx(c, 0.6, 1.3, 0, 2); tag(e, '返', '#bfe0ff'); stop(8); } },
+    /* r3.174.0：原「開架」跟「交鋒返脈」幾乎一樣 → 改成「見切」：前 0.25 秒內被打＝繞到背後必暴一刀＋擊暈；之後才被打＝一般格擋反擊 */
+    open_guard: { n: '見切', cat: '架', cd: 36, T: 36, d: '看穿出手：架起後 0.25 秒內被打→瞬間繞到敵人背後，必暴一刀並擊暈 1 秒；太晚才被打→一般反擊；沒被打→收架補斬', run: guardRun({ col: '190,215,255' }),
+      counter(c, e) { c.a.mvx.ctr = 1; const perfect = H.t <= 15;
+        if (perfect && e && e.st !== 'dead') { c.ghost(14); const bx = e.x + (e.x > H.x ? 1 : -1) * 0.7 * c.hh; if (ok(bx, e.y)) { H.x = bx; H.y = e.y; } H.face = e.x > H.x ? 1 : -1; c.a.face0 = H.face; H.inv = Math.max(H.inv || 0, 20);
+          sl(c, { a0: -2.4, a1: 1.1, r: 1.45, w: 0.46, m: 4.0, lv: 'heavy', crit: true, stun: 60, sw: 3 }); fx(c, 0.6, 1.4, 0, 2); KF().glint(H.x, H.y, 0.6, 0.6, 14); tag(e, '見切', '#ffd76a'); G.BUFF.add('nextCrit', 100, 300); SC.shake = Math.max(SC.shake || 0, 5); stop(14); }
+        else { sl(c, { a0: -2.0, a1: 0.9, r: 1.25, m: 1.6 }); fx(c, 0.6, 1.0, 0, 1); tag(e, '格擋', '#bfe0ff'); stop(8); } } }
   };
   /* 普攻（r3.74.0）：動作、出手時間、倍率照原本（動作圖事件），只把白色素材刀光換成殘月藍實心刀光＋藍色命中（原本走 03 的素材特效） */
   const NAT = (c, j) => { const e = c.a.ev0 && c.a.ev0[j || 0]; return e ? e.at : 8; }, NDM = (c, j) => { const e = c.a.ev0 && c.a.ev0[j || 0]; return e ? (e.m || 1) : 1; };
@@ -107,7 +113,7 @@
         if (t === f - 2) nsl(c, { a0: -2.5, a1: 1.2, sq: 0.4, r: 1.5, w: 0.4, sw: 4, life: 15, m: NDM(c), lv: 'heavy', kb: 0.5, arc: 2.6, hr: 1.6 });
         if (f2 > 0 && t === f2 - 2) nsl(c, { a0: 1.3, a1: -2.4, sq: 0.45, rot: 0.1, r: 1.55, w: 0.42, sw: 4, life: 15, m: NDM(c, 1), lv: 'heavy', kb: 0.5, arc: 2.6, hr: 1.6 }); } }];
   const regN = () => { if (MV2.N && MV2.N.katana !== NK) MV2.N.katana = NK; };
-  function regMv() { MV2.reg('katana', D); const w = G.WPN.BY.katana; if (w) for (const m of w.mv) if (D[m.id]) m.d = D[m.id].d; }
+  function regMv() { MV2.reg('katana', D); const w = G.WPN.BY.katana; if (w) for (const m of w.mv) if (D[m.id]) { m.d = D[m.id].d; if (m.id === 'open_guard') m.n = '見切'; } }
   G.KT = { arcBlade, dust, BL, ST, stop, tag, stance };   // 110_katana_hiden 共用
   /* ---------- 技・特技 ---------- */
   const LV = c => c.a.mvx.lv || 1, U = {
@@ -135,7 +141,7 @@
     special_breath: { n: '一息截隙', kind: 'skill', T: 34, run(c, t) { const lv = LV(c), s = ST(c);
         if (t === s) { const busy = G.E.filter(e => e.st === 'atk' && !e.atkHit), hs = slH(c, { a0: -0.6, a1: 0.5, sq: 0.35, r: 1.4, w: 0.22, sw: 2, m: 1.0, stun: 40 }), cut = hs.some(e => busy.includes(e));
           const d = G.RPG.d(), q = cut ? 30 : 15; d.qi = Math.min(100, (d.qi || 0) + q * (lv >= 3 ? 1.5 : 1)); scar(c.x + c.f * 0.8 * c.hh, c.y, 0.5, 0, 1.4, 20);
-          if (cut) { for (const e of hs) if (busy.includes(e)) { G.damageOni(e, 0.6 * c.mul, true, true); tag(e, '截', '#ffd76a'); } stop(8); dust(c.x + c.f * 0.8 * c.hh, c.y, 0.5, 10, 1.2); }
+          if (cut) { for (const e of hs) if (busy.includes(e)) { G.damageOni(e, 0.6 * c.mul, true, true); tag(e, '截', '#ffd76a'); KF().use('holy', () => { KF().burst(e.x, e.y, 0.55 * (e.ratio || 1), 2.4); KF().glint(e.x, e.y, 0.6 * (e.ratio || 1), 0.7, 16); }); } stop(14); SC.shake = Math.max(SC.shake || 0, 4); G.UI.toast('截隙成功　氣大量回復'); dust(c.x + c.f * 0.8 * c.hh, c.y, 0.5, 10, 1.2); }   /* r3.174.0：打斷成功的回饋加強（金色星光、較長定格、提示） */
           G.NUMS.push({ x: H.x, y: H.y - HH() * S(H.y) - 10, v: '氣 +' + Math.round(q * (lv >= 3 ? 1.5 : 1)), t: 0, col: '#ffc0d6' }); if (lv >= 5) G.BUFF.add('aspd', 15, 300); } } },
     special_home: { n: '半月歸鞘', kind: 'guard', cat: '架', T: 52, run(c, t) { if (t === 1) stance(c.a.T - 6);
         if (t === c.a.T - 6 && !c.a.mvx.ctr) { sl(c, { a0: -0.5, a1: 0.4, sq: 0.3, r: 1.8, w: 0.2, sw: 2, m: 0.8 }); scar(c.x + c.f * 1.0 * c.hh, c.y, 0.5, 0, 1.6, 22); } },
