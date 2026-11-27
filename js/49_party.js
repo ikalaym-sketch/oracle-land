@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 49_party.js
- * Version : r3.59.0  （r3.59.0：招式 noFit 不壓縮事件時點）　r3.58.0：出招名字依定位上色、大連攜字級 18
+ * Version : r3.144.0  (2026-11-27)　r3.144.0：夥伴放招的名字改成左邊頭像血條旁的泡泡（統一字色、無符號；大連攜外框閃一下），頭上的字拿掉
+ * 舊版    : r3.59.0  （r3.59.0：招式 noFit 不壓縮事件時點）　r3.58.0：出招名字依定位上色、大連攜字級 18
  * 舊版    : r3.21.0  （r3.21.0：夥伴沿牆滑開，卡住 0.75 秒跟到主角旁）
  * 舊版    : r3.19.2  （r3.19.2：滿版時夥伴頭像貼齊左側）
  * 舊版    : r3.10.1  (2026-11-13)
@@ -177,7 +178,7 @@
     { const w = 14 * s * Math.min(1.3, def.ratio + 0.25); ctx.fillStyle = 'rgba(30,20,10,.32)'; ctx.beginPath(); ctx.ellipse(P.x, P.y, w, w * 0.32, 0, 0, 6.283); ctx.fill(); }
     const a = P.st === 'down' ? 0.85 : P.inv > 0 && P.hurtT > 0 && (G.t >> 2) % 2 ? 0.5 : 1;
     A.draw(u, fr, P.x, P.y, sc, (P.face < 0) !== !!def.flip, a);
-    if (P.say && P.say.t-- > 0) G.txt((P.say.sp ? '★' : '') + P.say.n, P.x, P.y - HH() * def.ratio * s * 1.05 - 20 - (70 - P.say.t) * 0.15, P.say.sp ? 18 : P.say.ch === 'autonomous' ? 13 : 15, P.say.sp ? '#ffd23c' : ({ command: '#7fd8ff', smallCombo: '#8dffb0', autonomous: '#e8e8e8' })[P.say.ch] || '#bfe8ff', 'center', G.FONT_S, 900);
+    /* r3.144.0：招式名改在左上頭像旁的泡泡顯示（PY.hud） */
     if (P.st === 'down') { const q = P.rev / 120; G.txt('扶起 ' + Math.round(q * 100) + '%', P.x, P.y - HH() * def.ratio * s - 14, 11, q > 0 ? '#ffe7a8' : '#d8c9b0', 'center'); }
     else if (P.hp < P.hpMax) { const w = 34, y = P.y - HH() * def.ratio * s * 1.05 - 8; ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(P.x - w / 2 - 1, y - 1, w + 2, 5); ctx.fillStyle = '#7fd36b'; ctx.fillRect(P.x - w / 2, y, w * P.hp / P.hpMax, 3); } };
 
@@ -194,7 +195,16 @@
       ctx.lineWidth = ready ? 3 : 1.5; ctx.strokeStyle = ready ? `rgba(255,214,90,${0.6 + 0.4 * Math.sin(G.t * 0.2)})` : 'rgba(227,194,122,.7)'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.283); ctx.stroke();
       ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + r * 2 + 6, y + 8, 40, 5); ctx.fillStyle = '#7fd36b'; ctx.fillRect(x + r * 2 + 6, y + 8, 40 * P.hp / P.hpMax, 5);
       ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + r * 2 + 6, y + 17, 40, 4); ctx.fillStyle = ready ? '#ffd65a' : '#6fb7ff'; ctx.fillRect(x + r * 2 + 6, y + 17, 40 * P.link / 100, 4);
-      G.txt(ready ? '大連攜' : cd > 0 ? Math.ceil(cd / 60) + '秒' : '指令', x + r * 2 + 6, y + 33, 10, ready ? '#ffd65a' : '#d8c9b0', 'left'); }); };
+      G.txt(ready ? '大連攜' : cd > 0 ? Math.ceil(cd / 60) + '秒' : '指令', x + r * 2 + 6, y + 33, 10, ready ? '#ffd65a' : '#d8c9b0', 'left');
+      bubble(P, x + r * 2 + 6 + 40 + 10, y + 14); }); };
+  /* r3.144.0：放招泡泡——血條右邊，尖角指向頭像；彈出 0.15 秒、停約 1 秒、淡出 0.3 秒；大連攜外框閃一下 */
+  function bubble(P, bx, by) { const S = P.say; if (!S || !(S.t > 0)) return; S.t--; const age = 70 - S.t, k = Math.min(1, age / 9), a = Math.min(1, S.t / 18), fs = G.FS ? G.FS() : 1;
+    ctx.save(); ctx.font = `900 ${12 * fs}px ${G.FONT_S}`; const tw = ctx.measureText(S.n).width, w = tw + 18, h = 22 * Math.max(1, fs * 0.9), sc = 0.7 + 0.3 * (1 - Math.pow(1 - k, 3));
+    ctx.globalAlpha = a; ctx.translate(bx, by); ctx.scale(sc, sc);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(7, -5); ctx.lineTo(7, 5); ctx.closePath(); ctx.fillStyle = 'rgba(16,10,14,.85)'; ctx.fill();
+    G.rr(6, -h / 2, w, h, 7); ctx.fillStyle = 'rgba(16,10,14,.85)'; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(227,194,122,.75)'; ctx.stroke();
+    if (S.sp && age < 24) { const f = 1 - age / 24; ctx.lineWidth = 2 + 3 * f; ctx.strokeStyle = `rgba(255,236,170,${0.9 * f})`; G.rr(6 - 2 * f, -h / 2 - 2 * f, w + 4 * f, h + 4 * f, 8); ctx.stroke(); }
+    G.txt(S.n, 6 + w / 2, 1, 12, '#f3e8d2', 'center', G.FONT_S, 900); ctx.restore(); }
   PY.tap = function (p) { for (const b of BTN) { if (p.x < b.x || p.x > b.x + b.w || p.y < b.y || p.y > b.y + b.h) continue; const P = b.P;
       if (P.st === 'down' || P.cur) return true; if (!P.tg || !alive(P.tg)) P.tg = pickTarget(P);
       if (P.link >= 100) { if (PY.cast(P, 'grandCombo', 'tap')) P.link = 0; return true; }
