@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 05_dialog.js
- * Version : r3.157.0  (2026-11-27)　r3.157.0：接入 68 張對話半身像（a/bust，講話時才載入；茨木／景綱／晴明等簡稱也對得到）
+ * Version : r3.157.2  (2026-11-27)　r3.157.2：對話開始前先等半身像載好（最多 0.6 秒），連選項分支一起預載——修正第一次出場（如五條大橋弁慶）沒有頭像
+ * 舊版    : r3.157.0  (2026-11-27)　r3.157.0：接入 68 張對話半身像（a/bust，講話時才載入；茨木／景綱／晴明等簡稱也對得到）
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：出選項時上方保留上一句台詞（誰在問、問什麼）
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：記錄對話結束時間（_endT，橫幅延後用）
  * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：對話改成半身頭像：框外上方站人，位置在一段對話內固定（蒼真右、對方左），講話的人亮、其他人暗；名字牌移到講話者那側；有底色的頭像自動去背
@@ -25,14 +26,21 @@
     '長壁姬': 'osakabe', '源義經': 'yoshitsune', '鬼灘': 'onada', '道滿': 'doman', '年輕的陰陽師': 'doman', '澄岳': 'chogaku', '宗八': 'sohachi', '鬼王': 'oniou', '雷獸': 'raiju', '花澄': 'hanasumi', '砂狐': 'sagitsune',
     '阿德婆婆': 'otoku', '阿德': 'otoku', '蓬庵': 'hoan', '汀江': 'migiwae', '潮丸的娘': 'migiwae', '巡檢孫六': 'magoroku', '孫六': 'magoroku', '九尾': 'kyubi', '鬼族使者': 'oni_envoy', '阿紺': 'okon', '染布的阿紺': 'okon', '爐火女神': 'hearth_goddess',
     '海邊的河童': 'kappa_sea', '安倍晴明': 'seimei', '晴明': 'seimei', '阿春': 'oharu', '劍士的亡魂': 'swordsman_ghost', '鎌鼬': 'kamaitachi', '鎌鼬長兄': 'kamaitachi', '阿菊': 'okiku', '河童大將': 'kappa_general',
-    '村長': 'village_chief', '鬼族守爐人': 'oni_keeper', '貓又': 'nekomata', '茶屋婆婆': 'teahouse_granny', '梅乃婆婆': 'umeno', '受傷的人魚': 'mermaid', '真穗': 'maho' };
+    '村長': 'village_chief', '鬼族守爐人': 'oni_keeper', '貓又': 'nekomata', '茶屋婆婆': 'teahouse_granny', '梅乃婆婆': 'umeno', '受傷的人魚': 'mermaid', '真穗': 'maho',
+    '半兵衛': 'hanbei', '行商・半兵衛': 'hanbei', '潮丸': 'shiomaru', '甚藏': 'jinzo', '太吉': 'takichi', '挑夫太吉': 'takichi', '阿絹': 'okinu', '朔兵衛': 'sakubei', '千景': 'chikage', '鈴緒': 'suzuo', '冬馬': 'toma',
+    '柚吉': 'yuzukichi', '小百合': 'sayuri', '蓮太': 'renta', '笹音': 'sasane', '太助': 'tasuke', '拉車的太助': 'tasuke', '槇之介': 'makinosuke', '小太郎': 'kotaro', '阿吉': 'akichi', '渡船夫': 'ferryman', '無名武士': 'nameless_samurai',
+    '傘妖': 'kasaobake', '鬼族的母親': 'oni_mother', '織娘之女': 'weaver_girl', '葦穗村的長老': 'ashiho_elder', '士兵隊長': 'guard_captain', '道摩兵': 'doma_soldier', '道摩的副將': 'doma_general',
+    '鬼族的孩子': 'oni_child', '鬼族的大叔': 'oni_uncle', '人類的攤販': 'vendor_human', '鬼族的攤販': 'vendor_oni', '老人': 'old_man', '陰陽頭': 'onmyo_head', '漁婦': 'fishwife', '掌櫃': 'innkeeper', '老闆娘': 'landlady',
+    '老爺爺': 'grandpa', '放牛的孩子': 'cowherd', '前鬼': 'zenki', '後鬼': 'goki', '被綁住的小妖': 'bound_imp', '黑符陰陽師': 'kurofu', '黑符': 'kurofu', '仙鶴': 'crane', '人類代表': 'rep_human', '鬼族代表': 'rep_oni',
+    '村婦': 'village_woman', '小河童': 'kappa_child', '鬼族的長老': 'oni_elder', '使者': 'messenger', '宿場的老闆': 'post_owner', '農婦': 'farm_wife' };
   const BREQ = {};
   function bustKey(n) { const b = BN[n]; if (!b) return null; const k = 'bust_' + b; if (G.IMG[k]) return k;
-    if (!BREQ[k]) { BREQ[k] = 1; G.ASSET.img(k, 'a/bust/' + k + '.webp').catch(() => {}); } return null; }
+    if (!BREQ[k]) { BREQ[k] = 1; G.ASSET.img(k, 'a/bust/' + k + '.webp').catch(() => { BREQ[k] = 2; }); }   /* 還沒有圖的角色：記下失敗，之後不再等 */ return null; }
   const D = G.DLG = { list: null, i: 0, shown: 0, done: null, choice: null, log: false, skip: false, B: {},
     active() { return !!this.list; },
     get who() { const L = this.list && this.list[this.i]; return L && L.who; },
-    start(list, done) { for (const L of list || []) if (L && L.who) bustKey(L.who);   /* r3.157.0：先載這段對話會用到的半身像 */
+    start(list, done) { const need = new Set(); const walk = A => { for (const L of A || []) { if (!L) continue; if (L.who && BN[L.who]) need.add(L.who); if (L.choice) for (const c of L.choice) walk(c.then); } }; walk(list);   /* r3.157.2：連選項分支一起先載半身像 */
+      for (const n of need) bustKey(n); for (const n of [...need]) if (G.IMG['bust_' + BN[n]] || BREQ['bust_' + BN[n]] === 2) need.delete(n); this.hold = need.size ? { names: [...need], t: G.t } : null;   /* 半身像沒載好前先等（最多 0.6 秒），不再出現第一句沒頭像 */
       this.list = list.slice(); this.i = 0; this.done = done; this.skip = false; this.log = false; G.IN.stick = null; this.prep(); },
     prep() {
       while (this.list && this.list[this.i] && this.list[this.i].do) { const f = this.list[this.i].do; this.i++; f(); }
@@ -47,7 +55,7 @@
     step() { if (!this.list) return; const L = this.list[this.i]; if (!L || !L.text) return;
       if (this.shown < L.text.length) this.shown = Math.min(L.text.length, this.shown + SPEED[G.SAVE.data.textSpeed]);
       else if (this.skip && !this.choice && G.t % 6 === 0) this.advance(); },
-    tap(p) {
+    tap(p) { if (this.hold) return;
       const B = this.B, hit = G.UI.hit;
       if (this.log) { this.log = false; return; }
       if (B.log && hit(p, B.log)) { this.log = true; return; }
@@ -68,7 +76,7 @@
     ctx.font = `900 ${12 * fs}px ${G.FONT_S}`; const L = G.wrap(t, maxW), s2 = L.length > 2 ? 11 : 12, lh = Math.min(17, (b.h - 6) / Math.min(2, L.length));
     if (L.length > 2) { ctx.font = `900 ${11 * fs}px ${G.FONT_S}`; const L2 = G.wrap(t, maxW); L.length = 0; L.push(...L2.slice(0, 2)); if (L2.length > 2) L[1] = L[1].slice(0, -1) + '…'; }
     L.slice(0, 2).forEach((l, i) => G.txt(l, cx, cy + (i - (Math.min(2, L.length) - 1) / 2) * lh, s2, G.C.ink, 'center', G.FONT_S, 900)); }
-  D.draw = function () {
+  D.draw = function () { const hd = this.hold; if (hd) { if (G.t - hd.t > 36 || hd.names.every(n => G.IMG['bust_' + BN[n]] || BREQ['bust_' + BN[n]] === 2)) this.hold = null; else return; }
     const L = this.list && this.list[this.i]; if (!L) return;
     if (this.log) return drawLog();
     if (this.choice) { G.veil(0.35);
