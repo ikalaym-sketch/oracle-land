@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 77_moves.js
- * Version : r3.184.0  (2026-11-28)　秘傳另外標記 mvx.hd（技能、特技不算秘傳演出）
+ * Version : r3.193.0  (2026-11-28)　鐵砲凝射傷害補到「連」的標準（1.66 → 1.99）
+ * 舊版    : r3.184.0  (2026-11-28)　秘傳另外標記 mvx.hd（技能、特技不算秘傳演出）
  * 舊版    : r3.176.0  (2026-11-28)　r3.176.0：野太刀／薙刀／長槍／和弓／鐵砲的招式傷害分級補正（MV2.BAL）
  * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：槍普攻直刺最多 3 個（由近到遠）；薙刀指定擊退也 ×1.3
  * 舊版    : r3.53.0  (2026-11-23)  r3.53.0：秘傳書一律顯示完整順序＋所在鍵位；取消店舖／神社升級給提示　r3.37.0：鐵砲槍口改用第二代素材；r3.35.0：U 定義可指定 kind；r3.36.0：射擊／槍口火光改從逐格錨點（W.muzzle）出現
@@ -25,7 +26,7 @@
     const U = [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]; w.mv = Object.keys(MV2.D[wid]).map((id, i) => { const d = MV2.D[wid][id]; return { id, n: d.n, k: d.cat === '架' ? 'guard' : 'attack', u: d.u || U[i] || 11, cd: d.cd || 36, cat: d.cat }; });
     w.MV = {}; for (const m of w.mv) w.MV[m.id] = m; };
   MV2.hiden = function (wid, list) { MV2.HD[wid] = list; };
-  MV2.BAL = {"teppo":{"retreat_shot":2.54,"point_shot":2.69,"aim_shift":3.27,"pressure_shot":1.47,"focused_shot":1.66,"denial_fire":2.74,"steady_rifle":1.9,"rifle_retreat":1.63,"shoulder_guard":1.8,"stock_deflect":1.8},"yumi":{"moving_shot":2.9,"quick_shot":2.14,"follow_shot":2.75,"fan_release":1.64,"spread_shot":1.4,"piercing_shot":3.22,"full_aim":2.27,"denial_shot":4,"steady_focus":1.8,"lower_retreat":1.8},"nodachi":{"advancing_weight":3.01,"side_path":3.87,"dawn_draw":2.52,"dragging_line":1.07,"low_ridge":3.79,"back_turn":3.04,"retreat_peak":2.75,"planted_break":3.98,"falling_ridge":3.22,"sinking_charge":3.01,"long_line":3.6,"opening_brace":1.8},"yari":{"long_pierce":1.62,"tip_probe":1.49,"intercept_thrust":1.89,"double_thrust":1.55,"side_gap":1.95,"rising_point":1.32,"ground_sweep":2.52,"shaft_break":2.59,"focused_point":1.6,"pulling_retreat":3.33,"fixed_line":1.8,"shaft_gate":1.8},"naginata":{"gliding_wing":1.58,"side_wave":1.94,"retreat_swallow":1.77,"wide_leaf":2.04,"fan_sweep":1.61,"around_diagonal":2.27,"reverse_leaf":2.27,"low_leaf":2.7,"reverse_whirl":2.04,"sinking_leaf":2.39,"upright_deny":1.8,"wing_brace":1.8}};   /* r3.176.0：各武器招式傷害補正倍率（打刀已在 109 直接改數值，不在表內） */
+  MV2.BAL = {"teppo":{"retreat_shot":2.54,"point_shot":2.69,"aim_shift":3.27,"pressure_shot":1.47,"focused_shot":1.99,"denial_fire":2.74,"steady_rifle":1.9,"rifle_retreat":1.63,"shoulder_guard":1.8,"stock_deflect":1.8},"yumi":{"moving_shot":2.9,"quick_shot":2.14,"follow_shot":2.75,"fan_release":1.64,"spread_shot":1.4,"piercing_shot":3.22,"full_aim":2.27,"denial_shot":4,"steady_focus":1.8,"lower_retreat":1.8},"nodachi":{"advancing_weight":3.01,"side_path":3.87,"dawn_draw":2.52,"dragging_line":1.07,"low_ridge":3.79,"back_turn":3.04,"retreat_peak":2.75,"planted_break":3.98,"falling_ridge":3.22,"sinking_charge":3.01,"long_line":3.6,"opening_brace":1.8},"yari":{"long_pierce":1.62,"tip_probe":1.49,"intercept_thrust":1.89,"double_thrust":1.55,"side_gap":1.95,"rising_point":1.32,"ground_sweep":2.52,"shaft_break":2.59,"focused_point":1.6,"pulling_retreat":3.33,"fixed_line":1.8,"shaft_gate":1.8},"naginata":{"gliding_wing":1.58,"side_wave":1.94,"retreat_swallow":1.77,"wide_leaf":2.04,"fan_sweep":1.61,"around_diagonal":2.27,"reverse_leaf":2.27,"low_leaf":2.7,"reverse_whirl":2.04,"sinking_leaf":2.39,"upright_deny":1.8,"wing_brace":1.8}};   /* r3.176.0：各武器招式傷害補正倍率（打刀已在 109 直接改數值，不在表內） */
   const DEF = (wid, id) => MV2.D[wid] && MV2.D[wid][id];
   /* ---------- 執行環境 c ---------- */
   function ctxOf(a) { const m = a.mvx; if (m.c) return m.c;

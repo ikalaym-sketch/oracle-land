@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 117_teppo.js
- * Version : r3.192.0  (2026-11-28)　r3.192.0：命中分三級（子彈火花／炸裂彈小爆／砲擊大爆）、曳光彈道、槍口火光、自繪火球與焦痕；地面火改用手繪火焰素材排成火帶
+ * Version : r3.193.0  (2026-11-28)　r3.193.0：爆炸改回手繪素材；焙烙火矢改往四周拋、每顆都留燃燒；身法逐招區分＋偏強招式收招放慢；托擊（招式）改名槍托反擊；五招秘傳加演出層
+ * 舊版    : r3.192.0  (2026-11-28)　r3.192.0：命中分三級（子彈火花／炸裂彈小爆／砲擊大爆）、曳光彈道、槍口火光、自繪火球與焦痕；地面火改用手繪火焰素材排成火帶
  * 舊版    : r3.82.0  (2026-11-25)
  * 變更    : r3.82.0 改用現成素材：大筒＝合戰大筒 war_cannon、爆炸＝fx_blast＋fx_crack_glow＋fx_smoke＋fx_debris、焙烙＝fx_bomb、燃燒地帶＝刑部姬地面火帶＋鬼王火堆、
  *                   火龍放射＝酒吞童子烈焰、火車＝酒吞童子酒桶、槍口火光＝fx_muzzle_big；新增 clip（播頭目素材包片段）；燃燒狀態拿掉身上火苗，只留火星（G.FLAMES）。
@@ -43,7 +44,7 @@
   const frac = v => v - Math.floor(v);
   /* 火苗：用手繪的火焰動畫素材（鬼王火堆），跟遊戲畫風一致；每簇的大小、播放進度、左右翻面都不同。素材還沒載好時才用火團代替 */
   function tongue(ctx, x, y, h, w, ph, a) { if (a <= 0.01 || h < 1) return; const u0 = pk('b_oni'), r = u0 && ((u0.act && u0.act.oniking_fire) || (u0.fx && u0.fx.oniking_fire));
-    if (r && r.f && r.f.length) { const fr = r.f[Math.floor(G.t / 4 + ph * 2.7) % r.f.length], sc = h * 1.25 / (r._mh || (r._mh = Math.max(...r.f.map(f => f[3])))); ctx.save(); ctx.globalAlpha = a; ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(tex(FO), x - h * 0.55, y - h * 0.75, h * 1.1, h * 1.1); ctx.globalCompositeOperation = 'source-over'; try { A.draw(u0, fr, x, y + h * 0.08, sc, frac(ph * 1.3) > 0.5, a); } catch (e) {} ctx.restore(); return; }
+    if (r && r.f && r.f.length) { const fr = r.f[Math.floor(G.t / 4 + ph * 2.7) % r.f.length], sc = h * 1.25 / (r._mh || (r._mh = Math.max(...r.f.map(f => f[3])))); ctx.save(); ctx.globalAlpha = 0.3 * a; ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(tex(FO), x - h * 0.55, y - h * 0.75, h * 1.1, h * 1.1); ctx.globalAlpha = a; ctx.globalCompositeOperation = 'source-over'; try { A.draw(u0, fr, x, y + h * 0.08, sc, frac(ph * 1.3) > 0.5, a); } catch (e) {} ctx.restore(); return; }
     ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6 * a; ctx.drawImage(tex(FO), x - w * 2, y - h, w * 4, h * 1.1); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
   /* 火球：白閃→幾團橘黃火翻滾膨脹→轉成往上飄的黑煙；R＝判定半徑（身高倍），畫面大小約 R×0.55 */
   function fireball(x, y, R, o) { o = o || {}; const big = R >= 1.4, N = big ? 11 : R >= 0.9 ? 7 : 5, life = big ? 50 : 34, B = [], F = []; for (let i = 0; i < N; i++) { const a = rnd(0, TAU), r = Math.sqrt(Math.random()) * 0.34; B.push([Math.cos(a) * r, Math.sin(a) * r * 0.7 - 0.1, rnd(0.3, 0.46), rnd(0, 6), rnd(0.7, 1.3)]); }
@@ -103,7 +104,8 @@
   /* ---------- 爆炸：素材火球 fx_blast＋地裂 fx_crack_glow＋煙 fx_smoke＋碎石 fx_debris；柔光與火星補色；m 有值才判定 ---------- */
   function boom(c, x, y, R, m, lv, o) { o = o || {};
     if (o.spark) hitSpark(x, y, o.z || 0.5, o.f || H.face, 1);   /* 子彈命中：只有火花，不炸火球（判定照舊） */
-    else { fireball(x, y, R); if (R >= 1.4) { VX.s2(R >= 2 ? 'fx_crack_glow_l' : 'fx_crack_glow_m', { x, y, k: R * 0.8, sy: 0.55, l: 'g', life: 60 }); VX.s2('fx_debris', { x, y, k: 0.5 + R * 0.2, life: 30 }); E(() => KF().rocks && KF().rocks(x, y, 8, R * 0.7)); }
+    else { VX.s2('fx_blast', { x, y, k: lv === 'hiden' ? Math.min(2.6, R * 0.85) : Math.min(1.5, R * 0.62), life: lv === 'hiden' ? 36 : 30 }); VX.s2('fx_smoke', { x: x + rnd(-0.2, 0.2) * K(y), y, z: 0.2 * K(y), k: R * 0.6, life: 54, a: 0.7 }); E(() => { scorch(x, y, R * 0.55, R >= 1.4 ? 260 : 150); KF().light(x, y, R * 1.3, 20, 0.5, 0.5); KF().embers(x, y, 0.3, 3 + Math.round(R * 3), { sp: 0.9 + R * 0.3 }); });   /* 爆炸用手繪素材（比原本小一點，不蓋住妖怪），地面留焦痕 */
+      if (R >= 1.4) { VX.s2(R >= 2 ? 'fx_crack_glow_l' : 'fx_crack_glow_m', { x, y, k: R * 0.8, sy: 0.55, l: 'g', life: 60 }); VX.s2('fx_debris', { x, y, k: 0.5 + R * 0.2, life: 30 }); E(() => KF().rocks && KF().rocks(x, y, 8, R * 0.7)); }
       SC.shake = Math.max(SC.shake || 0, Math.min(12, 2 + R * 3)); }
     if (m) return hitT(c, { shape: 'circle', x, y, r: R, m, lv: lv || 'heavy', kind: 'blunt', kb: o.kb !== undefined ? o.kb : 1, ign: o.ign }); return []; }
   /* ---------- 燃燒地帶：地面火帶（刑部姬 fire_field）＋散落火堆（鬼王 fire），每 15 格判定 ---------- */
@@ -142,7 +144,7 @@
   /* ---------- 焙烙：拋物線丟出、落地爆炸 ---------- */
   function lob(c, tx, ty, T, R, m, burn) { const mz = W.muzzle && W.muzzle(), x0 = mz ? mz[0] : c.x + c.f * 0.5 * c.hh, y0 = mz ? mz[1] : c.y - 0.6 * c.hh;
     VX.custom((q, ctx) => { const u = Math.min(1, q.t / T), k = K(ty), x = x0 + (tx - x0) * u, y = y0 + (ty - y0) * u - Math.sin(u * Math.PI) * 1.4 * k; if (u >= 1) return; if (!VX.draw2(ctx, 'fx_bomb', Math.floor(q.t / 3) % 3, x, y + 0.1 * k, 0.55, { rot: u * 6 })) { ctx.fillStyle = '#2a2420'; ctx.beginPath(); ctx.arc(x, y, 0.08 * k, 0, TAU); ctx.fill(); } }, T + 1, 'o');   // 焙烙玉素材
-    c.later(T, () => { boom(c, tx, ty, R, m, 'heavy'); if (burn) burnZone(c, tx, ty, R * 0.8, 180, 0.15); }); }
+    c.later(T, () => { boom(c, tx, ty, R, m, 'heavy'); if (burn) burnZone(c, tx, ty, R * (burn > 1 ? 0.9 : 0.7), burn > 1 ? 180 : 120, 0.15); }); }
   /* ---------- 火焰噴流：從槍口往前的火焰，越遠越大、越暗 ---------- */
   function flame(c, frames, L, spread, m) { const a0 = c.a, mzp = () => { const mz = W.muzzle && W.muzzle(), k = K(H.y); return mz ? [mz[0], H.y, (H.y - mz[1]) / k] : [H.x + H.face * 0.9 * k, H.y, 0.6]; };   // 酒吞童子烈焰素材，每 6 格接一段，跟著槍口
     VX.custom(() => {}, frames, 'o', { step: (o, tt) => { if (H.act !== a0) { o.t = o.life; return; } const f = H.face, k = K(H.y);
@@ -172,12 +174,13 @@
   /* 前方燃燒火藥線 */
   function powderLine(c, len, frames, m) { const x0 = c.x + c.f * 0.5 * c.hh, y0 = c.y, f = c.f; fireLine(x0, y0, f, len, frames);   // 火藥線：沿線燒過去
     VX.custom(() => {}, frames, 'g', { step: (o, tt) => { if (tt % 15 === 8) hitT(c, { shape: 'line', x: x0, y: y0, len, w: 0.35, m: m / 2, lv: 'light', kind: 'blunt', kb: 0 }); } }); }
-  (function b2() { if (!VX.burn2) return setTimeout(b2, 50); const b0 = VX.burn2; VX.burn2 = function (o) { if (isT() && H.act) { fireField(o.x, o.y, (o.r || 1) * 0.8, o.life || 120); return {}; } return b0.apply(this, arguments); }; })();   /* 招式（火花斷進）的地面火也換成同一套 */
+  (function b2() { if (!VX.burn2) return setTimeout(b2, 50); const b0 = VX.burn2; VX.burn2 = function (o) { if (isT() && G.t <= denT) return {}; if (isT() && H.act) { fireField(o.x, o.y, (o.r || 1) * 0.8, o.life || 120); return {}; } return b0.apply(this, arguments); }; })();   /* 其他地面火也換成同一套 */
   /* ==================== 技・特技 ==================== */
   const RL = c => Math.max(6, Math.round(c.a.T * 0.35));
   const DU = {
-    skill_horoku: { n: '焙烙火矢', run(c, t) { const lv = LV(c), n = lv >= 3 ? 5 : 3; if (t !== RL(c)) return; const [px, py] = ahead(c, 3.2);
-        for (let i = 0; i < n; i++) { const off = (i - (n - 1) / 2), tx = px + c.f * Math.abs(off) * -0.25 * c.hh + rnd(-0.1, 0.1) * c.hh, ty = py + off * 0.45 * c.hh; c.later(i * 2, () => lob(c, tx, ty, 14, 1.25, 1.4, lv >= 5)); } } },
+    skill_horoku: { n: '焙烙火矢', run(c, t) { const lv = LV(c), n = lv >= 3 ? 5 : 3; if (t !== RL(c)) return; const k = c.hh, a0 = c.f > 0 ? 0 : Math.PI;   // r3.193.0：往四周拋出（不再疊在同一處），每顆落地爆炸後都留下燃燒
+        for (let i = 0; i < n; i++) { const an = a0 + i / n * TAU + rnd(-0.12, 0.12), d = (i === 0 ? 2.6 : 2.3) + rnd(-0.15, 0.15); let tx = c.x + Math.cos(an) * d * k, ty = c.y + Math.sin(an) * d * k * 0.5; if (!SC.walkable(tx, ty)) { tx = c.x + Math.cos(an) * d * k * 0.55; ty = c.y + Math.sin(an) * d * k * 0.28; }
+          c.later(i * 2, () => lob(c, tx, ty, 14, 1.25, 1.4, lv >= 5 ? 2 : 1)); } } },
     skill_rensha: { n: '早合連射', run(c, t) { const lv = LV(c), n = lv >= 3 ? 7 : 5, a = RL(c); c.a.T = Math.max(c.a.T, a + n * 4 + 10);
         for (let i = 0; i < n; i++) if (t === a + i * 4) { const last = i === n - 1; pierceShot(c, { m: 0.7, ang: rnd(-0.025, 0.025), spd: 1.1, range: 10, lv: last ? 'heavy' : 'mid', big: last, kb: last && lv >= 5 ? 1.5 : 0.2 }); if (i % 2 === 0) smoke(c.x + c.f * 0.9 * c.hh, c.y, 1, 0.12, 0.3); } } },
     skill_sandan: { n: '霰彈', run(c, t) { const lv = LV(c), a = RL(c), waves = lv >= 5 ? 3 : lv >= 3 ? 2 : 1; c.a.T = Math.max(c.a.T, a + waves * 10 + 10);
@@ -213,23 +216,102 @@
       if (t === r2) pellets(c, 9, 1.4, { m: 0.3, range: 3.2 });
       if (t === r3) { [-0.38, 0, 0.38].forEach((a, i) => c.later(i * 3, () => barrel(c, a, 4.5, 28, 1.6, 1.8))); c.a.T = Math.max(c.a.T, r3 + 40); } } }
   };
+  /* ====================== r3.193.0 秘傳演出層（暗場、運鏡、主視覺；判定與傷害照舊） ======================
+   * 鐵砲＝火藥、轟炸、破壞：鏡頭以拉遠看爆炸和震動為主。 */
+  const shot = (c, x, y, up, zoom, Tn) => { G.CAMFOCUS = { x, y: y - up * c.hh, until: G.t + Tn }; G.CAMZOOM = { k: zoom, until: G.t + Tn }; };
+  const cinit = (c, Tn, dim) => { const m = c.a.mvx; if (m.cin) return false; m.cin = 1; VX.dim(Tn, dim); return true; };
+  const shk = n => { SC.shake = Math.max(SC.shake || 0, n); }, hstop = n => { G.hitstop = Math.max(G.hitstop || 0, n); };
+  /* 火龍：一條由火焰組成的龍身，從槍口蜿蜒往前衝到 L（身高倍），龍頭較大、帶兩撮火鬚；之後在原地翻騰到結束 */
+  function fireDragon(c, L, frames) { const f = c.f, a0 = c.a;
+    E(() => KF().add(frames, 'o', (ctx, u) => { if (H.act !== a0 && u > 4) return; const k = K(H.y), p = muzP(c), x0 = p[0], y0 = H.y - p[2] * k, g = eo3(Math.min(1, u / 16)), al = Math.min(1, u / 4) * Math.min(1, (frames - u) / 12), N = 12, hd = L * k * g;
+        for (let i = 0; i <= N; i++) { const v = i / N, d = hd * v, wv = Math.sin(v * 7 - u * 0.33) * 0.3 * k * (0.3 + 0.7 * v), hx = x0 + f * d, hy = y0 + wv * 0.6 + v * 0.25 * k, sz = (0.34 + 0.5 * v) * k * (i === N ? 1.5 : 1); tongue(ctx, hx, hy + sz * 0.5, sz, sz * 0.3, i * 1.37, al);   /* 身體：一節一節的火 */
+          if (i === N) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.8 * al; ctx.drawImage(tex(FY), hx - sz * 0.6, hy - sz * 0.6, sz * 1.2, sz * 1.2); ctx.globalAlpha = al; ctx.drawImage(tex(FW), hx + f * sz * 0.1 - sz * 0.22, hy - sz * 0.25, sz * 0.44, sz * 0.44); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } } },
+      (q, tt) => { if (tt % 3 === 0) KF().embers(H.x + f * rnd(0.8, L) * K(H.y), H.y, 0.5, 1, { sp: 0.7, life: 26 }); })); }
+  /* 蕈狀煙：爆心上方一根煙柱＋頂端翻滾的火與煙 */
+  function mushroom(x, y, R, life) { const Bc = []; for (let i = 0; i < 9; i++) Bc.push([rnd(-1, 1), rnd(-0.4, 0.4), rnd(0.5, 0.9), rnd(0, 6)]);
+    E(() => KF().add(life, 'o', (ctx, u) => { const k = K(y), q = u / life, up = eo3(Math.min(1, u / 26)) * R * k * 1.5, al = q < 0.55 ? Math.min(1, u / 5) : Math.max(0, 1 - (q - 0.55) / 0.45), hot = Math.max(0, 1 - u / 30);
+        for (let i = 0; i < 6; i++) { const v = i / 5; blob(ctx, x + Math.sin(u * 0.08 + i) * 0.06 * k, y - up * v, R * k * (0.34 - 0.1 * v), '70,60,54', 0.8 * al, 0.7); }   /* 煙柱 */
+        for (const b of Bc) { const bx = x + b[0] * R * k * 0.5 * (0.6 + 0.4 * q), by = y - up + b[1] * R * k * 0.3 - Math.sin(u * 0.1 + b[3]) * 0.04 * k, r = R * k * 0.36 * b[2] * (0.8 + 0.5 * q); blob(ctx, bx, by, r * 1.25, '66,56,50', 0.85 * al, 0.7); if (hot > 0) { ctx.globalCompositeOperation = 'lighter'; blob(ctx, bx, by + r * 0.2, r * 0.9, FR, 0.8 * hot * al, 0.5); blob(ctx, bx, by + r * 0.25, r * 0.6, FO, 0.8 * hot * al, 0.5); blob(ctx, bx, by + r * 0.3, r * 0.3, FY, 0.7 * hot * al, 0.5); ctx.globalCompositeOperation = 'source-over'; } } })); }
+  /* 天上的火點（朝天齊射後亮起） */
+  const skyDots = (c, x, y, n, sp) => { for (let i = 0; i < n; i++) c.later(i, () => E(() => KF().glint(x + rnd(-sp, sp) * c.hh, y, rnd(4.8, 6), rnd(0.2, 0.42), 16))); };
+  /* 鉛彈暴雨：斜落的彈痕（亮芯＋深色襯底）、落地塵柱與火花 */
+  function leadStreaks(c, px, py, R, frames) { const f = c.f, D = []; E(() => KF().add(frames + 12, 'o', (ctx, u) => { const k = K(py); ctx.lineCap = 'round';
+        for (const d of D) { const v = (u - d[2]) / 6; if (v < 0 || v > 1.4) continue; const hx = d[0] - f * (1 - Math.min(1, v)) * 1.6 * k, hy = d[1] - (1 - Math.min(1, v)) * 5.4 * k, tx = hx - f * 0.34 * k, ty = hy - 1.15 * k, a = v <= 1 ? 1 : 1 - (v - 1) / 0.4;
+          for (const [w, col, al] of [[0.05, FD, 0.3], [0.028, FO, 0.9], [0.011, FW, 1]]) { const g = ctx.createLinearGradient(tx, ty, hx, hy); g.addColorStop(0, rgba(col, 0)); g.addColorStop(1, rgba(col, al * a)); ctx.strokeStyle = g; ctx.lineWidth = Math.max(0.8, w * k); ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke(); } } },
+      (o, tt) => { if (tt < frames) for (let i = 0; i < 2; i++) { const a = rnd(0, TAU), r = Math.sqrt(Math.random()) * R, x = px + Math.cos(a) * r * c.hh, y = py + Math.sin(a) * r * 0.4 * c.hh; D.push([x, y, tt]); c.later(6, () => { hitSpark(x, y, 0.03, 1, 0.8); if (Math.random() < 0.5) E(() => KF().puff(x, y, 0.45, 16)); }); } while (D.length && tt - D[0][2] > 10) D.shift(); if (tt % 9 === 0 && tt < frames) shk(3); })); }
+  const HT0 = {}; for (const id in HT) HT0[id] = HT[id].f;
+  /* 火龍放射：貫穿彈、散彈鋪墊 → 鏡頭拉遠，火龍從槍口竄出一路燒過去，地面留下一條火路 */
+  HT.t_karyu.f = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh;
+    if (cinit(c, c.a.T + 90, 0.9)) shot(c, c.x + c.f * 1.6 * k, c.y, 0.7, 1.3, r3);
+    HT0.t_karyu(c, t, C);
+    if (t === r3) { shot(c, c.x + c.f * 2.6 * k, c.y, 0.9, 1.9, 80); fireDragon(c, 4.4, 62); hstop(3); shk(8); c.later(8, () => fireLine(c.x + c.f * 0.9 * k, c.y, c.f, 3.8, 150)); }
+    if (t > r3 && t < r3 + 60 && t % 6 === 0) shk(4); };
+  /* 國崩：兩發貫穿彈 → 大筒登場特寫 → 開砲，鏡頭拉遠看落點：大爆炸、蕈狀煙、地裂、粉塵 */
+  HT.t_sandan.f = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh;
+    if (cinit(c, c.a.T + 110, 0.9)) shot(c, c.x + c.f * 1.6 * k, c.y, 0.7, 1.35, r3);
+    HT0.t_sandan(c, t, C);
+    if (t === r3) { const [tx, ty] = ahead(c, 5), fly = 14 + Math.round(Math.abs(tx - c.x) / k); c.a.T = Math.max(c.a.T, r3 + 12 + fly + 44); shot(c, c.x - c.f * 0.6 * k, c.y, 0.7, 1.15, 12);   /* 大筒特寫 */
+      c.later(12, () => { shot(c, (c.x + tx) / 2, ty, 1.6, 2.2, fly + 70); shk(9); hstop(3); });
+      c.later(12 + fly, () => { VX.flash && VX.flash(3); hstop(8); shk(16); mushroom(tx, ty, 3.0, 80); E(() => { KF().crack && KF().crack(tx, ty, 3.2, 120, true); for (let i = 0; i < 10; i++) { const an = i / 10 * TAU; KF().puff(tx + Math.cos(an) * 2.6 * k, ty + Math.sin(an) * 1.1 * k, 2.0); } KF().rocks && KF().rocks(tx, ty, 22, 2.8); }); }); } };
+  /* 鉛雨：朝天齊射（鏡頭上抬）→ 天上一片火點 → 鉛彈像暴雨斜落，彈著的塵柱與火花鋪滿落點 */
+  HT.t_namari.f = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh;
+    if (cinit(c, c.a.T + 130, 0.9)) shot(c, c.x + c.f * 1.4 * k, c.y, 0.8, 1.35, r3);
+    HT0.t_namari(c, t, C);
+    if (t === r3) { const [px, py] = ahead(c, 3.5); c.a.T = Math.max(c.a.T, r3 + 100); shot(c, c.x + c.f * 0.6 * k, c.y, 2.6, 1.6, 12); shk(8); hstop(3);
+      const p = muzP(c); for (let i = 0; i < 7; i++) c.later(i, () => E(() => KF().qi({ x: p[0] + c.f * i * 0.05 * k, y: c.y, z: p[2] + 1.2, ang: -1.4 + rnd(-0.12, 0.12), len: 3.2, w: 0.07, dur: 2, life: 10, motes: 1 })));
+      c.later(5, () => skyDots(c, px, py, 16, 2.6)); c.later(10, () => { shot(c, (c.x + px) / 2, py, 1.8, 2.15, 110); leadStreaks(c, px, py, 2.6, 90); });
+      c.later(100, () => { shk(9); E(() => KF().puff(px, py, 3)); }); } };
+  /* 雷神筒：槍身纏電蓄力（鏡頭貼近）→ 一道粗雷光貫穿整個畫面 → 連鎖跳電 → 中雷者頭上再落一道雷 */
+  HT.t_raitou.f = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh;
+    if (cinit(c, c.a.T + 60, 0.92)) shot(c, c.x + c.f * 0.5 * k, c.y, 0.7, 1.12, r3 - 4);
+    if (t > r1 && t < r3 && t % 3 === 0) { const p = muzP(c); KF().use('moon', () => KF().bolt(p[0] + rnd(-0.7, 0.2) * k * c.f, c.y - (p[2] + rnd(-0.3, 0.3)) * k, p[0] + rnd(-0.2, 0.3) * k * c.f, c.y - (p[2] + rnd(-0.25, 0.25)) * k, 5, 1.6, 1)); if (t % 9 === 0) shk(2); }   /* 槍身纏電 */
+    if (t === r3 - 4) shot(c, c.x + c.f * 4.2 * k, c.y, 0.8, 2.25, 70);
+    HT0.t_raitou(c, t, C);
+    if (t === r3) { c.a.T = Math.max(c.a.T, r3 + 40); VX.flash && VX.flash(2); hstop(7); shk(14); const p = muzP(c), y0 = c.y - p[2] * k, es = G.E.filter(e => e.st !== 'dead' && (e.x - c.x) * c.f > 0 && Math.abs(e.x - c.x) < 8.5 * k && Math.abs(e.y - c.y) < 1.2 * k);
+      KF().use('moon', () => { for (let i = 0; i < 3; i++) KF().bolt(p[0], y0 + (i - 1) * 0.1 * k, p[0] + c.f * 11 * k, y0 + (i - 1) * 0.16 * k, 16, 7, 3); KF().add(14, 'o', (ctx, u) => { const kk = K(c.y), a = 1 - u / 14, w = (0.26 - u * 0.012) * kk, Cm = KF().PAL.moon, x1 = p[0] + c.f * 11 * kk; ctx.globalCompositeOperation = 'lighter'; const g = ctx.createLinearGradient(0, y0 - w, 0, y0 + w); g.addColorStop(0, rgba(Cm.mid, 0)); g.addColorStop(0.5, rgba('255,255,255', 0.95 * a)); g.addColorStop(1, rgba(Cm.mid, 0)); ctx.fillStyle = g; ctx.fillRect(Math.min(p[0], x1), y0 - w, Math.abs(x1 - p[0]), w * 2); }); });   /* 雷光束 */
+      es.slice(0, 6).forEach((e, i) => c.later(16 + i * 3, () => { if (e.st === 'dead') return; const ke = K(e.y); KF().use('moon', () => { KF().bolt(e.x + rnd(-0.5, 0.5) * ke, e.y - 6.5 * ke, e.x, e.y - 0.3 * ke, 14, 5, 2); KF().light(e.x, e.y, 1.2, 14, 0.7, 0.6); KF().puff(e.x, e.y, 0.9); }); shk(6); })); } };   /* 落雷（演出） */
+  /* 火車：三顆點燃的火藥桶滾成火輪，沿路留下火路，撞進妖怪群連環爆（鏡頭先對準滾動的方向） */
+  HT.t_horoku.f = function (c, t, C) { const [r1, r2, r3] = C.rel, k = c.hh;
+    if (cinit(c, c.a.T + 110, 0.9)) shot(c, c.x + c.f * 1.6 * k, c.y, 0.7, 1.35, r3);
+    HT0.t_horoku(c, t, C);
+    if (t === r3) { c.a.T = Math.max(c.a.T, r3 + 60); shot(c, c.x + c.f * 2.8 * k, c.y, 0.9, 2.1, 90); shk(6);
+      [-0.38, 0, 0.38].forEach((a, i) => { const x0 = c.x + c.f * 0.5 * k, y0 = c.y, f = c.f; for (let j = 1; j <= 9; j += 2) c.later(i * 3 + j * 3, () => { const d = 4.5 * k * j / 9.4, x = x0 + f * Math.cos(a) * d, y = y0 + Math.sin(a) * d * 0.5; fireField(x, y, 0.34, 110 - j * 3); E(() => KF().add(10, 'o', (ctx, u) => { const kk = K(y); tongue(ctx, x, y - 0.1 * kk, 0.7 * kk, 0.2 * kk, j * 1.3 + i, 1 - u / 10); })); });   /* 火輪與火路 */
+        c.later(i * 3 + 28, () => { hstop(i === 2 ? 8 : 4); shk(i === 2 ? 15 : 10); if (i === 2) VX.flash && VX.flash(2); }); }); } };
   /* ==================== 身法：子彈命中小爆、散彈多 2 顆 ==================== */
-  function mvWrap(base) { const f = function (c, t) { const sh = c.shoot; c.shoot = function (k, o) { o = Object.assign({}, o);
-      if (k === 'bullet' && o.m) { const h0 = o.onHit, sk = new Set(); o.onHit = e => { const r = h0 ? h0(e) : undefined; if (!sk.has(e)) { sk.add(e); boom(c, e.x, e.y, 0.8, 0.35, 'mid', { kb: 0.3, spark: 1, z: (e.ratio || 1) * 0.5, f: c.f }); } return r; }; }
-      if (k === 'pellet' && !o.__x && Math.abs(o.ang || 0) > 0.3) { const s = Math.sign(o.ang); sh.call(c, k, Object.assign({}, o, { ang: o.ang + s * 0.17, __x: 1 })); }
-      return sh.call(c, k, o); }; try { return base.apply(this, arguments); } finally { c.shoot = sh; } }; f.__tp = 1; return f; }
+  /* r3.193.0：身法逐招區分（判定、傷害不動，只加表現）＋偏強的招式收招多幾格 */
+  const SLOW = { retreat_shot: 3, point_shot: 3, aim_shift: 3, pressure_shot: 4, close_scatter: 4, denial_fire: 6, steady_rifle: 6, rifle_retreat: 6 };
+  const muzP = c => { const mz = W.muzzle && W.muzzle(); return mz ? [mz[0], c.y, (c.y - mz[1]) / c.hh] : [c.x + c.f * 0.9 * c.hh, c.y, 0.6]; };
+  function reticle(e) { E(() => KF().add(14, 'o', (ctx, u) => { if (e.st === 'dead') return; const k = K(e.y), q = u / 14, r = k * (0.5 - 0.3 * eo3(q)), a = 1 - q * q, x = e.x, y = e.y - (e.ratio || 1) * 0.55 * k; ctx.lineCap = 'round';
+      for (const [w, col, al] of [[0.04, FD, 0.45], [0.02, FW, 1]]) { ctx.strokeStyle = rgba(col, al * a); ctx.lineWidth = Math.max(1, w * k); ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke(); for (let i = 0; i < 4; i++) { const an = i * Math.PI / 2 + q * 0.8; ctx.beginPath(); ctx.moveTo(x + Math.cos(an) * r * 0.6, y + Math.sin(an) * r * 0.6); ctx.lineTo(x + Math.cos(an) * r * 1.5, y + Math.sin(an) * r * 1.5); ctx.stroke(); } } })); }
+  let denT = -1;
+  function mvWrap(base, id) { const f = function (c, t) { const sh = c.shoot, ht = c.hit, gl = VX.glow, ld0 = H.loaded || 0; let shots = 0;
+      if (t === 1 && SLOW[id] && !c.a.mvx.slw) { c.a.mvx.slw = 1; c.a.T += SLOW[id]; if (c.a.c && c.a.c.cx) c.a.c.cx = c.a.c.cx.map(v => v + SLOW[id]); }
+      if (id === 'focused_shot' && t === 2) { const p = muzP(c); E(() => KF().charge(p[0], p[1], p[2], 12, 14)); }   /* 凝射：光點收進槍口 */
+      if (id === 'ramrod_load' && t === 3) { const p = muzP(c); smoke(p[0], c.y, 2, 0.14, 0.4); E(() => KF().embers(p[0], c.y, p[2], 3, { sp: 0.4, life: 22 })); }   /* 裝填：倒火藥的煙與火星 */
+      if (id === 'shoulder_guard') { VX.glow = () => ({}); if (t === 1) { const k = c.hh, x = c.x + c.f * 0.45 * k; E(() => { KF().add(12, 'o', (ctx, u) => { const kk = K(H.y), a = 1 - u / 12; ctx.translate(H.x + c.f * 0.42 * kk, H.y - 0.62 * kk); ctx.rotate(-0.5 * c.f); ctx.lineCap = 'round'; for (const [w, col, al] of [[0.07, '40,44,56', 0.5], [0.04, '200,210,226', 0.95], [0.014, FW, 1]]) { ctx.strokeStyle = rgba(col, al * a); ctx.lineWidth = Math.max(1, w * kk); ctx.beginPath(); ctx.moveTo(-0.42 * kk, 0); ctx.lineTo(0.42 * kk, 0); ctx.stroke(); } }); KF().glint(x, c.y, 0.62, 0.3, 10); }); } }   /* 肩架護膛：槍身橫擋的鋼光（取代白光球） */
+      c.shoot = function (k, o) { o = Object.assign({}, o); shots++;
+        if (k === 'bullet' && o.m) { const h0 = o.onHit, sk = new Set(), heavy = id === 'focused_shot' || id === 'steady_rifle'; if (heavy) o.big = 1;
+          o.onHit = e => { const r = h0 ? h0(e) : undefined; if (!sk.has(e)) { sk.add(e); boom(c, e.x, e.y, 0.8, 0.35, 'mid', heavy ? { kb: 0.3 } : { kb: 0.3, spark: 1, z: (e.ratio || 1) * 0.5, f: c.f });   /* 凝射、穩膛＝炸裂彈；其餘子彈只有火花 */
+              if (id === 'aim_shift') reticle(e); if (id === 'pressure_shot') E(() => KF().puff(e.x + rnd(-0.3, 0.3) * c.hh, e.y, 0.5, 18)); } return r; }; }
+        if (k === 'pellet' && shots === 1) { const kk = c.hh; E(() => { for (let i = 0; i < 3; i++) KF().puff(c.x + c.f * (1.2 + i * 0.7) * kk, c.y + rnd(-0.3, 0.3) * kk, 0.5 + i * 0.15, 20); }); }   /* 散彈：前方一片揚塵 */
+        if (k === 'pellet' && !o.__x && Math.abs(o.ang || 0) > 0.3) { const sg = Math.sign(o.ang); sh.call(c, k, Object.assign({}, o, { ang: o.ang + sg * 0.17, __x: 1 })); }
+        return sh.call(c, k, o); };
+      if (id === 'denial_fire') c.hit = function (o) { if (denT < G.t) { denT = G.t + 14; fireLine(c.x + c.f * 0.5 * c.hh, c.y, c.f, 3, 110); } return ht.call(c, o); };   /* 火花斷進：身前一條火藥線燒過去 */
+      try { return base.apply(this, arguments); } finally { c.shoot = sh; c.hit = ht; VX.glow = gl;
+        if (id === 'ramrod_load' && (H.loaded || 0) > ld0) { const p = muzP(c); hitSpark(p[0] - c.f * 0.25 * c.hh, c.y, p[2], c.f, 0.9); E(() => { KF().glint(p[0] - c.f * 0.3 * c.hh, c.y, p[2], 0.6, 14); KF().light(c.x, c.y, 1.2, 14, 0.5, 0.6); }); } } };   /* 裝好：槍身迸出火花、一閃 */
+    f.__tp = 1; return f; }
   /* ---------- 名稱 ---------- */
-  const SKN = { skill_horoku: ['焙烙火矢', '扇形拋出焙烙，落地連爆', '3 → 5 顆', '爆炸後燃燒 3 秒'], skill_rensha: ['早合連射', '快速連發貫穿彈，每發打穿一列', '5 → 7 發', '最後一發擊退'],
+  const SKN = { skill_horoku: ['焙烙火矢', '朝四周拋出焙烙，落地爆炸並留下燃燒 2 秒', '3 → 5 顆', '燃燒範圍加大、延長到 3 秒'], skill_rensha: ['早合連射', '快速連發貫穿彈，每發打穿一列', '5 → 7 發', '最後一發擊退'],
     skill_sandan: ['霰彈', '前方 120° 扇形 12 顆鉛彈', '兩波', '第三波燃燒'], skill_sogeki: ['大筒', '身後召喚大砲朝敵群連轟', '3 → 4 發', '最後一發巨爆'],
     special_guardshot: ['托擊', '以槍托擋下，近距霰彈反擊', '擋下時回 10 氣力', '反擊附帶爆炸'], special_precision: ['火蓋切', '立即打出炸裂彈，下一發暴擊率上升', '+50% → +80%', '暴擊傷害 +50%'],
     special_reloadshot: ['早合', '裝填時打出炸裂彈，之後 3 發免裝填', '裝填時間 −30%', '炸裂範圍加大'], special_scatterback: ['退き口', '後跳扇形散擊，前方留下燃燒火藥線', '散彈 +2', '後撤無敵'] };
   let named = 0;
-  function rename() { const L = W.LIST && W.LIST.find(w => w.id === 'teppo'); if (!L) return; for (const s of L.sk) { const v = SKN[s.id]; if (v) { s.n = v[0]; s.d = v[1]; s.d3 = v[2]; s.d5 = v[3]; } } named = 1; }
+  function rename() { const L = W.LIST && W.LIST.find(w => w.id === 'teppo'); if (!L) return; for (const s of L.sk) { const v = SKN[s.id]; if (v) { s.n = v[0]; s.d = v[1]; s.d3 = v[2]; s.d5 = v[3]; } } const D9 = MV2.D.teppo; if (D9 && D9.stock_deflect) D9.stock_deflect.n = '槍托反擊'; if (L.mv) for (const q of L.mv) if (q.id === 'stock_deflect') q.n = '槍托反擊';   /* 跟特技「托擊」區分 */ named = 1; }
   /* ---------- 掛上（92 會重建定義：每格對照，必要時補回） ---------- */
   const WRH = {};
   function patch() { const D = MV2.D.teppo, U = MV2.U.teppo, HD = MV2.HD && MV2.HD.teppo; if (!U) return;
     for (const k in DU) { const d = U[k], s = DU[k]; if (!d) continue; if (s.run && d.run !== s.run) d.run = s.run; if (s.counter && d.counter !== s.counter) d.counter = s.counter; if (d.n !== s.n) d.n = s.n; }
-    if (D) for (const k in D) { const d = D[k]; if (d && d.run && !d.run.__tp) d.run = mvWrap(d.run); if (d && d.counter && !d.counter.__tp) d.counter = mvWrap(d.counter); }
+    if (D) for (const k in D) { const d = D[k]; if (d && d.run && !d.run.__tp) d.run = mvWrap(d.run, k); if (d && d.counter && !d.counter.__tp) d.counter = mvWrap(d.counter, k + '#c'); }
     if (HD) for (const h of HD) { const s = HT[h.id]; if (!s) continue; if (h.n !== s.n) h.n = s.n; if (h.run === WRH[h.id]) continue; const base = h.run;
       WRH[h.id] = h.run = function (c, t) { if (t === 1) { base.call(this, c, 1); return; } const C = c.a._comp; if (C && C.rel) s.f(c, t, C); else base.call(this, c, t); }; }
     if (!named) rename(); }
