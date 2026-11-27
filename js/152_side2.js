@@ -1,6 +1,7 @@
 /* =====================================================================
  * 152_side2.js
- * 版本    : r3.141.0  (2026-11-27)　r3.141.0：受傷的人魚站在任務點（借鬼女圖），進珊庭先載圖
+ * 版本    : r3.143.0  (2026-11-27)　r3.143.0：終章支援看得到：海河童出場吐水、鬼族箭雨從天上落下（命中時才扣血）
+ * 舊版    : r3.141.0  (2026-11-27)　r3.141.0：受傷的人魚站在任務點（借鬼女圖），進珊庭先載圖
  * 舊版    : r3.134.0  (2026-11-27)
  * 說明    : 劇情補完・支線第 2 批（第 8～12 章，7 條）。
  *           ‧ c8_s_market 和平夜市（赴宴和談）／c8_s_curfew 宵禁的夜（突襲）：兩岸城換夜間圖（ch8_market_night）。
@@ -148,9 +149,14 @@
     return enc; }; }
   const ls0 = G.lootStep; G.lootStep = function () { ls0.apply(this, arguments); const enc = B.enc; if (!enc || enc.done || !enc._sup || G.DLG.active()) return;
     for (const a of enc._sup) { if (a.n <= 0 || --a.t > 0) continue; a.t = 600; a.n--;
-      for (const u of enc.units) { if (u.st === 'dead' || u.hp <= 1) continue; const d = Math.round(u.hpMax * a.k); u.hp = Math.max(1, u.hp - d); u.flash = 10; G.NUMS.push({ x: u.x, y: u.y - (G.HERO_H || 90) * 1.2, v: d, t: 0 });
-        if (G.VX && G.VX.ring) G.VX.ring({ x: u.x, y: u.y, r1: 1.6, life: 20, col: a.col }); }
-      SC.shake = Math.max(SC.shake || 0, 4); G.UI.toast(a.who + '！（剩 ' + a.n + ' 輪）'); } };
+      const hit = u => { if (u.st === 'dead' || u.hp <= 1) return; const d = Math.round(u.hpMax * a.k); u.hp = Math.max(1, u.hp - d); u.flash = 10; G.NUMS.push({ x: u.x, y: u.y - (G.HERO_H || 90) * 1.2, v: d, t: 0 });
+        if (G.VX && G.VX.ring) G.VX.ring({ x: u.x, y: u.y, r1: 1.6, life: 20, col: a.col }); SC.shake = Math.max(SC.shake || 0, 4); };
+      const L = enc.units.filter(u => u.st !== 'dead' && u.hp > 1), AL = G.ALLY;   /* r3.143.0：看得到誰在幫忙 */
+      if (a.who === '海河童' && AL && AL.cameo) AL.cameo(KAPPA, { onHit: () => L.forEach(hit) });
+      else if (a.who === '鬼族箭雨' && AL && AL.rain) L.forEach(u => { for (let i = 0; i < 12; i++) AL.rain(u, 'arrow', i === 11 ? hit : null, i * 3); });
+      else L.forEach(hit);
+      G.UI.toast(a.who + '！（剩 ' + a.n + ' 輪）'); } };
+  const KAPPA = { name: '海河童', anim: 'b_kappa', idle: 'kappataisho_idle_right3q', walk: 'kappataisho_walk_right3q', atk: ['kappataisho_spit_right3q'], hk: 0.8, nat: 1, say: '表哥說要幫忙，我也來了喀！' };
   /* r3.141.0：人魚站在任務點（Q.STAT 立繪）；鬼女圖進圖前先載 */
   if (Q.STAT) Q.STAT['受傷的人魚'] = ['e_kijo', 0.9];
   { const en1 = SC.enter; SC.enter = function (id) { if (id === 'W_R10_05' && G.ASSET && G.ASSET.enemies && G.ENEMY_IDX && G.ENEMY_IDX.kijo) G.ASSET.enemies(['kijo']); return en1.apply(this, arguments); }; }

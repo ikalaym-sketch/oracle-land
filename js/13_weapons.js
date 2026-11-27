@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 13_weapons.js
- * Version : r3.142.0  (2026-11-27)　r3.142.0：普攻連段加成 W.CMB（野太刀二擊 +30%、三擊 +50%，特性文字同步）
+ * Version : r3.143.0  (2026-11-27)　r3.143.0：武器特性實裝（熟練頁說明照做）：打刀 暴擊 +5%、完美閃避後第一擊 +30%；薙刀 擊退 ×1.3；槍 普攻直刺最多貫穿 3 個；和弓 出箭中可移動、收尾重箭穿透；鐵砲 無視防禦 30%
+ * 舊版    : r3.142.0  (2026-11-27)　r3.142.0：普攻連段加成 W.CMB（野太刀二擊 +30%、三擊 +50%，特性文字同步）
  * 舊版    : r3.140.0  (2026-11-27)　r3.140.0：普攻節奏 W.RHY（每把武器普攻播放倍率，慢下來的武器傷害 ×1/倍率；16_growth 套用）
  * 舊版    : r3.0.4  (2026-11-12)
  * 變更    : r3.0.4 加入招式（組合技 3 鍵，每武器 12 招，熟練度解鎖）與身法（2 鍵：閃身／後跳／瞬步／滑行／空蟬）；
@@ -81,4 +82,13 @@
         G.H.st = 'idle'; G.H.t = 0; G.H.act = null; G.UI.toast('換上' + BY[id].n); }).catch(e => { W.loading = null; G.UI.toast('武器載入失敗，請重試'); console.error(e); }); },
     unit() { return G.ANIM.get('w_' + W.curId()); }
   };
+  /* ---------- r3.143.0：武器特性（主角出手；夥伴／符文／持續傷害不算） ---------- */
+  W.TR = { kb: () => (W.curId() === 'naginata' ? 1.3 : 1) };
+  { const dm0 = G.damageOni; if (dm0) G.damageOni = function (e, mult, big, fc, opt) { const H = G.H, id = W.curId(), mine = !(opt && (opt.party || opt.rune)) && !G._bleedTick && H && H.act;
+      if (!mine || !e || e.st === 'dead') return dm0.apply(this, arguments);
+      let o = opt, S = G.RPG && G.RPG.S, c0 = null;
+      if (id === 'katana') { if (S) { c0 = S.crit; S.crit = (S.crit || 0) + 5; }   // 暴擊率 +5%
+        if (H._pfT && G.t - H._pfT < 90 && !H._pfU) { H._pfU = 1; mult *= 1.3; } }   // 完美閃避後 1.5 秒內第一擊 +30%
+      if (id === 'teppo') o = Object.assign({}, opt, { ign: Math.min(100, ((opt && opt.ign) || 0) + 30) });   // 無視防禦 30%
+      try { const r = dm0.call(this, e, mult, big, fc, o); if (id === 'naginata' && e.kb) e.kb *= 1.3; return r; } finally { if (c0 !== null) S.crit = c0; } }; }
 })();

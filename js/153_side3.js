@@ -1,6 +1,7 @@
 /* =====================================================================
  * 153_side3.js
- * 版本    : r3.141.0  (2026-11-27)　r3.141.0：最後一隻式神改成紙鶴（文字＋任務點畫紙鶴 shiki_crane）
+ * 版本    : r3.143.0  (2026-11-27)　r3.143.0：支援看得到：酒吞出場用自己的連斬／重砸；小雷獸跟在身邊、落雷時播攻擊動作；八雲斬畫 8 道刀光
+ * 舊版    : r3.141.0  (2026-11-27)　r3.141.0：最後一隻式神改成紙鶴（文字＋任務點畫紙鶴 shiki_crane）
  * 舊版    : r3.135.0  (2026-11-27)
  * 說明    : 劇情補完・支線第 3 批：副本頭目故事 4 線、隱藏夥伴心事 3 條、夥伴同行副本對話。
  *           副本頭目線（通關該副本後開放）：
@@ -137,12 +138,17 @@
   /* 八雲斬、酒吞的葫蘆、小雷獸 */
   const HH = () => G.HERO_H || 90, ring = (x, y, col) => { if (G.VX && G.VX.ring) G.VX.ring({ x, y, r1: 1.6, life: 20, col }); };
   function hitAll(k, col) { for (const e of G.E) { if (e.st === 'dead' || e.ally) continue; if (e.boss || e.bb) { const d = Math.round(e.hpMax * k); e.hp = Math.max(1, e.hp - d); e.flash = 8; G.NUMS.push({ x: e.x, y: e.y - HH() * 1.2, v: d, t: 0 }); } else G.damageOni(e, 2, true, false, { rune: 1 }); ring(e.x, e.y, col); } }
-  let pet = 0, gd = 0;
+  let pet = 0, gd = 0, rp = null;
+  const SHUTEN = { name: '酒吞童子', anim: 'b_shuten', idle: 'shuten_idle_right3q', walk: 'shuten_walk_right3q', atk: ['shuten_combo_right3q', 'shuten_slam_right3q'], hk: 1.2, nat: 1, say: '喝了我的酒，就得讓我砍一刀！' };
+  const RAIJU = { name: '小雷獸', anim: 'b_raiju', idle: 'raijuo_idle_right3q', walk: 'raijuo_run_right3q', atk: ['raijuo_roar_right3q', 'raijuo_claw_right3q'], hk: 0.45, nat: 1 };
+  const slashes = u => { if (!G.VX || !G.VX.custom) return; for (let i = 0; i < 8; i++) G.VX.custom((o, c) => { const q = (o.t - o.d) / 10; if (q < 0 || q > 1) return; const k = HH() * SC.depth(u.y), a = -1.2 + i * 0.37, L = k * 1.6, cx = u.x, cy = u.y - k * 0.6;
+      c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(210,235,255,' + (1 - q) + ')'; c.lineWidth = Math.max(2, k * 0.06 * (1 - q)); c.beginPath(); c.moveTo(cx - Math.cos(a) * L, cy - Math.sin(a) * L); c.lineTo(cx + Math.cos(a) * L * (0.3 + q * 0.7), cy + Math.sin(a) * L * (0.3 + q * 0.7)); c.stroke(); c.restore(); }, 12 + i * 8, 'o', { d: i * 8 }); };   /* r3.143.0：八雲斬刀光 */
   function fxStep() { const enc = B.enc;
-    if (F().yakumo && enc && !enc.done && !enc._yk) { const u = enc.units[0]; if (u && u.hp < u.hpMax * 0.5) { enc._yk = 1; G.UI.banner('八雲斬', '八道斬擊劈開了雲'); let i = 0; const go = () => { if (i++ >= 8) return; hitAll(0.01, '200,230,255'); SC.shake = 5; later(8, go); }; go(); } }
-    if (F().gourd && inParty('yorimitsu') && enc && !enc.done) { if (++gd >= 5400) { gd = 0; G.UI.toast('酒吞：「喝了我的酒，就得讓我砍一刀！」'); hitAll(0.03, '255,140,90'); SC.shake = 7; } } else gd = Math.min(gd, 4800);
+    if (F().yakumo && enc && !enc.done && !enc._yk) { const u = enc.units[0]; if (u && u.hp < u.hpMax * 0.5) { enc._yk = 1; G.UI.banner('八雲斬', '八道斬擊劈開了雲'); slashes(u); let i = 0; const go = () => { if (i++ >= 8) return; hitAll(0.01, '200,230,255'); SC.shake = 5; later(8, go); }; go(); } }
+    if (F().gourd && inParty('yorimitsu') && enc && !enc.done) { if (++gd >= 5400) { gd = 0; if (G.ALLY && G.ALLY.cameo) G.ALLY.cameo(SHUTEN, { onHit: () => { hitAll(0.03, '255,140,90'); SC.shake = 7; } }); else { G.UI.toast('酒吞：「喝了我的酒，就得讓我砍一刀！」'); hitAll(0.03, '255,140,90'); SC.shake = 7; } } } else gd = Math.min(gd, 4800);
+    if (F().raiPet && G.ALLY && G.ALLY.cameo && (!rp || !G.ALLY.cam.includes(rp)) && G.mode === 'play' && !SC.trans) rp = G.ALLY.cameo(RAIJU, { pet: 1, onHit: (o, e) => { if (!e) return; G.damageOni(e, 1.2, false, false, { rune: 1 }); ring(e.x, e.y, '170,210,255'); if (G.VX && G.VX.spr) G.VX.spr({ u: 'b_raiju', n: 'raijuo_bolt', x: e.x, y: e.y, z: 0, w: 1.2, add: 1, life: 16 }); } });   /* r3.143.0：小雷獸跟在身邊 */
     if (F().raiPet && G.E.length && ++pet >= 480) { let b = null, bd = 400; for (const e of G.E) { if (e.st === 'dead' || e.ally) continue; const d = Math.hypot(e.x - H.x, e.y - H.y); if (d < bd) { bd = d; b = e; } }
-      if (b) { pet = 0; G.damageOni(b, 1.2, false, false, { rune: 1 }); ring(b.x, b.y, '170,210,255'); } } }
+      if (b) { pet = 0; if (rp && rp.u && G.ALLY.cam.includes(rp)) G.ALLY.strike(rp, b); else { G.damageOni(b, 1.2, false, false, { rune: 1 }); ring(b.x, b.y, '170,210,255'); } } } }
 
   /* ================= 夥伴同行副本對話 ================= */
   const TALK = {

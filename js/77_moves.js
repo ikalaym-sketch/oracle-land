@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 77_moves.js
- * Version : r3.53.0  (2026-11-23)  r3.53.0：秘傳書一律顯示完整順序＋所在鍵位；取消店舖／神社升級給提示　r3.37.0：鐵砲槍口改用第二代素材；r3.35.0：U 定義可指定 kind；r3.36.0：射擊／槍口火光改從逐格錨點（W.muzzle）出現
+ * Version : r3.143.0  (2026-11-27)　r3.143.0：槍普攻直刺最多 3 個（由近到遠）；薙刀指定擊退也 ×1.3
+ * 舊版    : r3.53.0  (2026-11-23)  r3.53.0：秘傳書一律顯示完整順序＋所在鍵位；取消店舖／神社升級給提示　r3.37.0：鐵砲槍口改用第二代素材；r3.35.0：U 定義可指定 kind；r3.36.0：射擊／槍口火光改從逐格錨點（W.muzzle）出現
  * 變更    : r3.34.0 新增。招式（組合技）新引擎＋秘傳連技（規格 VFX_SPEC v2.1 第二、三節）。
  *           ・招式池：每把武器 12 招（沿用 12 個動作圖），分類 起／連／收／架；熟練度 1–11 逐招解鎖。
  *           ・招式依「招式設計」演出：時間軸（第幾格做什麼）＋程式特效（76_vfx），命中判定與特效同一份路徑，不看人物圖的武器位置。
@@ -31,9 +32,10 @@
       later(n, fn) { G.STORY.later(n, () => { try { fn(c); } catch (x) { console.warn('mv2 later', x); } }); },
       at(dx, dz) { const k = HH() * S(H.y); return [H.x + a.face0 * dx * k, H.y, (dz || 0) * k]; },   // 主角相對點（前 dx、高 dz）
       /* 傷害：o={shape,r,arc,ang,len,w,x,y,back,m,lv,kind,kb,stun,launch,def,ign,crit,col,face,skip} */
-      hit(o) { const hits = VX.area(Object.assign({ face: a.face0 }, o)); if (!hits.length) return hits; const lv0 = o.lv || 'light', lv = c.fin && lv0 === 'light' ? 'mid' : c.fin && lv0 === 'mid' ? 'heavy' : lv0;
+      hit(o) { let hits = VX.area(Object.assign({ face: a.face0 }, o)); if (!hits.length) return hits;
+        if (a.kind === 'atk' && o.shape === 'line' && G.WPN.curId() === 'yari' && hits.length > 3) { hits = hits.sort((p, q) => Math.abs(p.x - H.x) - Math.abs(q.x - H.x)).slice(0, 3); }   /* r3.143.0：槍 貫穿最多 3 個 */ const lv0 = o.lv || 'light', lv = c.fin && lv0 === 'light' ? 'mid' : c.fin && lv0 === 'mid' ? 'heavy' : lv0;
         for (const e of hits) { const big = lv === 'heavy' || lv === 'hiden'; G.damageOni(e, (o.m || 1) * c.mul, big, !!o.crit, o.ign ? { ign: o.ign } : undefined);
-          if (o.kb !== undefined) e.kb = (o.kbDir || a.face0) * o.kb * HH() * S(e.y) / 6 / (e.ratio || 1);
+          if (o.kb !== undefined) e.kb = (o.kbDir || a.face0) * o.kb * HH() * S(e.y) / 6 / (e.ratio || 1) * (G.WPN.TR ? G.WPN.TR.kb() : 1);
           if (o.stun) e.stun = Math.max(e.stun || 0, o.stun); if (o.launch) { e.stun = Math.max(e.stun || 0, o.launch); e.air = Math.max(e.air || 0, o.launch); }
           if (o.def && e.db !== undefined || o.def) { e.db = e.db || {}; e.db.def = Math.max(e.db.def || 0, o.def); e.db.defT = Math.max(e.db.defT || 0, 180); }
           if (o.slow) { e.db = e.db || {}; e.db.slow = Math.max(e.db.slow || 0, o.slow); e.db.slowT = 120; }

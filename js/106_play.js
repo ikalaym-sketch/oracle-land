@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 106_play.js
- * Version : r3.127.4  (2026-11-27)　r3.127.4：救援士兵、小雪不套「靠近敵人變半透明」
+ * Version : r3.143.0  (2026-11-27)　r3.143.0：戰鬥中淡化路人時，跳過援軍、支援角色、鎌鼬三兄弟
+ * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：救援士兵、小雪不套「靠近敵人變半透明」
  * 舊版    : r3.105.0  (2026-11-26)　r3.105.0：合併傷害數字也用「萬」
  * 舊版    : r3.64.0  (2026-11-24)
  * 變更    : r3.64.0 新增。試玩回饋第一批：
@@ -46,7 +47,7 @@
         if (pa) { const x = a.x - ux * pa, y = a.y - uy * pa; if (SC.walkable(x, y)) { a.x = x; a.y = y; } }
         if (pb) { const x = b.x + ux * pb, y = b.y + uy * pb; if (SC.walkable(x, y)) { b.x = x; b.y = y; } } } } }
   function fadeNpc() { const A = G.E.filter(e => e.st !== 'dead' && e.delay <= 0);
-    for (const nn of G.NPC) { if (nn.noMerge || nn.npc === 'xue') { nn._fa = 1; continue; } const near = A.some(e => Math.abs(e.x - nn.x) < 180 && Math.abs(e.y - nn.y) < 90); nn._fa = near ? 0.4 : 1; } }
+    for (const nn of G.NPC) { if (nn.noMerge || nn.npc === 'xue' || nn.ally || nn.kamaF) { nn._fa = 1; continue; }   /* r3.143.0：援軍／支援角色／鎌鼬三兄弟不淡化（原本靠近敵人就變 40%） */ const near = A.some(e => Math.abs(e.x - nn.x) < 180 && Math.abs(e.y - nn.y) < 90); nn._fa = near ? 0.4 : 1; } }
   const dn0 = G.drawNpc; G.drawNpc = function (n) { if (!n || !(n._fa < 1)) return dn0.apply(this, arguments); ctx.save(); ctx.globalAlpha *= n._fa; try { return dn0.apply(this, arguments); } finally { ctx.restore(); } };
   /* 傷害數字合併 */
   const do0 = G.damageOni; G.damageOni = function (e) { const n0 = G.NUMS.length, r = do0.apply(this, arguments); if (G.NUMS.length !== n0 + 1) return r;

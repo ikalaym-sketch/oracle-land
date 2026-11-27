@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.126.0  (2026-11-27)　r3.126.0：里歐出招中本體步進直接略過（讓外層各模組的每格處理照常執行）
+ * Version : r3.143.0  (2026-11-27)　r3.143.0：和弓特性：普攻出箭中可移動（不轉身，速度 ×0.6）
+ * 舊版    : r3.126.0  (2026-11-27)　r3.126.0：里歐出招中本體步進直接略過（讓外層各模組的每格處理照常執行）
  * 舊版    : r3.111.0  (2026-11-26)　r3.111.0：近戰外框橢圓預警停用（改由 139_foeai 畫頭目同款預警）
  * 舊版    : r3.107.0  (2026-11-26)　r3.107.0：暫時攻擊%（茶屋糰子、名物、招式增益 G.BUFF atk）併入攻擊區，與裝備／修練的攻擊% 同區相加
  * 舊版    : r3.106.0  (2026-11-26)　r3.106.0：掉落物繪製掛點 G.LOOTDRAW（134_econ：銅錢／寶箱）
@@ -152,6 +153,7 @@ G.ONI_RATIO = 1.38;
     for (let i = 1; i <= n; i++) a.ev.push(Object.assign({}, last, { at: Math.min(a.T - 1, last.at + 7 * i), damage: (last.damage || DMG0) * 0.7 })); }
   function actStep(mx, my, wp) {
     const a = H.act, c = a.c, t = H.t;
+    if (a.kind === 'atk' && wp.id === 'yumi' && Math.hypot(mx, my) > 0.2) tryMove(H, mx * 0.6, my * 0.42);   // r3.143.0：和弓邊走邊射
     if (a.beh) G.SKB.tick(a, mx, my);
     else if (c && c.mv) { const [dist, f0, f1, i0, i1] = c.mv; if (t >= f0 && t < f1 && f1 > f0) tryMove(H, H.face * dist * K * (a.dm || 1) / (f1 - f0), my * 0.8); if (t >= i0 && t < i1) H.inv = Math.max(H.inv, 2); }
     else if (a.kind === 'dash') tryMove(H, H.face * (t < 12 ? 7.5 : 2), my * 1.5);

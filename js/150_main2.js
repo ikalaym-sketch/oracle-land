@@ -1,6 +1,7 @@
 /* =====================================================================
  * 150_main2.js
- * 版本    : r3.132.0  (2026-11-27)
+ * 版本    : r3.143.0  (2026-11-27)　r3.143.0：水軍砲擊看得到砲彈從海上飛來（落地才扣血）
+ * 舊版    : r3.132.0  (2026-11-27)
  * 說明    : 劇情補完・主線第 2 批（第 5、9、10、11 章）。
  *           ‧ 第 5 章「誰在說謊」：長屋多問一戶（收炭灰的行商），問完後從 5 句證詞挑矛盾；挑錯小雪好感 −1、再挑一次。
  *           ‧ 第 9 章「道摩本尊」：打倒分身後本尊現身（50% 血），打掉一半就收手撤退，接原本的對話。
@@ -95,9 +96,10 @@
   if (B && B.start) { const bs0 = B.start; B.start = function (id) { const enc = bs0.apply(this, arguments);
     if (enc && id === 'omagatsuhi' && C('c10_navy') === 'peace') { enc._navy = { n: 6, t: 360 }; later(120, () => G.UI.banner('礁島水軍', '「神社的劍士！看海上——水軍的船，來還人情了！」')); } return enc; }; }
   function navyStep() { const enc = B.enc; if (!enc || enc.done || !enc._navy || G.DLG.active()) return; const a = enc._navy; if (a.n <= 0 || --a.t > 0) return; a.t = 600; a.n--;
-    for (const u of enc.units) { if (u.st === 'dead' || u.hp <= 1) continue; const d = Math.round(u.hpMax * 0.02); u.hp = Math.max(1, u.hp - d); u.flash = 10; G.NUMS.push({ x: u.x, y: u.y - (G.HERO_H || 90) * 1.2, v: d, t: 0 });
-      if (G.VX && G.VX.ring) G.VX.ring({ x: u.x, y: u.y, r1: 1.6, life: 20, col: '255,190,110' }); }
-    SC.shake = Math.max(SC.shake || 0, 5); G.UI.toast('水軍砲擊！（剩 ' + a.n + ' 輪）'); }
+    const hit = u => { if (u.st === 'dead' || u.hp <= 1) return; const d = Math.round(u.hpMax * 0.02); u.hp = Math.max(1, u.hp - d); u.flash = 10; G.NUMS.push({ x: u.x, y: u.y - (G.HERO_H || 90) * 1.2, v: d, t: 0 });
+      if (G.VX && G.VX.ring) G.VX.ring({ x: u.x, y: u.y, r1: 1.6, life: 20, col: '255,190,110' }); SC.shake = Math.max(SC.shake || 0, 5); };
+    for (const u of enc.units) { if (u.st === 'dead' || u.hp <= 1) continue; if (G.ALLY && G.ALLY.rain) { for (let i = 0; i < 3; i++) G.ALLY.rain(u, 'shell', i === 2 ? hit : null, i * 6); } else hit(u); }   /* r3.143.0：砲彈從海上飛來 */
+    G.UI.toast('水軍砲擊！（剩 ' + a.n + ' 輪）'); }
 
   /* ================= 第 11 章：不能回頭 ================= */
   const XMAP = 'W_R11_02'; let XF = null;

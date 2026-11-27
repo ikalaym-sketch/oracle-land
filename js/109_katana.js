@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 109_katana.js
- * Version : r3.74.0  (2026-11-24)
+ * Version : r3.143.0  (2026-11-27)　r3.143.0：完美閃避記時間（H._pfT），打刀特性「反擊 +30%」用
+ * 舊版    : r3.74.0  (2026-11-24)
  * 變更    : r3.74.0 普攻換成殘月藍（新增 MV2.N.katana：出手時間與倍率照動作圖事件，刀光改實心藍月牙、命中改藍色）。
  *           r3.73.0 全部招式／技／特技的特效改由 111_katana_fx 繪製：實心漸細刀光（刀幕不再畫，判定照舊）、突刺光、聚氣、刀鍔閃、架勢刀身光、緩速冰霧、地面揚霧＋局部光取代所有地面圈；斷風改實心月牙。
  *           r3.72.0 特效改藍系（深藍／中藍為主、白只留細刃芯），移除白色半橢圓架勢框、地面白線、全部 lighter 疊加；居合畫面縮為 1.3 身高（判定 1.8）；匯出 G.KT 給 110。
@@ -172,7 +173,7 @@
     /* 秘傳鍵外圈倒數 */
     const ud0 = G.UI.draw; G.UI.draw = function () { ud0.apply(this, arguments); const R = H.hidenRdy, B = G.UI.B; if (!R || !B || !R.max) return; const b = B['c' + (R.k + 1)]; if (!b) return; const ctx = G.ctx, q = Math.max(0, 1 - R.t / R.max);
       ctx.save(); ctx.strokeStyle = 'rgba(255,215,120,.95)'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 9, -Math.PI / 2, -Math.PI / 2 + 6.283 * q); ctx.stroke(); ctx.restore(); };
-    function perfect() { BOD.pf++; const k = HH() * S(H.y); for (const e of G.E) if (e.st !== 'dead' && Math.hypot(e.x - H.x, (e.y - H.y) * 1.5) < 3.5 * k) { e.stun = Math.max(e.stun || 0, 24); e.flash = 4; }
+    function perfect() { BOD.pf++; H._pfT = G.t; H._pfU = 0; const k = HH() * S(H.y); for (const e of G.E) if (e.st !== 'dead' && Math.hypot(e.x - H.x, (e.y - H.y) * 1.5) < 3.5 * k) { e.stun = Math.max(e.stun || 0, 24); e.flash = 4; }
       VX.dim && VX.dim(24, 0.4); VX.ghost && VX.ghost(18); KF().light(H.x, H.y, 1.4, 20, 0.55, 0.6); dust(H.x, H.y, 0.6, 10, 1.2, 30);
       G.NUMS.push({ x: H.x, y: H.y - k - 14, v: '見切', t: 0, col: '#9fd0ff' }); const d = G.RPG.d(); d.qi = Math.min(100, (d.qi || 0) + 10); G.BUFF.add('atk', 30, 60); G.hitstop = Math.max(G.hitstop || 0, 6); } })();
 })();

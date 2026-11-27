@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 87_story2.js
- * Version : r3.41.0  (2026-11-18)  r3.41.0：汐音加入改成站在河岸下游等你過去（不再接在五平對話後直接演）；進圖有劇情對話時，對話結束 30 秒後才生怪
+ * Version : r3.143.0  (2026-11-27)　r3.143.0：G.ALLY.cameo：支援角色「暫時出場」——走到敵人側邊用自己的招式打一下再退場；pet＝跟在主角身邊、G.ALLY.strike 時原地出招（小雷獸）
+ * 舊版    : r3.41.0  (2026-11-18)  r3.41.0：汐音加入改成站在河岸下游等你過去（不再接在五平對話後直接演）；進圖有劇情對話時，對話結束 30 秒後才生怪
  * 舊版    : r3.39.0  (2026-11-17)
  * 變更    : r3.39.0 新增。劇情觸發與章節流程整理：
  *           1. 走近觸發：進圖劇情（cut）依站位表改成「人物站在定點、頭上『…』，主角走近 1.6 身高自動對話」（點擊也可以）。
@@ -194,7 +195,38 @@
     const s = SC.depth(n.y), sc = HH() * n.hk * s / (n.vh || 200), ms = n.st === 'atk' ? Math.min((G.t - n.t0) * 16.7, (A.dur(n.clip) || 700) - 1) : (G.t - (n.t0 || 0)) * 16.7, fr = A.frameAt(n.st === 'atk' ? n.clip : Object.assign({}, n.clip, { loop: true }), ms), c = G.ctx;
     c.save(); c.globalAlpha = 0.3 * n.alpha; c.fillStyle = '#1e140a'; c.beginPath(); c.ellipse(n.x, n.y, HH() * n.hk * 0.42 * s, HH() * n.hk * 0.11 * s, 0, 0, 6.283); c.fill(); c.restore();
     A.draw(n.u, fr, n.x, n.y, sc, n.face * (n.nat || 1) < 0, n.alpha);
-    const y = n.y - HH() * n.hk * s * 1.08; G.txt(n.name, n.x, y - 6, 9, '#bfe3ff', 'center'); };
+    const y = n.y - HH() * n.hk * s * 1.08; if (!n.noName) G.txt(n.name, n.x, y - 6, 9, '#bfe3ff', 'center'); };
+
+  /* ---------- r3.143.0：暫時出場的支援角色（不靠劇情援軍名單，不需頭目戰） ---------- */
+  const CAM = ALLY.cam = [];
+  function camAdd(a, o) { G.NPC.push(o); CAM.push(o); Promise.resolve(A.load(a.anim)).then(u => { if (!u || !u.act || !u.act[a.idle]) { camDel(o); return; } o.u = u; const L = u.act[a.idle].f.map(f => f[5]).sort((p, q) => p - q); o.vh = L[L.length >> 1] || 200; o.clip = u.act[a.idle]; o.t0 = G.t;
+      if (a.say) { if (G.BANTER && G.BANTER.bubble) G.BANTER.bubble(o, a.say); else G.UI.toast(a.name + '：' + a.say); } }, () => camDel(o)); return o; }
+  function camDel(o) { const i = CAM.indexOf(o); if (i >= 0) CAM.splice(i, 1); G.NPC = G.NPC.filter(n => n !== o); }
+  function camAtk(o, e) { const a = o.def, u = o.u; if (!u) return; o.st = 'atk'; o.hit = 0; o.tg = e || o.tg; o.clip = u.act[a.atk[Math.floor(Math.random() * a.atk.length)]] || u.act[a.idle]; o.t0 = G.t; if (o.tg) o.face = o.tg.x > o.x ? 1 : -1; }
+  /* a：{ name, anim, idle, walk, atk[], hk, nat, say }；opt：{ onHit(o, e), pet, near } */
+  ALLY.cameo = function (a, opt) { opt = opt || {}; const e = opt.pet ? null : target(H), side = e ? (H.x < e.x ? -1 : 1) : (H.face || 1);
+    const x = opt.pet ? H.x - (H.face || 1) * HH() * 0.7 : (e ? e.x + side * HH() * 1.2 * Math.max(1, e.bb ? e.size || 1 : 1) : H.x + side * 80), y = opt.pet ? H.y + 10 : (e ? e.y + 8 : H.y);
+    return camAdd(a, { ally: 1, cam: 1, pet: !!opt.pet, noName: !!opt.pet, anim: a.anim, def: a, name: a.name, x, y, face: e ? (e.x > x ? 1 : -1) : 1, hk: a.hk, nat: a.nat, st: 'idle', t: 0, alpha: 0, sid: SC.id, onHit: opt.onHit, tg: e, go: !opt.pet }); };
+  /* 天上落下（箭雨／砲彈）：kind＝'arrow'｜'shell'；落地時 onLand(e) */
+  ALLY.rain = function (e, kind, onLand, delay) { if (!e || !G.VX || !G.VX.custom) { if (onLand) onLand(e); return; } const T = kind === 'shell' ? 34 : 22, dir = kind === 'shell' ? -1 : (Math.random() < 0.5 ? -1 : 1), ox = (Math.random() - 0.5) * HH() * 0.5;
+    G.VX.custom((o, c) => { const q = Math.min(1, (o.t - (o.d || 0)) / T); if (q < 0 || q >= 1) return; const k = HH() * SC.depth(e.y), x1 = e.x + ox, y1 = e.y, x0 = x1 + dir * k * (kind === 'shell' ? 4 : 1.2), y0 = y1 - k * (kind === 'shell' ? 5 : 4);
+        const x = x0 + (x1 - x0) * q, y = y0 + (y1 - y0) * q - (kind === 'shell' ? Math.sin(q * Math.PI) * k * 1.2 : 0); c.save();
+        if (kind === 'shell') { const g = c.createRadialGradient(x, y, 0, x, y, k * 0.32); g.addColorStop(0, 'rgba(255,200,120,.8)'); g.addColorStop(1, 'rgba(255,120,40,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, k * 0.32, 0, 6.283); c.fill(); c.fillStyle = '#1e1a18'; c.beginPath(); c.arc(x, y, k * 0.13, 0, 6.283); c.fill(); }
+        else { const ang = Math.atan2(y1 - y0, x1 - x0), L = k * 0.8; c.strokeStyle = 'rgba(255,235,200,.35)'; c.lineWidth = Math.max(3, k * 0.07); c.beginPath(); c.moveTo(x - Math.cos(ang) * L * 1.6, y - Math.sin(ang) * L * 1.6); c.lineTo(x, y); c.stroke(); c.strokeStyle = '#3a2a1c'; c.lineWidth = Math.max(2, k * 0.035); c.beginPath(); c.moveTo(x - Math.cos(ang) * L, y - Math.sin(ang) * L); c.lineTo(x, y); c.stroke();
+          c.fillStyle = '#d8d0c0'; c.beginPath(); c.moveTo(x, y); c.lineTo(x - Math.cos(ang - 0.4) * k * 0.14, y - Math.sin(ang - 0.4) * k * 0.14); c.lineTo(x - Math.cos(ang + 0.4) * k * 0.14, y - Math.sin(ang + 0.4) * k * 0.14); c.fill(); }
+        c.restore(); }, T + 2, 'o', { d: delay || 0, step(o, t) { if (t === T - 1) { try { if (onLand) onLand(e); } catch (x) { console.warn('rain', x); }
+          if (kind === 'shell' && G.VX.smoke) G.VX.smoke({ x: e.x + ox, y: e.y, z: 0.4 * HH(), n: 4 }); if (G.VX.impact) G.VX.impact({ x: e.x + ox, y: e.y, z: 0.5, big: kind === 'shell' ? 1 : 0 }); } } }); };
+  ALLY.strike = function (o, e) { if (o && o.u && o.st !== 'atk') camAtk(o, e); };
+  function camStep(o) { if (!G.NPC.includes(o)) G.NPC.push(o); if (!o.u) return; o.t++; const a = o.def, u = o.u;
+    if (o.out) { o.alpha -= 0.06; if (o.alpha <= 0) camDel(o); return; } o.alpha = Math.min(1, o.alpha + 0.08);
+    if (o.st === 'atk') { const ms = (G.t - o.t0) * 16.7, dur = A.dur(o.clip) || 700;
+      if (!o.hit && ms >= dur * 0.45) { o.hit = 1; const e = o.tg && alive(o.tg) ? o.tg : target(o); try { if (o.onHit) o.onHit(o, e); } catch (x) { console.warn('cameo', x); } if (e && G.VX && G.VX.impact) G.VX.impact({ x: e.x, y: e.y, z: 0.6, big: 1 }); }
+      if (ms >= dur) { o.st = 'idle'; o.clip = u.act[a.idle]; o.t0 = G.t; if (!o.pet) o.out = 1; } return; }
+    if (o.pet) { const tx = H.x - (H.face || 1) * HH() * 0.7, ty = H.y + 10, dx = tx - o.x, dy = ty - o.y, d = Math.hypot(dx, dy);   // 跟在主角身邊
+      if (d > 30) { const s = Math.min(d, 3.2); o.x += dx / d * s; o.y += dy / d * s; o.face = dx > 0 ? 1 : -1; o.clip = u.act[a.walk] || u.act[a.idle]; } else o.clip = u.act[a.idle]; return; }
+    if (o.go) { const e = o.tg && alive(o.tg) ? o.tg : (o.tg = target(o)); if (!e) { o.out = 1; return; } const side = o.x < e.x ? -1 : 1, tx = e.x + side * HH() * 1.15 * (e.bb ? Math.max(1, e.size || 1) : 1), ty = e.y + 8, dx = tx - o.x, dy = ty - o.y, d = Math.hypot(dx, dy);
+      o.face = e.x > o.x ? 1 : -1; if (d > 10 && o.t < 90) { const s = Math.min(d, 3.4); o.x += dx / d * s; o.y += dy / d * s; o.clip = u.act[a.walk] || u.act[a.idle]; } else { o.go = 0; camAtk(o, e); } } }
+  { const st3 = G.STORY.step.bind(G.STORY); G.STORY.step = function () { st3(); if (!CAM.length) return; for (const o of CAM.slice()) { if (o.sid !== SC.id) { camDel(o); continue; } if (G.mode === 'play' && !G.DLG.active()) camStep(o); } }; }
 
   /* ======================= 5. 鎌鼬三兄弟留在風口護巢灘 ======================= */
   const KM = [['鎌鼬長兄', 'kama1_idle_left3q', 0.62, 0, 0], ['鎌鼬次兄', 'kama2_idle_left3q', 0.56, 64, 14], ['鎌鼬三弟', 'kama3_idle_left3q', 0.5, 124, -6]];
