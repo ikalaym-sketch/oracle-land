@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 05_dialog.js
- * Version : r3.157.2  (2026-11-27)　r3.157.2：對話開始前先等半身像載好（最多 0.6 秒），連選項分支一起預載——修正第一次出場（如五條大橋弁慶）沒有頭像
+ * Version : r3.160.0  (2026-11-27)　r3.160.0：玄符（黑符的雙胞胎哥哥）共用黑符半身像
+ * 舊版    : r3.157.2  (2026-11-27)　r3.157.2：對話開始前先等半身像載好（最多 0.6 秒），連選項分支一起預載——修正第一次出場（如五條大橋弁慶）沒有頭像
  * 舊版    : r3.157.0  (2026-11-27)　r3.157.0：接入 68 張對話半身像（a/bust，講話時才載入；茨木／景綱／晴明等簡稱也對得到）
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：出選項時上方保留上一句台詞（誰在問、問什麼）
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：記錄對話結束時間（_endT，橫幅延後用）
@@ -31,7 +32,7 @@
     '柚吉': 'yuzukichi', '小百合': 'sayuri', '蓮太': 'renta', '笹音': 'sasane', '太助': 'tasuke', '拉車的太助': 'tasuke', '槇之介': 'makinosuke', '小太郎': 'kotaro', '阿吉': 'akichi', '渡船夫': 'ferryman', '無名武士': 'nameless_samurai',
     '傘妖': 'kasaobake', '鬼族的母親': 'oni_mother', '織娘之女': 'weaver_girl', '葦穗村的長老': 'ashiho_elder', '士兵隊長': 'guard_captain', '道摩兵': 'doma_soldier', '道摩的副將': 'doma_general',
     '鬼族的孩子': 'oni_child', '鬼族的大叔': 'oni_uncle', '人類的攤販': 'vendor_human', '鬼族的攤販': 'vendor_oni', '老人': 'old_man', '陰陽頭': 'onmyo_head', '漁婦': 'fishwife', '掌櫃': 'innkeeper', '老闆娘': 'landlady',
-    '老爺爺': 'grandpa', '放牛的孩子': 'cowherd', '前鬼': 'zenki', '後鬼': 'goki', '被綁住的小妖': 'bound_imp', '黑符陰陽師': 'kurofu', '黑符': 'kurofu', '仙鶴': 'crane', '人類代表': 'rep_human', '鬼族代表': 'rep_oni',
+    '老爺爺': 'grandpa', '放牛的孩子': 'cowherd', '前鬼': 'zenki', '後鬼': 'goki', '被綁住的小妖': 'bound_imp', '黑符陰陽師': 'kurofu', '黑符': 'kurofu', '玄符': 'kurofu', '仙鶴': 'crane', '人類代表': 'rep_human', '鬼族代表': 'rep_oni',
     '村婦': 'village_woman', '小河童': 'kappa_child', '鬼族的長老': 'oni_elder', '使者': 'messenger', '宿場的老闆': 'post_owner', '農婦': 'farm_wife' };
   const BREQ = {};
   function bustKey(n) { const b = BN[n]; if (!b) return null; const k = 'bust_' + b; if (G.IMG[k]) return k;
