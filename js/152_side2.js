@@ -1,6 +1,7 @@
 /* =====================================================================
  * 152_side2.js
- * 版本    : r3.134.0  (2026-11-27)
+ * 版本    : r3.141.0  (2026-11-27)　r3.141.0：受傷的人魚站在任務點（借鬼女圖），進珊庭先載圖
+ * 舊版    : r3.134.0  (2026-11-27)
  * 說明    : 劇情補完・支線第 2 批（第 8～12 章，7 條）。
  *           ‧ c8_s_market 和平夜市（赴宴和談）／c8_s_curfew 宵禁的夜（突襲）：兩岸城換夜間圖（ch8_market_night）。
  *           ‧ c10_s_kappa 河童長者的海外親戚：牽線後終章大禍津日戰，海河童助陣（3 輪水砲）。
@@ -150,4 +151,7 @@
       for (const u of enc.units) { if (u.st === 'dead' || u.hp <= 1) continue; const d = Math.round(u.hpMax * a.k); u.hp = Math.max(1, u.hp - d); u.flash = 10; G.NUMS.push({ x: u.x, y: u.y - (G.HERO_H || 90) * 1.2, v: d, t: 0 });
         if (G.VX && G.VX.ring) G.VX.ring({ x: u.x, y: u.y, r1: 1.6, life: 20, col: a.col }); }
       SC.shake = Math.max(SC.shake || 0, 4); G.UI.toast(a.who + '！（剩 ' + a.n + ' 輪）'); } };
+  /* r3.141.0：人魚站在任務點（Q.STAT 立繪）；鬼女圖進圖前先載 */
+  if (Q.STAT) Q.STAT['受傷的人魚'] = ['e_kijo', 0.9];
+  { const en1 = SC.enter; SC.enter = function (id) { if (id === 'W_R10_05' && G.ASSET && G.ASSET.enemies && G.ENEMY_IDX && G.ENEMY_IDX.kijo) G.ASSET.enemies(['kijo']); return en1.apply(this, arguments); }; }
 })();

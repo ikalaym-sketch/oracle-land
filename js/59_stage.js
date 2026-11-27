@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 59_stage.js
- * Version : r3.58.0  (2026-11-24)　r3.58.0：修正 r3.56.0 註解吞掉 idle／mv 宣告（劇情登場角色報錯）
+ * Version : r3.141.0  (2026-11-27)　r3.141.0：說話的人到位才出對話框（最多 2 秒）；頭目角色在別張圖講話用 1.0 大小；本圖頭目已打倒後，說完話照常退場（原本一直留著＝同圖兩個須佐之男）；亡魂半透明（原 156_castfix 併入）
+ * 舊版    : r3.58.0  (2026-11-24)　r3.58.0：修正 r3.56.0 註解吞掉 idle／mv 宣告（劇情登場角色報錯）
  * 舊版    : r3.56.0  (2026-11-24)　r3.56.0：夥伴登場大小與戰鬥一致　r3.41.0：對話中路人不會走（AM.step 停）→ 畫面外的同名路人與新生成的路人直接站到說話位置（不透明）；
  *           只有「本圖的頭目」說完話才留在原地，其他頭目圖（如第 2 章的道摩）對話後照常退場；走位不再用 tryMove（擠住時來回抖），最多 1.5 秒到位
  * 舊版    : r3.30.0  (2026-11-16)　r3.30.0：說話者以別名比對（五平＝東村・五平）；同圖已有此人就不另生，路人在畫面外改成走過來
@@ -47,14 +48,15 @@
     return (SC.snap && SC.snap(x, y, 'walk', 160)) || [x, y]; }
   function from(t) { const { vw } = SC.view ? SC.view() : { vw: 900 }, side = t[0] >= G.H.x ? 1 : -1, x = Math.max(30, Math.min(SC.def.w - 30, G.H.x + side * vw * 0.55));
     return (SC.snap && SC.snap(x, t[1], 'walk', 260)) || t; }
+  const GHOST = { '劍士的亡魂': 0.55 };   // r3.141.0
   const mapBoss = f => !!(f.boss && G.BOSS && G.BOSS.MAP && G.BOSS.MAP[SC.id] === f.boss);
   function enter(n, f, i) { const fb = mapBoss(f), t = spot(n, fb ? f : {}, i), p0 = fb ? t : from(t), sid = SC.id;
     const o = { name: n, stg: 1, sid, boss: fb };
-    if (f.k === 'amb') { if (!G.AMB) return; G.AMB.add(f.u, t[0], t[1], { name: n, hold: true }).then(a => { if (!a) return; o.a = a; if (!ST.on.includes(o)) { G.AMB.remove(a); return; } a.alpha = 1; a.st = 'idle'; a.face = G.H.x < a.x ? -1 : 1; }); ST.on.push(o); return; }
+    if (f.k === 'amb') { if (!G.AMB) return; G.AMB.add(f.u, t[0], t[1], { name: n, hold: true }).then(a => { if (!a) return; o.a = a; if (!ST.on.includes(o)) { G.AMB.remove(a); return; } a.alpha = GHOST[n] || 1; a.st = 'idle'; a.face = G.H.x < a.x ? -1 : 1; }); ST.on.push(o); return; }
     if (f.k === 'npc') { const a = o.a = { npc: f.npc, name: n, x: p0[0], y: p0[1], face: 1, walking: true, stg: 1 }; G.NPC.push(a); ST.on.push(o); let k = 0;
       const go = () => { if (!ST.on.includes(o) || SC.id !== sid) return; const dx = t[0] - a.x, dy = t[1] - a.y, d = Math.hypot(dx, dy); if (d < 6 || ++k > 220) { a.walking = false; return; } const s = Math.min(d, 4.2); if (k > 90) { a.x = t[0]; a.y = t[1]; } else { a.x += dx / d * s; a.y += dy / d * s; } a.face = Math.sign(dx) || a.face; requestAnimationFrame(go); }; go(); return; }
     const key = f.key && f.key(); if (!key) { ST.miss[n] = 1; return; }
-    const a = o.a = { anim: key, hk: f.hk || 1, nat: f.nat || 1, name: n, x: p0[0], y: p0[1], face: -1 }; G.NPC.push(a); ST.on.push(o);
+    const a = o.a = { anim: key, hk: f.boss && !fb ? 1 : f.hk || 1, nat: f.nat || 1, name: n, x: p0[0], y: p0[1], face: -1 }; G.NPC.push(a); ST.on.push(o);
     Promise.resolve(A.load(key)).then(u => { if (!u || !u.act) return; a.u = u; if (f.k === 'pa' && G.PARTY && G.PARTY.DEF[f.id]) { const D = G.PARTY.DEF[f.id]; a.hk = D.ratio * (u.refH || 130) / (D.refH({ id: f.id }) || 130); }
       const idle = (f.cn && u.act[f.cn]) || u.act.idle || u.act[clipOf(u, /idle|stand|wait/)] || u.act[Object.keys(u.act)[0]], mv = u.act.run || u.act.walk || u.act[clipOf(u, /run|walk|step/)] || idle;   // r3.56.0：夥伴登場用和戰鬥相同的身高基準（原本用圖集 refH → 變大）
       if (fb) { a.clip = idle; return; } a.clip = mv; let k = 0; const go = () => { if (!ST.on.includes(o) || SC.id !== sid) return; const dx = t[0] - a.x, dy = t[1] - a.y, d = Math.hypot(dx, dy);
@@ -69,6 +71,16 @@
   const en0 = SC.enter; SC.enter = function () { for (const o of ST.on.slice()) leave(o); return en0.apply(this, arguments); };
   /* r3.27.0：頭目說完話留在原地，等真正的頭目出現才退場（避免「出現兩次」） */
   const ls0 = G.NPCLIFE.step; let tk = 0; G.NPCLIFE.step = function () { ls0(); if (++tk % 15 || !ST.on.length) return; const up = (G.BOSS && G.BOSS.enc) || G.E.some(e => e.boss && e.st !== 'dead' && e.hp > 0);
-    for (const o of ST.on.slice()) if (o.boss && (up || o.sid !== SC.id)) leave(o); };
+    const beat = !!G.SAVE.data.flags['boss_' + SC.id];   // r3.141.0：本圖頭目已打倒 → 說完話就退場
+    for (const o of ST.on.slice()) if (o.boss && (up || o.sid !== SC.id || (beat && !G.DLG.active()))) leave(o); };
+  /* r3.141.0：說話的人到位才出對話框：登場者還在載入／走位 → 對話框不畫、點擊無效、字不跑（最多 2 秒） */
+  let wait = 0, last = new Map();
+  const ready = () => { for (const o of ST.on) { const a = o.a; if (!a) return false; if (a.npc) { if (a.walking) return false; continue; } if (a.amb) continue;
+      if (!a.u) return false; const p = last.get(a), mv = !p || Math.abs(p[0] - a.x) > 0.5 || Math.abs(p[1] - a.y) > 0.5; last.set(a, [a.x, a.y]); if (mv) return false; } return true; };
+  const D = G.DLG, ds0 = D.start; D.start = function () { const r = ds0.apply(this, arguments); last = new Map(); wait = ST.on.length ? 120 : 0; return r; };
+  const dst0 = D.step, dt0 = D.tap, dd0 = D.draw;
+  D.step = function () { if (wait && (--wait <= 0 || ready())) wait = 0; if (wait) return; return dst0.apply(this, arguments); };
+  D.tap = function () { if (wait) return; return dt0.apply(this, arguments); };
+  D.draw = function () { if (wait) return; return dd0.apply(this, arguments); };
   ST.build = build; ST.find = n => (G.CAST && G.CAST.unit(n)) || find(n);
 })();

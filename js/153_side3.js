@@ -1,6 +1,7 @@
 /* =====================================================================
  * 153_side3.js
- * 版本    : r3.135.0  (2026-11-27)
+ * 版本    : r3.141.0  (2026-11-27)　r3.141.0：最後一隻式神改成紙鶴（文字＋任務點畫紙鶴 shiki_crane）
+ * 舊版    : r3.135.0  (2026-11-27)
  * 說明    : 劇情補完・支線第 3 批：副本頭目故事 4 線、隱藏夥伴心事 3 條、夥伴同行副本對話。
  *           副本頭目線（通關該副本後開放）：
  *             dg_fuji  弁慶的薙刀（義經）——三段薙刀收齊，抉擇交給弁慶／埋在富士；獎勵「八艘跳」：閃身／瞬步後 1 秒內可免冷卻再用 2 次。
@@ -87,11 +88,11 @@
         say('安倍晴明', '他說封印要犧牲一個人，請師父另想辦法。陰陽寮說他妖言惑眾，把他除了名。……那天，我一句話都沒有替他說。'),
         say('安倍晴明', '古都的夜之町，還留著他年輕時養的式神。它們沒有主人了，在街上遊蕩。'), say('安倍晴明', '替我去看看。……該怎麼處理，你決定。')] },
     steps: [{ t: 'kill', map: 'Q_kyoto_night', at: 'center', n: 2, foes: ['kuroonmyo'], text: '在古都・夜之町平息遊蕩的式神' },
-      { t: 'choice', map: 'Q_kyoto_night', at: 'center', dx: 160, name: '最後一隻式神', key: 'dg_shiki', text: '面對最後一隻式神', lines: [nar('（最後一隻式神是一隻紙做的小狐狸。它沒有攻擊你，只是叼著一張紙，放在你腳邊。）'),
+      { t: 'choice', map: 'Q_kyoto_night', at: 'center', dx: 160, name: '最後一隻式神', key: 'dg_shiki', text: '面對最後一隻式神', lines: [nar('（最後一隻式神是一隻白色的紙鶴。它沒有攻擊你，只是叼著一張紙，放在你腳邊。）'),
         nar('（紙上是很工整的字：「今日替河童的孩子治了病。他笑了。術是用來讓大家活下去的。——道滿」）'), say('小雪', '道滿……是道摩以前的名字？'), say('小雪', '這隻式神……一直帶著他的日記。')],
-        opts: [{ label: '放它走', v: 'spare', lines: [nar('（紙狐狸繞著你轉了一圈，往夜空飛去。方向是立約殿。）'), say('白丸', '……它要去找它的主人。'), say('小雪', '希望道摩先生……還記得自己寫過這句話。')] },
-          { label: '打散它', v: 'destroy', lines: [nar('（紙狐狸化成灰，日記也跟著燒掉了。）'), say('蒼真', '……留著，只會被道摩拿去用。'), say('小雪', '……嗯。')] }] }],
-    done() { if (C('dg_shiki') === 'spare') { F().domaLost = (F().domaLost || 0) - 1; G.UI.banner('道摩的舊式神', '紙狐狸飛向立約殿（道摩被奪的碎片 −1）'); } } });
+        opts: [{ label: '放它走', v: 'spare', lines: [nar('（紙鶴繞著你飛了一圈，往夜空飛去。方向是立約殿。）'), say('白丸', '……它要去找它的主人。'), say('小雪', '希望道摩先生……還記得自己寫過這句話。')] },
+          { label: '打散它', v: 'destroy', lines: [nar('（紙鶴化成灰，日記也跟著燒掉了。）'), say('蒼真', '……留著，只會被道摩拿去用。'), say('小雪', '……嗯。')] }] }],
+    done() { if (C('dg_shiki') === 'spare') { F().domaLost = (F().domaLost || 0) - 1; G.UI.banner('道摩的舊式神', '紙鶴飛向立約殿（道摩被奪的碎片 −1）'); } } });
 
   /* ================= 隱藏夥伴心事 ================= */
   Q.add({ id: 'pt_yorimitsu', ch: 8, title: '童子切的重量', desc: '源賴光說，有一筆舊帳想親自去算。', reward: { exp: 600, gold: 400 },
@@ -164,4 +165,8 @@
   function ptStep() { const enc = B.enc; if (!enc || enc.done || !enc._pt || enc._ph) return; const u = enc.units[0]; if (u && u.hp < u.hpMax * 0.5) { enc._ph = 1; G.UI.toast(enc._pt.half); } }
 
   const ls0 = G.lootStep; G.lootStep = function () { ls0.apply(this, arguments); if (FT) ftStep(); hassoStep(); fxStep(); ptStep(); };
+  /* r3.141.0：最後一隻式神＝紙鶴，飄在任務點上 */
+  { const df0 = G.drawFx; G.drawFx = function () { const r = df0.apply(this, arguments);
+      try { const VX = G.VX; if (VX && VX.draw2 && SC.id === 'Q_kyoto_night') for (const m of G.QST.marks) if (m.label === '最後一隻式神' && !m.dead && m.x > -999) VX.draw2(G.ctx, 'shiki_crane', Math.floor(G.t / 6) % 4, m.x, m.y - 70 + Math.sin(G.t / 20) * 6, 1.1, { flip: G.H.x < m.x }); } catch (e) {}
+      return r; }; }
 })();

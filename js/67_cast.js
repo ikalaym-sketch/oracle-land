@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 67_cast.js
- * Version : r3.127.4  (2026-11-27)　r3.127.4：戰鬥類事件（入侵、據點、伏擊…）在章節地圖的村莊也讓村民退場
+ * Version : r3.141.0  (2026-11-27)　r3.141.0：補劇情角色指定圖（新劇情 14 人＋小河童／人魚）；任務加人時同圖已有劇情專用人物（鐵心、小雪…）→ 不另生，任務記號移到他身上（原 156_castfix 併入）
+ * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：戰鬥類事件（入侵、據點、伏擊…）在章節地圖的村莊也讓村民退場
  * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：同名合併跳過 noMerge（救援事件的 4 名士兵）
  * 舊版    : r3.52.0  (2026-11-23)　r3.52.0：世界／隨機事件期間，任務要找的人不退場（原本整村的人藏起來，任務只剩地上的框）
  * 舊版    : r3.51.1  (2026-11-18)　r3.51.1：清理借用 NPC 時跳過傳送役時雨（原本會把時雨的「渡船／任務地點／副本合戰」選單清掉）
@@ -26,7 +27,9 @@
   const findHere = name => AM.list.find(n => human(n) && same(n.name, name));
   /* ---------- 1. 加人時借用同名者 ---------- */
   const add0 = AM.add.bind(AM), rm0 = AM.remove.bind(AM), pend = {};
+  const story = name => G.NPC.find(o => o.npc && !o.stg && o.x > -999 && same(o.name, name));   // r3.141.0：劇情專用人物（小雪、阿松、權爺、小太、鐵心）
   AM.add = function (u, x, y, o) { const name = o && o.name; if (!name || (o && o.follow)) return add0(u, x, y, o).then(n => { if (n) n.qnew = 1; return n; });
+    if (o && o.onTalk && story(name)) return Promise.resolve(null);   /* 同圖已有這位劇情人物 → 不另生（任務記號由 sync 移到他身上） */
     const k = SC.id + '|' + core(name), prev = pend[k] || Promise.resolve();
     const p = prev.then(() => { const ex = findHere(name); if (ex) { attach(ex, o); return ex; } return add0(u, x, y, o).then(n => { if (n) { n.qnew = 1; if (o.onTalk) n.onTalk = () => talk(n); } return n; }); });
     pend[k] = p.catch(() => 0); return p; };
@@ -46,6 +49,7 @@
     const g = (D && D.GREET[n.role]) || ['有什麼事？']; G.DLG.start([{ who: n.name, text: g[Math.floor(Math.random() * g.length)] }, { choice: C }]); }
   /* ---------- 3. 每 20 幀：合併同名、歸還借用 ---------- */
   function sync() { if (!SC.id || SC.trans) return;
+    for (const m of Q.marks) { if (m.n || m.st || !m.q || !(m.x > -999) || !m.run) continue; const s = story(m.label); if (s && Math.hypot(m.x - s.x, m.y - s.y) > 8) { m.x = s.x; m.y = s.y; } }   // r3.141.0：記號移到劇情人物身上
     if (new Set(G.NPC).size !== G.NPC.length) G.NPC = [...new Set(G.NPC)];   // 同一物件放兩次
     const H = G.NPC.filter(o => o.amb && human(o) && !o.noMerge), seen = [];   /* r3.127.2：noMerge＝事件裡的同名群眾（救援士兵）不合併 */
     for (const n of H) { const k = seen.find(o => same(o.name, n.name)); if (!k) { seen.push(n); continue; }
@@ -55,16 +59,21 @@
       rm0(dup); if (keep !== k) seen[seen.indexOf(k)] = keep; }
     // 立繪／劇情演員（不在路人名單裡的）同名重複
     const S = G.NPC.filter(o => o.anim && !o.amb && o.x > -999 && !(G.PARTY && G.PARTY.list.includes(o))), ss = [];
-    for (const o of S) { const k = ss.find(x => same(x.name, o.name)); if (!k) { ss.push(o); continue; } for (const m of Q.marks) if (m.st === o) m.st = k; if (G.STAGE) for (const s of G.STAGE.on) if (s.a === o) s.a = k; G.NPC = G.NPC.filter(x => x !== o); }
+    for (const o of S) { const k = ss.find(x => same(x.name, o.name)); if (!k) { ss.push(o); continue; } for (const m of Q.marks) if (m.st === o) { m.st = k; m.x = k.x; m.y = k.y; }   /* r3.141.0：記號跟著留下的那位（原本留在原地沒人） */ if (G.STAGE) for (const s of G.STAGE.on) if (s.a === o) s.a = k; G.NPC = G.NPC.filter(x => x !== o); }
     // 任務已不需要的借用路人：恢復走動
     for (const n of H) if (n.fer && n.ferTalk && n.onTalk !== n.ferTalk && !marksOf(n).length) n.onTalk = n.ferTalk;   /* 時雨：任務借用結束後恢復原本選單 */
     for (const n of H) if (!n.qnew && !n.fer && n.onTalk && !marksOf(n).length && !(G.STAGE && G.STAGE.on.some(o => o.a === n))) { n.onTalk = null; n.hold = false; n.borrowed = 0; } }
   let tk = 0; const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0(); if (++tk % 20 === 0) try { sync(); } catch (e) { console.warn('cast', e); } };
   /* ---------- 4. 沒有專屬圖的劇情角色：指定用哪張圖 ---------- */
-  const UA = { '鬼族守爐人': 'n_t_oni_veteran', '鬼族使者': 'n_t_oni_veteran', '鬼族': 'n_t_oni_veteran' };   // 路人圖
+  const UA = { '鬼族守爐人': 'n_t_oni_veteran', '鬼族使者': 'n_t_oni_veteran', '鬼族': 'n_t_oni_veteran',   // 路人圖
+    /* r3.141.0：新劇情（r3.130～r3.137）沒有專屬圖的角色 */
+    '半兵衛': 'n_t_human_carrier', '村長': 'n_t_human_elder', '老爺爺': 'n_p_gohei', '阿菊': 'n_p_kinu', '阿吉': 'n_jinzo', '鈴緒': 'n_suzuo', '宿場的老闆': 'n_sakubei',
+    '放牛的孩子': 'n_renta', '鬼族的孩子': 'n_yuzukichi', '鬼族的攤販': 'n_t_oni_veteran', '鬼族的大叔': 'n_t_oni_veteran', '鬼灘': 'n_t_oni_veteran', '人類的攤販': 'n_stall_vendor',
+    '劍士的亡魂': 'n_toma', '時雨': 'n_t_human_clerk' };
+  const UX = { '小河童': { k: 'an', key: () => 'n_t_kappa_mentor', hk: 0.6 }, '受傷的人魚': { k: 'an', key: () => 'e_kijo', hk: 0.9, en: 'kijo' } };   // r3.141.0：縮小的長者圖（原本被比對成河童頭目）／人魚借鬼女圖
   const UE = { '黑符陰陽師': 'doma_ritualist', '道摩的使者': 'doma_ritualist', '無名武士': 'kengo', '傘妖': 'karakasa' };   // 敵人圖（站著不打）
   // r3.41.0：完全同名才套（原本「道摩」會被別名比對成「道摩的使者」→ 用了黑衣兵的圖）
-  function unit(n) { for (const k in UA) if (k === n) return { k: 'amb', u: UA[k] }; for (const k in UE) if (k === n) { const t = UE[k]; if (G.ANIM.get && G.ANIM.get('e_' + t)) return { k: 'an', key: () => 'e_' + t, hk: 1 }; pre(t); return null; } return null; }
+  function unit(n) { for (const k in UA) if (k === n) return { k: 'amb', u: UA[k] }; if (UX[n]) { pre(UX[n].en); return UX[n]; } for (const k in UE) if (k === n) { const t = UE[k]; if (G.ANIM.get && G.ANIM.get('e_' + t)) return { k: 'an', key: () => 'e_' + t, hk: 1 }; pre(t); return null; } return null; }
   const pre = t => { if (G.ENEMY_IDX && G.ENEMY_IDX[t] && G.ASSET.enemies) G.ASSET.enemies([t]); };
   const en0 = G.STORY.onEnter.bind(G.STORY); G.STORY.onEnter = function (id) { en0(id); try {   // 這張圖目前的劇情會用到 → 先載圖
     const T = G.TEXT && G.TEXT.slots, qs = G.SAVE.data.qs || {}; for (const q of Q.L) { const s = qs[q.id]; let k = null, st = null;
