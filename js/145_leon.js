@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 145_leon.js
- * Version : r3.149.0  (2026-11-27)　r3.149.0：里歐職業技能（特性＋Lv15～100 共 7 項）；職業頁右側改成職業格式（外觀切換、特性、職業技能）
+ * Version : r3.150.0  (2026-11-27)　r3.150.0：修正 r3.149.0 誤刪按鍵配置常數（里歐 技能／按鍵頁報錯）；轉職＝開啟里歐（換其他職業就離開）；按鍵選招依類別分組可展開／收起
+ * 舊版    : r3.149.0  (2026-11-27)　r3.149.0：里歐職業技能（特性＋Lv15～100 共 7 項）；職業頁右側改成職業格式（外觀切換、特性、職業技能）
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：未設定招式提示加前往按鈕
  * 舊版    : r3.128.2  (2026-11-27)　r3.128.2：落下系晶術改成從約 2.6 身高處加速落下、落地才判定＋震動；擊飛的敵人在招式期間維持浮空、收招後暈 0.75 秒
  * 舊版    : r3.128.0  (2026-11-27)　r3.128.0：逐招修正（跳躍 ×1.6、飛燕連腳前進 ×1.8、雙牙劍氣 ×1.6、追刺地槍翻轉、落下系晶術加高縮小、投槍跳起、粉塵爆發、魔人闇加大停留、剎牙交叉、千裂虛光閃／翔破裂光閃擊飛、魔人千裂衝／魔神煉獄殺頂著打、義憐聖靈斬上移、英文秘奧義放大／以目標為中心／全畫面）；秘奧義加名稱與畫面壓暗
@@ -316,22 +317,38 @@
     if (!unlocked()) { T('？？？', x + w / 2, y + h * 0.35, 18, C.gold, 'center', 900); T('任一難度通關一次後解鎖（第二輪起一直開放）', x + w / 2, y + h * 0.35 + 34, 12, C.sub, 'center'); return; }
     const d = SAV(); let yy = y + 20;
     T('里歐（雙劍・晶術）', x + 14, yy, 16, C.gold, 'left', 900);
-    U.button(x + w - 104, yy - 12, 94, 26, d.on ? '外觀使用中' : '換此外觀', () => setOn(!d.on), d.on ? 'main' : ''); yy += 22;
-    T('Lv ' + d.lv + '／' + CAP + (d.lv < CAP ? '　經驗 ' + d.exp + '／' + need(d.lv) : '') + '　招式點數 ' + d.pt, x + 14, yy, 11, C.sub); yy += 18; T('招式在 武器 › 技能／按鍵 設定（開啟外觀後）', x + 14, yy, 10, C.dim); yy += 22;
-    ctx.font = `700 ${11 * fs()}px ${G.FONT}`; for (const l of G.wrap('特性【雙劍晶術】TP 回復 +20%、晶術傷害 +10%（開啟里歐外觀時生效）', w - 28)) { T(l, x + 14, yy, 11, C.ink, 'left', 700); yy += 18 * fs(); } yy += 6;
+    const cc = GR.canChange(); U.button(x + w - 104, yy - 12, 94, 26, d.on ? '目前職業' : cc ? '轉職' : '需在神社', !d.on && cc ? () => { setOn(1); G.UI.toast('轉職為「里歐」'); } : null, d.on ? 'main' : cc ? '' : 'off'); yy += 22;   // r3.150.0：轉職＝開啟里歐（外觀＋招式＋職業技能）
+    T('Lv ' + d.lv + '／' + CAP + (d.lv < CAP ? '　經驗 ' + d.exp + '／' + need(d.lv) : '') + '　招式點數 ' + d.pt, x + 14, yy, 11, C.sub); yy += 18; T('招式在 武器 › 技能／按鍵 設定', x + 14, yy, 10, C.dim); yy += 22;
+    ctx.font = `700 ${11 * fs()}px ${G.FONT}`; for (const l of G.wrap('特性【雙劍晶術】TP 回復 +20%、晶術傷害 +10%（只在此職業生效）', w - 28)) { T(l, x + 14, yy, 11, C.ink, 'left', 700); yy += 18 * fs(); } yy += 6;
     for (const a of LJ) { const ok = d.lv >= a[0]; T('Lv' + a[0] + '　' + a[1], x + 14, yy, 11, ok ? C.gold : C.dim, 'left', 700);
       ctx.font = `500 ${11 * fs()}px ${G.FONT}`; const L = G.wrap('【' + a[2] + '】' + a[3], w - 104); L.forEach((l, k) => T(l, x + 90, yy + k * 15 * fs(), 11, ok ? C.ink : C.dim, 'left', 500)); yy += Math.max(20, L.length * 15 + 5) * fs(); }
   }
+  const keyOf = c => { const d = SAV(), i = d.keys.findIndex(ch => ch.includes(c)); return i >= 0 ? i : d.sp[0] === c ? 3 : d.sp[1] === c ? 4 : d.ult === c ? 5 : -1; };
+  /* ---------- r3.126.0：開里歐外觀時，武器 › 技能／按鍵 用與武器相同的版面 ---------- */
+  const KD = { atk: ['斬', '普攻'], c1: ['招1', '招式鍵 1'], c2: ['招2', '招式鍵 2'], c3: ['招3', '招式鍵 3'], m1: ['身1', '身法 1'], m2: ['身2', '身法 2'], skA: ['技A', '技能 A（晶術）'], skB: ['技B', '技能 B（晶術）'], ult: ['奧', '奧義鍵（秘奧義）'] };
+  const KP = { atk: [0, 0, 40], c1: [180, 76, 22], c2: [135, 76, 22], c3: [90, 76, 22], m1: [196, 146, 23], m2: [168, 150, 23], skA: [132, 150, 24], skB: [104, 146, 24], ult: [72, 140, 24] };
+  const KT = { c1: ['特技', '奧義'], c2: ['特技', '奧義'], c3: ['特技', '奧義'], skA: ['晶術'], skB: ['晶術'], ult: ['秘奧義'] };
+  const learned = ts => Object.keys(META).filter(c => ts.includes(META[c][2]) && SAV().sk[c] > 0).sort((a, b) => META[a][0] - META[b][0]);
+  const sub = c => { const m = META[c], lv = SAV().sk[c] || 0; return m[2] + '・Lv ' + lv + '・' + (m[2] === '秘奧義' ? '氣 100' : 'TP ' + tpCost(c)); };
   function keyOfName(k) { const d = SAV(), wp = W.cur(), sl = sl0.call(W);
     if (k[0] === 'c') { const c = d.keys[+k[1] - 1][0]; return c ? META[c][1] : null; }
     if (k === 'skA' || k === 'skB') { const c = d.sp[k === 'skA' ? 0 : 1]; return c ? META[c][1] : null; }
     if (k === 'ult') return d.ult ? META[d.ult][1] : null;
     if (k === 'm1' || k === 'm2') { const b = wp.BD[sl.M[k === 'm1' ? 0 : 1]]; return b ? b.n : null; } return '普攻連段'; }
-  function rowList(rx, rw, top, bot, items, isOn, pick, empty, key) { const U = M.ui, C = G.C, RH = Math.round(44 * fs()), off = U.scrollArea(key, rx, top, rw, bot - top, Math.max(1, items.length) * RH); U.clip(rx, top, rw, bot - top);
+  /* r3.150.0：招式清單依類別分組（特技／晶術／奧義／秘奧義），點類別標題展開／收起；預設只展開目前已選招式所在的類別 */
+  function rowList(rx, rw, top, bot, items, isOn, pick, empty, key) { const U = M.ui, C = G.C, RH = Math.round(44 * fs()), HH2 = Math.round(30 * fs()), FO = M.sel.lvfold = M.sel.lvfold || {};
+    const cats = []; for (const it of items) { const k = it.c && META[it.c] ? META[it.c][2] : '其他'; let g = cats.find(q => q.k === k); if (!g) cats.push(g = { k, L: [] }); g.L.push(it); }
+    const grp = items.length > 6; const rows = []; for (const g of cats) { const fk = key + ':' + g.k; if (FO[fk] === undefined) FO[fk] = !grp || g.L.some(isOn) || cats.length === 1;
+      if (grp) rows.push({ hd: g, fk }); if (!grp || FO[fk]) for (const it of g.L) rows.push({ it }); }
+    const tot = rows.reduce((a, r) => a + (r.hd ? HH2 : RH), 0), off = U.scrollArea(key, rx, top, rw, bot - top, Math.max(1, tot)); U.clip(rx, top, rw, bot - top);
     if (!items.length) G.txt(empty, rx + 14, top + 20, 11, C.dim, 'left', G.FONT, 500);
-    items.forEach((it, i) => { const yy = top + i * RH + off, on = isOn(it); if (yy + RH < top || yy > bot) return; ctx.fillStyle = on ? 'rgba(120,80,30,.45)' : 'rgba(255,255,255,.03)'; G.rr(rx + 8, yy + 3, rw - 16, RH - 6, 6); ctx.fill();
-      if (it.c) drawIc(it.c, rx + 14, yy + 8, RH - 16, on ? 1 : 0.85); G.txt(it.n, rx + 22 + RH - 16, yy + RH * 0.36, 13, C.ink, 'left', G.FONT_S, 900); G.txt(it.s, rx + 22 + RH - 16, yy + RH * 0.7, 10, C.sub, 'left', G.FONT, 500);
-      U.hit(rx + 8, Math.max(top, yy + 3), rw - 16, RH - 6, () => pick(it)); });
+    let yy = top + off; for (const r of rows) { const rh = r.hd ? HH2 : RH; if (yy + rh >= top && yy <= bot) {
+        if (r.hd) { const op = FO[r.fk]; ctx.fillStyle = 'rgba(227,194,122,.12)'; G.rr(rx + 8, yy + 3, rw - 16, rh - 6, 6); ctx.fill(); G.txt((op ? '▼ ' : '▶ ') + r.hd.k + '（' + r.hd.L.length + '）', rx + 16, yy + rh / 2, 12, C.gold, 'left', G.FONT_S, 900);
+          U.hit(rx + 8, Math.max(top, yy + 3), rw - 16, rh - 6, () => { FO[r.fk] = !op; }); }
+        else { const it = r.it, on = isOn(it); ctx.fillStyle = on ? 'rgba(120,80,30,.45)' : 'rgba(255,255,255,.03)'; G.rr(rx + 8, yy + 3, rw - 16, RH - 6, 6); ctx.fill();
+          if (it.c) drawIc(it.c, rx + 14, yy + 8, RH - 16, on ? 1 : 0.85); G.txt(it.n, rx + 22 + RH - 16, yy + RH * 0.36, 13, C.ink, 'left', G.FONT_S, 900); G.txt(it.s, rx + 22 + RH - 16, yy + RH * 0.7, 10, C.sub, 'left', G.FONT, 500);
+          U.hit(rx + 8, Math.max(top, yy + 3), rw - 16, RH - 6, () => pick(it)); } }
+      yy += rh; }
     ctx.restore(); }
   function keyPage(x, y, w, h) { const U = M.ui, C = G.C, d = SAV(), wp = W.cur(), sel = M.sel.lvk || 'c1'; boot(); if (!META || !UIU) { U.box(x, y, w, h); G.txt('載入中…', x + w / 2, y + h / 2, 13, C.sub, 'center'); return; }
     const lw = Math.min(330, w * 0.44); U.box(x, y, lw, h);
@@ -391,10 +408,12 @@
   const GR = G.GROW, pj0 = M.PAGE['職業'];
   if (GR && pj0) { const rq0 = GR.reqText;
     M.PAGE['職業'] = function (x, y, w, h) { const ul = unlocked(), d = SAV(), j = GR.jd(), sel = M.sel.job === 'leon';
-      const fake = { id: 'leon', n: ul ? '里歐（外觀）' + (d.on ? '　◇' : '') : '？？？', fac: '外觀', max: CAP, req: ul ? null : ['leon', 1, 1], ab: [], trait: ['—', ''] };
+      const fake = { id: 'leon', n: ul ? '里歐' : '？？？', fac: '雙劍', max: CAP, req: ul ? null : ['leon', 1, 1], ab: [], trait: ['—', ''] };
       GR.JOBS.push(fake); GR.JB.leon = fake; const lv0 = j.lv.leon; j.lv.leon = ul ? d.lv : 0; GR.reqText = function (job) { return job && job.id === 'leon' ? '任一難度通關' : rq0.call(GR, job); };
-      try { pj0.apply(this, arguments); } finally { GR.JOBS.pop(); delete GR.JB.leon; if (lv0 === undefined) delete j.lv.leon; else j.lv.leon = lv0; GR.reqText = rq0; }
+      const cur0 = j.cur; if (d.on && ul) j.cur = 'leon';   /* r3.150.0：里歐是目前職業時清單標 ◆ */
+      try { pj0.apply(this, arguments); } finally { GR.JOBS.pop(); delete GR.JB.leon; if (lv0 === undefined) delete j.lv.leon; else j.lv.leon = lv0; GR.reqText = rq0; j.cur = cur0; }
       if (sel) { const lw = Math.min(280, w * 0.44); if (M.area) M.area = M.area.filter(a => a.key !== 'job'); panel(x + lw + 10, y, w - lw - 10, h); } };   /* 拿掉底下職業頁的捲動區（不然拖曳會捲到它） */
+    const ch0 = GR.change; GR.change = function (id) { if (id !== 'leon' && on()) setOn(0); return ch0.apply(this, arguments); };   /* r3.150.0：轉職為其他職業＝離開里歐 */
     const ss0 = GR.setSkin; GR.setSkin = function (id) { if (id !== 'leon' && G.SAVE.data.leon && G.SAVE.data.leon.on) setOn(0); return ss0.apply(this, arguments); };   /* 換回其他職業外觀＝關掉里歐 */
     /* 開里歐外觀時：武器 › 技能／按鍵 改顯示里歐面板（同一份資料） */
     for (const pg of ['技能', '按鍵']) { const p0 = M.PAGE[pg]; if (p0) M.PAGE[pg] = function (x, y, w, h) { if (!on()) return p0.apply(this, arguments); (pg === '技能' ? skillPage : keyPage)(x, y, w, h); }; }

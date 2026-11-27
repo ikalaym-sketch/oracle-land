@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 16_growth.js
- * Version : r3.149.0  (2026-11-27)　r3.149.0：里歐普攻加快 ×1.15（約 15 幀），每下傷害同打刀
+ * Version : r3.150.0  (2026-11-27)　r3.150.0：轉職為里歐時，原職業的特性／特殊／外掛不生效
+ * 舊版    : r3.149.0  (2026-11-27)　r3.149.0：里歐普攻加快 ×1.15（約 15 幀），每下傷害同打刀
  * 舊版    : r3.148.0  (2026-11-27)　r3.148.0：奧義加速每級氣 +5% 生效；衝刺 Lv5 改成「穿過的敵人停頓 0.5 秒」
  * 舊版    : r3.147.0  (2026-11-27)　r3.147.0：修練頁改版（兩欄卡片＋右側說明與升級鈕，等級用圓點，鎖住的排後面）；職業頁拿掉開發用說明
  * 舊版    : r3.142.0  (2026-11-27)　r3.142.0：普攻連段加成（WPN.CMB）
@@ -132,11 +133,11 @@
     extSlots() { return 3 + (total() >= 120 ? 1 : 0); },
     abOf(key) { const [jid, i] = key.split(':'); return [JB[jid], JB[jid].ab[+i]]; },
     /* 收集目前生效的效果（recalc 時 1 次） */
-    effects() { const j = jd(), cj = GR.cur(), E = [];
-      E.push(cj.trait[2]);
+    effects() { const j = jd(), cj = GR.cur(), E = [], lo = !!(G.LEON && G.LEON.on && G.LEON.on());   // r3.150.0：轉職為里歐時，原職業的特性／特殊／外掛不生效（基本能力照常）
+      if (!lo) E.push(cj.trait[2]);
       for (const job of JOBS) for (const a of job.ab) if (a[1] === '基本' && learned(job, a)) E.push(a[4]);
-      for (const a of cj.ab) if (a[1] !== '基本' && learned(cj, a)) E.push(a[4]);
-      const fac = []; for (let i = 0; i < GR.extSlots(); i++) { const k = j.ext[i]; if (!k || !GR.extList().includes(k)) continue; const [jb, a] = GR.abOf(k); E.push(a[4]); fac.push(jb.fac); }
+      if (!lo) for (const a of cj.ab) if (a[1] !== '基本' && learned(cj, a)) E.push(a[4]);
+      const fac = []; for (let i = 0; i < (lo ? 0 : GR.extSlots()); i++) { const k = j.ext[i]; if (!k || !GR.extList().includes(k)) continue; const [jb, a] = GR.abOf(k); E.push(a[4]); fac.push(jb.fac); }
       if (fac.length >= 3) { const x = total() >= 140 ? 1.5 : 1; const nonN = fac.filter(f => f !== '中');
         if (nonN.length && nonN.every(f => f === '光')) E.push({ dr: 8 * x, _reso: '光' }); else if (nonN.length && nonN.every(f => f === '闇')) E.push({ dmgP: 8 * x, _reso: '闇' }); }
       for (const t of TOTAL) if (total() >= t[0]) E.push(t[2]);
