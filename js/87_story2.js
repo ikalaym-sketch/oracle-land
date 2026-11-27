@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 87_story2.js
- * Version : r3.143.0  (2026-11-27)　r3.143.0：G.ALLY.cameo：支援角色「暫時出場」——走到敵人側邊用自己的招式打一下再退場；pet＝跟在主角身邊、G.ALLY.strike 時原地出招（小雷獸）
+ * Version : r3.165.0  (2026-11-27)　r3.165.0：終章援軍加鎌鼬（全境動員到城東請過）；兩岸城打幻影時不叫終章援軍
+ * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：G.ALLY.cameo：支援角色「暫時出場」——走到敵人側邊用自己的招式打一下再退場；pet＝跟在主角身邊、G.ALLY.strike 時原地出招（小雷獸）
  * 舊版    : r3.41.0  (2026-11-18)  r3.41.0：汐音加入改成站在河岸下游等你過去（不再接在五平對話後直接演）；進圖有劇情對話時，對話結束 30 秒後才生怪
  * 舊版    : r3.39.0  (2026-11-17)
  * 變更    : r3.39.0 新增。劇情觸發與章節流程整理：
@@ -161,10 +162,11 @@
     omagatsuhi: { when: () => Q.isDone('c12_m2'), list: [
       { name: '河童大將', anim: 'b_kappa', idle: 'kappataisho_idle_right3q', walk: 'kappataisho_walk_right3q', atk: ['kappataisho_push_right3q', 'kappataisho_spit_right3q'], hk: 1.2, nat: 1, k: 1.5, say: '恩人的事，就是河童的事！' },
       { name: '九尾', anim: 'b_kyubi', idle: 'kyubi_idle_right3q', walk: 'kyubi_run_right3q', atk: ['kyubi_whip_right3q', 'kyubi_cast_right3q'], hk: 1.2, nat: 1, k: 1.5, say: '狐族全員，出陣。' },
+      { name: '鎌鼬', anim: 'b_kama', idle: 'kama1_idle_left3q', walk: 'kama1_run_left3q', atk: ['kama1_spin_left3q', 'kama1_storm_left3q'], hk: 1.1, nat: -1, k: 1.5, say: '這座城的風，我們守。這片天的風，也一樣。', need: () => !!F().kama12 },
       { name: '酒吞童子', anim: 'b_shuten', idle: 'shuten_idle_right3q', walk: 'shuten_walk_right3q', atk: ['shuten_combo_right3q', 'shuten_slam_right3q'], hk: 1.25, nat: 1, k: 1.6, say: '鬼族的帳，今天一起算！', need: () => !!F().oniFriend }] }
   };
   const ALLY = G.ALLY = { list: [] };
-  function spawnAllies(id) { const d = AL[id]; if (!d || !d.when()) return; const sid = SC.id; let i = 0;
+  function spawnAllies(id) { const d = AL[id]; if (!d || !d.when() || (id === 'omagatsuhi' && SC.id === 'hub_city')) return;   /* r3.165.0：兩岸城的幻影戰不叫終章援軍 */ const sid = SC.id; let i = 0;
     for (const a of d.list) { if (a.need && !a.need()) continue; const side = i % 2 ? 1 : -1, x = H.x + side * (80 + 40 * i), y = H.y + (i % 3 - 1) * 26, k = i++;
       const o = { ally: 1, anim: a.anim, def: a, name: a.name, x, y, face: 1, hk: a.hk, nat: a.nat, cd: 60 + k * 25, st: 'idle', t: 0, alpha: 0, sid, k };
       ALLY.list.push(o); G.NPC.push(o);

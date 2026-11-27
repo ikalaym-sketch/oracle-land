@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 160_hwside.js
- * Version : r3.164.0  (2026-11-27)
+ * Version : r3.165.0  (2026-11-27)　r3.165.0：全境動員加兩站——城東請鎌鼬三兄弟（決戰援軍）、運河碼頭當面請河童大將
+ * 舊版    : r3.164.0  (2026-11-27)
  * 變更    : r3.164.0 新增。兩岸城重建後的支線（劇本 2026-11-27_2110_HUB_REBUILD_SIDE_v1）：
  *           ・hw_names「門柱上的名字」：13 名陣亡足輕裡，有 3 個人名字下面不知道該刻什麼 → 去水車村、葦穗村、神社找認識他們的人
  *             → 私塾門柱刻字過場；孫六念完名字，把隊長交給冬馬
@@ -99,9 +100,25 @@
         say(n, n === '鎌鼬長兄' ? '……飯糰。城裡的米比山裡的白。三弟一定會很高興。……我也是。' : '黃瓜！你果然懂我！……城裡的黃瓜，貴得要命呢。')]
         : [say(n, n === '鎌鼬長兄' ? '不用帶東西。……來坐就好。' : '沒黃瓜也沒關係！來比相撲！')] },
       { label: '離開', then: [] }] }])); }
-  function resMarks() { if (SC.id !== ID || !F().hw_reloc || HW.phase() !== 'retaken' || !HUB.marks) return;
+  function resMarks() { if (SC.id !== ID || !F().hw_reloc || HW.phase() !== 'retaken' || !HUB.marks) return; if (Q.active('c12_m2')) { HUB.marks = HUB.marks.filter(m => !/^res:/.test(m.id)); return; }   /* 全境動員來請人時，先不出送禮標記（不重疊） */
     for (const o of G.NPC) { if (!o.hwRes || !o.u || !(o.name === '鎌鼬長兄' || o.name === '河童大將')) continue; const id = 'res:' + o.name;
       if (HUB.marks.some(m => m.id === id)) continue; HUB.marks.push({ id, hw: 1, x: o.x, y: o.y, n: o, label: o.name + '・說話／送禮', kind: 'talk', run: () => talkRes(o.name) }); } }
   const st0 = G.STORY.step.bind(G.STORY); let tk = 0; G.STORY.step = function () { st0(); if (++tk % 45 === 0) try { resMarks(); } catch (e) { console.warn('hwside', e); } };
+  /* ======================= 四、全境動員：城東的鎌鼬、碼頭的河童大將 ======================= */
+  { const q = Q.by.c12_m2; if (q && !q._hw) { q._hw = 1; const sk = () => !F().hw_reloc;
+    q.steps.push({ t: 'talk', map: ID, at: 'east_arrival', dx: -110, u: null, name: '鎌鼬三兄弟', text: '到城東請鎌鼬三兄弟助陣', skip: sk, lines: () => [
+        蒼('鎌鼬長兄。最後一仗，我想請你們三兄弟一起。'), say('鎌鼬長兄', '……你不用請。'),
+        say('鎌鼬長兄', '城門前那一夜，我們站在人類的屋頂上。風裡有燒焦的味道，也有人在念名字。'),
+        say('鎌鼬長兄', '那時候就決定了。這座城的風，我們守。……大禍津日要吹滅它，得先過我們三個。'),
+        nar('（屋頂上，次兄把鐮刀磨得發亮。三弟一聲不響，把藥袋塞得鼓鼓的。）'), 雪('三弟……那些藥，是給大家的？'),
+        say('鎌鼬長兄', '也給妳。妳的手要是又透明了，三弟說他有辦法。……我是不信，不過他很堅持。'),
+        ...P('kuzuha', '葛葉', '鎌鼬跟狐族，終於站在同一邊了。……山裡的老傢伙們聽到，大概會嚇一跳。'),
+        act(() => { F().kama12 = 1; G.SAVE.markDirty(); G.UI.banner('鎌鼬三兄弟', '決戰時會趕來助陣'); })] });
+    q.steps.push({ t: 'talk', map: ID, at: 'east_arrival', dx: -200, dy: 136, u: null, name: '碼頭的河童大將', text: '到運河碼頭請河童大將助陣', skip: sk, lines: () => [
+        say('河童大將', '（從運河裡探出頭，甩得你一身水）恩人！長者跟我說了——要打最後一場？'),
+        say('河童大將', '城門前那一仗，我把火車澆熄了。這一次，我要把大禍津日那張臉，澆到它睜不開眼！'),
+        蒼('你的皿還沒長好。'), say('河童大將', '皿裂了才好，水從縫裡噴出來，更有力！'), say('河童大將', '……騙你的。可是河童不會在這種時候躲回河裡。'),
+        say('河童大將', '城裡的小孩叫我「清河的大將」。……大將，就要站在最前面。'),
+        act(() => { F().kappaGen12 = 1; G.SAVE.markDirty(); })] }); } }
   G.HWSIDE = { talkRes, FALLEN };
 })();
