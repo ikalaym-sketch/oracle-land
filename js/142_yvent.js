@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 142_yvent.js
- * Version : r3.117.0  (2026-11-26)　r3.117.0：友軍頭目改用頭目引擎原本招式（26 B.allyStart）；友軍不畫預警；血條移到左側夥伴下方（頭像＝頭目待機圖頭部）
+ * Version : r3.161.0  (2026-11-27)　r3.161.0：頭目失控抽到已搬進兩岸城的頭目（鎌鼬、河童大將）時，從城裡趕過來
+ * 舊版    : r3.117.0  (2026-11-26)　r3.117.0：友軍頭目改用頭目引擎原本招式（26 B.allyStart）；友軍不畫預警；血條移到左側夥伴下方（頭像＝頭目待機圖頭部）
  * 舊版    : r3.116.0  (2026-11-26)　r3.116.0：匯出 spawnAlly（143 好感助戰用，可設停留時間）
  * 舊版    : r3.115.0  (2026-11-26)
  * 變更    : r3.115.0 新增。妖怪村頭目事件（每次進村 35% 觸發；同時只一件；每件各自隱藏冷卻、可重複；全部有對話）。
@@ -113,7 +114,7 @@
     G.DLG.start([say('天狗長者', '退了……全退了！'), say(n, A ? '村子還在。這就夠了。' : '……我也該好好鍛鍊了。')], () => { dropAlly(); showAll(); });
     X.finish(c, '守住了妖怪村', '妖玉 +4'); CUR = null; }
   /* 2. 頭目失控 */
-  function ramp() { const rs = residents().filter(r => cdOk('ramp_' + r[0])); if (!rs.length) return false; const r = rnd(rs), np = resNpc(r[0]); if (!np) return false;
+  function ramp() { const rs = residents().filter(r => cdOk('ramp_' + r[0])); if (!rs.length) return false; const r = rnd(rs), np = resNpc(r[0]) || (G.HWR && G.HWR.visitor(r)); if (!np) return false;   // r3.161.0：搬進兩岸城的頭目從城裡趕來
     setCd('ramp_' + r[0], 30); YV().last = Date.now(); const c = CUR = { k: 'ramp', r };
     G.DLG.start(lines(r[0], 'ramp'), () => { hideOne(np);
       bossFight(r, np.x, np.y, { sub: '失控・打到 30% 讓牠清醒', tag: '（失控）', hp: 0.8 }, () => { showAll(); X.reward({ lv: lvNow() }, 2.5, 2, 2); aff(r[0]); G.DLG.start(lines(r[0], 'sorry').concat([say('', '（收到謝禮）')])); CUR = null; }); });

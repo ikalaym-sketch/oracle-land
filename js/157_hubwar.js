@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 157_hubwar.js
- * Version : r3.160.0  (2026-11-27)　r3.160.0：舊存檔（已進第 12 章）一併標記南、東據點已攻下
+ * Version : r3.161.0  (2026-11-27)　r3.161.0：舊存檔（已進第 12 章）一併標記重建完成、妖怪頭目已搬進城
+ * 舊版    : r3.160.0  (2026-11-27)　r3.160.0：舊存檔（已進第 12 章）一併標記南、東據點已攻下
  * 舊版    : r3.159.0  (2026-11-27)
  * 變更    : r3.159.0 新增。兩岸城攻防篇 第一批（劇本 2026-11-27_1840_HUB_WAR_SCRIPT_v1）：
  *           ・W1 兩岸城淪陷（過場：河水倒灌、亡者上岸、孫六死守、居民西撤、橋斷、城被罩住）
@@ -306,7 +307,7 @@
   /* ======================= 十四、舊存檔與進場處理 ======================= */
   function legacy() { const f = F(), qs = G.SAVE.data.qs = G.SAVE.data.qs || {}; if (f.hw_legacy) return;
     const mark = L => L.forEach(id => { if (!qs[id] || !qs[id].done) qs[id] = { s: 0, k: 0, done: 1, t: Date.now() }; });
-    if (f.ch12 || f.op12 || f.end) { mark(HW.QIDS.concat(['hw7', 'hw8'])); f.hw_break = 1; f.hw7s = { south: 1, east: 1 }; f.hw_legacy = 2; }
+    if (f.ch12 || f.op12 || f.end) { mark(HW.QIDS.concat(['hw7', 'hw8', 'hw9'])); f.hw_break = 1; f.hw7s = { south: 1, east: 1 }; f.hw_reloc = 1; f.hw_legacy = 2; }
     else if (f.ch11 || f.op11) { mark(HW.QIDS); f.hw_break = 1; f.hw_legacy = 1; }
     else f.hw_legacy = 0.5;
     G.SAVE.markDirty(); }

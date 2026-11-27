@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 158_hubwar2.js
- * Version : r3.160.0  (2026-11-27)
+ * Version : r3.161.0  (2026-11-27)　r3.161.0：援軍也會打 W8 的波次敵人；援軍講話者同名（對話不另生一個）；匯出援軍介面給 W8
+ * 舊版    : r3.160.0  (2026-11-27)
  * 變更    : r3.160.0 新增。兩岸城攻防篇 第二批：W7 城內爭奪（劇本 2026-11-27_1840_HUB_WAR_SCRIPT_v1 第十節）
  *           ・據點戰：我方本陣（西口，耐久）、南方道摩軍本陣（拒馬 3 座＋核心）、東方妖穴（核心）；北方妖穴只當背景（W8 才打）
  *           ・敵方據點每 20 秒沿街道派一隊（同時最多 16 隻），走節點路線（下方木橋斷了，東邊只能繞上橋）
@@ -176,14 +177,14 @@
     kappa: { key: 'b_kappa', pre: 'kappataisho_', suf: '_right3q', nat: 1, sz: 1.15, run: 'walk', atk: 'push', fx: 'kappataisho_water_splash', cd: 200, m: 0.7, r: 1.3 } };
   const VH = {};
   function vh(u, D) { const k = D.pre; if (VH[k]) return VH[k]; const r = u.act[D.pre + 'idle' + D.suf]; if (!r) return 200; const L = r.f.map(f => f[5]).sort((p, q) => p - q); return (VH[k] = L[L.length >> 1]); }
-  function addAlly(id, x, y) { const D = ALLY[id]; A.load && Promise.resolve(A.load(D.key)).catch(() => 0); const a = { hwA: 1, id, D, x, y, face: -1, clip: 'idle', ft: 0, cd: 60 + Math.random() * 60, name: '' }; G.NPC.push(a); W.allies.push(a); return a; }
+  function addAlly(id, x, y) { const D = ALLY[id]; A.load && Promise.resolve(A.load(D.key)).catch(() => 0); const a = { hwA: 1, id, D, x, y, face: -1, clip: 'idle', ft: 0, cd: 60 + Math.random() * 60, name: id === 'kama1' ? '鎌鼬' : id === 'kappa' ? '河童大將' : '' };   /* 講話的人用同名，避免對話時另外生一個 */ G.NPC.push(a); W.allies.push(a); return a; }
   function addAmbAlly(u, x, y, name, kind) { const a = { amb: null, kind, x, y, cd: 90 + Math.random() * 90 }; W.allies.push(a); HW.add(u, x, y, name).then(n => { if (!n) return; a.amb = n; n.hwAlly = 1; n.face = -1; }); return a; }
   function aFx(key, name, x, y, s, life) { const u = A.get(key), r = u && u.act[name]; if (!r) return; W.fx.push({ key, r, x, y, s, t: 0, life: life || r.f.length * 4 }); }
-  function nearFoe(x, y, R) { let best = null, bd = R; for (const e of G.E) { if (!e.hw7 || !live(e) || e.delay > 0 || (e.hwObj && e.inv && e.inv())) continue; const d = Math.hypot(e.x - x, (e.y - y) * 1.4) - (e.hwObj ? 120 : 0); if (d < bd) { bd = d; best = e; } } return best; }
+  function nearFoe(x, y, R) { let best = null, bd = R; for (const e of G.E) { if (!(e.hw7 || e.hwq) || !live(e) || e.delay > 0 || (e.hwObj && e.inv && e.inv())) continue; const d = Math.hypot(e.x - x, (e.y - y) * 1.4) - (e.hwObj ? 120 : 0); if (d < bd) { bd = d; best = e; } } return best; }
   function stepAllies() { const k = HH();
     for (const a of W.allies) { if (a.cd > 0) a.cd--;
-      if (a.kind) { const n = a.amb; if (!n || a.cd > 0) continue; const e = nearFoe(n.x, n.y, 420); if (!e) continue; a.cd = 180;   /* 狐火／鬼族的刀 */
-        if (a.kind === 'fox') { tracer(n.x, n.y - k * S(n.y) * 0.8, e.x, e.y - k * S(e.y) * 0.5, 'orb', '140,210,255'); G.STORY.later(14, () => { if (live(e)) G.damageOni(e, 1, false, false, opt(e, e.hwObj ? 0.15 : 0.4, Math.sign(e.x - n.x) || 1)); }); }
+      if (a.kind) { const n = a.amb; if (!n || a.cd > 0 || !G.NPC.includes(n)) continue; const e = nearFoe(n.x, n.y, 420); if (!e) continue; a.cd = 180;   /* 狐火／鬼族的刀 */
+        if (a.kind === 'fox') { tracer(n.x, n.y - k * S(n.y) * 0.8, e.x, e.y - k * S(e.y) * 0.5, 'orb', '140,210,255'); G.STORY.later(14, () => { if (live(e)) G.damageOni(e, 1, false, false, opt(e, e.hwObj ? 0.15 : e.bb || e.boss ? 0.06 : 0.4, Math.sign(e.x - n.x) || 1)); }); }
         else if (Math.hypot(e.x - n.x, e.y - n.y) < 90) { G.damageOni(e, 1, true, false, opt(e, 0.6, Math.sign(e.x - n.x) || 1)); G.FX.push({ k: 'dust', x: e.x, y: e.y, t: 0, life: 14 }); } else { a.cd = 10; n.x += Math.sign(e.x - n.x) * 1.6; n.y += Math.sign(e.y - n.y) * 0.8; n.walking = true; } continue; }
       const D = a.D, u = A.get(D.key); a.ft++; if (!u) continue; if (a.busy > 0 && --a.busy === 0) { a.clip = 'idle'; a.ft = 0; }
       if (D.heal) { const L = [H].concat((G.PARTY && G.PARTY.list || []).filter(p => p.hp > 0 && p.st !== 'down')); if (!(a.busy > 0)) { const tx = H.x + 70, ty = H.y + 16, dx = tx - a.x, dy = ty - a.y, d = Math.hypot(dx, dy);
@@ -195,7 +196,7 @@
       if (d > 6) { const sp = k * S(a.y) * 0.06; a.x += dx / d * Math.min(d, sp); a.y += dy / d * Math.min(d, sp); a.face = dx > 0 ? 1 : -1; if (a.clip !== D.run) { a.clip = D.run; a.ft = 0; } continue; }
       a.face = -side; if (a.cd > 0) { if (a.clip !== 'idle') { a.clip = 'idle'; a.ft = 0; } continue; }
       a.cd = D.cd; a.busy = 32; a.clip = D.atk; a.ft = 0; aFx(D.key, D.fx, e.x, e.y, 1.05, 32); const R = k * S(e.y) * D.r, ex = e.x, ey = e.y;
-      const hit = () => { for (const q of G.E) if (q.hw7 && live(q) && Math.hypot(q.x - ex, (q.y - ey) * 1.6) < R + (q.hwObj ? 60 : 0)) G.damageOni(q, 1, true, false, opt(q, q.hwObj ? D.m * 0.5 : D.m, -side)); };
+      const hit = () => { for (const q of G.E) if ((q.hw7 || q.hwq) && live(q) && Math.hypot(q.x - ex, (q.y - ey) * 1.6) < R + (q.hwObj ? 60 : 0)) G.damageOni(q, 1, true, false, opt(q, q.hwObj ? D.m * 0.5 : q.bb || q.boss ? D.m * 0.15 : D.m, -side));   /* 援軍打頭目只算一點（主角才是主力） */ };
       if (D.hits) for (let i = 0; i < D.hits; i++) G.STORY.later(4 + i * 9, hit); else hit(); SC.shake = Math.max(SC.shake || 0, 3); } }
   function clipOf(u, a) { const D = a.D; return u.act[D.pre + a.clip + D.suf] || u.act[D.pre + D.run + D.suf] || u.act[D.pre + 'idle' + D.suf]; }
   function drawAlly(a) { const u = A.get(a.D.key); if (!u) return; const r = clipOf(u, a); if (!r) return; const f = r.f[Math.floor(a.ft / 4) % r.f.length], s = S(a.y), sc = HH() * s * a.D.sz / vh(u, a.D);
@@ -306,5 +307,5 @@
   /* 世界事件：戰火～奪回前不在兩岸城發生（城裡已是戰場） */
   (function hkEV() { if (!G.EV || !G.EV.world) return setTimeout(hkEV, 60); const w0 = G.EV.world; G.EV.world = function () { const w = w0.apply(this, arguments), p = HW.phase();
       if (w && w.map === ID && !w.done && (p === 'sealed' || p === 'w6' || p === 'base' || p === 'battle')) { w.done = 1; w.until = Math.min(w.until || 0, Date.now() + 120000); } return w; }; })();
-  HW.W7 = { start, deploy, setOrd, capture, w7a, w7b, w7c, reset };
+  HW.W7 = { start, deploy, setOrd, capture, w7a, w7b, w7c, reset, addAlly, addAmbAlly, aFx, stepAllies, drawFx, W };
 })();
