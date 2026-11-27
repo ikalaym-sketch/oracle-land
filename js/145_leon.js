@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 145_leon.js
- * Version : r3.150.0  (2026-11-27)　r3.150.0：修正 r3.149.0 誤刪按鍵配置常數（里歐 技能／按鍵頁報錯）；轉職＝開啟里歐（換其他職業就離開）；按鍵選招依類別分組可展開／收起
+ * Version : r3.201.0  (2026-11-28)　r3.201.0：提供殘影／分身用的里歐圖
+ * 舊版    : r3.150.0  (2026-11-27)　r3.150.0：修正 r3.149.0 誤刪按鍵配置常數（里歐 技能／按鍵頁報錯）；轉職＝開啟里歐（換其他職業就離開）；按鍵選招依類別分組可展開／收起
  * 舊版    : r3.149.0  (2026-11-27)　r3.149.0：里歐職業技能（特性＋Lv15～100 共 7 項）；職業頁右側改成職業格式（外觀切換、特性、職業技能）
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：未設定招式提示加前往按鈕
  * 舊版    : r3.128.2  (2026-11-27)　r3.128.2：落下系晶術改成從約 2.6 身高處加速落下、落地才判定＋震動；擊飛的敵人在招式期間維持浮空、收招後暈 0.75 秒
@@ -287,6 +288,10 @@
     const b = A.get('lv_base'), r = b && b.act.dodge; if (!r) return dn0.apply(this, arguments);
     const k = Math.min(1, n.t / 8) * (n.life - n.t < 30 ? (n.life - n.t) / 30 : 1);
     ad0.call(A, b, r.f[r.f.length - 1], n.x, n.y, kOf(SC.depth(n.y)), n.face < 0, 0.55 * k); };
+  /* r3.201.0：殘影／秘傳分身用的里歐圖——記下「此刻里歐正在播的那一格」（招式中＝招式身體格，其餘＝一般動作格） */
+  function ghost(f) { if (!on()) return null; const b = A.get('lv_base'); if (!b) return null; const s = SC.depth(f ? f.y : H.y);
+    if (CUR) { const e = CUR.u.tl[Math.max(0, CUR.pi - 1)]; if (e && CUR.u.b[e[1]]) return { u: CUR.u, fr: CUR.u.b[e[1]], k: kOf(s) * (e[5] || 1), flip: (CUR.face < 0) !== !!e[6] }; }
+    return { u: b, fr: baseFrame(), k: kOf(s), flip: (f ? f.face : H.face) < 0 }; }
   const dh0 = G.drawHero;
   G.drawHero = function () { if (!on()) return dh0.apply(this, arguments); if (CUR) H.hop = CUR.hop || 0;   /* r3.127.3：跳躍高度在繪製時套用（其他模組會在步進後把 H.hop 歸零） */
     for (const L of LGS) drawLg(L, 1); for (const c of CASTS) drawFx(c, 1); SWAP = 1; KAT++; try { dh0.apply(this, arguments); } finally { SWAP = 0; KAT--; } for (const c of CASTS) drawFx(c, 0); for (const L of LGS) drawLg(L, 0); };
@@ -427,5 +432,5 @@
   { const ls1 = G.lootStep; G.lootStep = function () { const r = ls1.apply(this, arguments); if (H._pfT && H._pfT !== LS.pf) { LS.pf = H._pfT; if (jl(60)) tpGain(15); }
       if (G.t - LS.lastFire > 120) LS.chain = 0; return r; }; }
   const boot2 = () => { if (unlocked()) boot(); }; setTimeout(boot2, 2000); setInterval(boot2, 15000);
-  G.LEON = { on, boot, start, SAV, need, LD, open: c => !!(META && META[c] && OPEN[META[c][2]]), get META() { return META; }, get CUR() { return CUR; }, get CASTS() { return CASTS; }, REFH: () => REFH, press, fire, equip, setOn, tpGain, tpCost, kOf, set SLK(v) { SLK = v; }, get SLK() { return SLK; } };
+  G.LEON = { ghost, on, boot, start, SAV, need, LD, open: c => !!(META && META[c] && OPEN[META[c][2]]), get META() { return META; }, get CUR() { return CUR; }, get CASTS() { return CASTS; }, REFH: () => REFH, press, fire, equip, setOn, tpGain, tpCost, kOf, set SLK(v) { SLK = v; }, get SLK() { return SLK; } };
 })();

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 04_ui.js
- * Version : r3.172.0  (2026-11-28)　r3.172.0：戰鬥中的橫幅縮成上方小牌
+ * Version : r3.201.0  (2026-11-28)　r3.201.0：右下角按鍵位置可調（五段，越後面越密、越靠角落）
+ * 舊版    : r3.172.0  (2026-11-28)　r3.172.0：戰鬥中的橫幅縮成上方小牌
  * 舊版    : r3.168.0  (2026-11-27)　r3.168.0：右上視角／選單鈕與上方主線橫幅交給 161_hud2；點主角頭像開選單（頭像右上小☰）；畫面外目標只留箭頭
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：世界事件提醒的後備改開行旅繪圖
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：技能鍵冷卻改環狀（補滿閃一下）、按鈕間距加大，文字不變
@@ -38,14 +39,17 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
     get menu() { return G.MENU && G.MENU.open; },
     layout() {
       const R = G.LW - 16 - G.SAFE.r, Bt = G.LH - 14 - G.SAFE.b, T = 12 + G.SAFE.t;
-      const cx = R - 50, cy = Bt - 50, ring = (an, d) => [cx + Math.cos(an * Math.PI / 180) * d, cy - Math.sin(an * Math.PI / 180) * d];
+      /* r3.201.0：按鍵位置可調（選單 › 設定 ›「按鍵位置」五段）：越往後整組越密、越靠右下角，最後一段「斬」鍵貼齊角落。
+       * q＝0～1；圓心往角落移、內外圈半徑縮小、外圈各鍵角度微調（避免互相重疊或被螢幕下緣切掉）。 */
+      const q = Math.max(0, Math.min(4, (G.SAVE && G.SAVE.data && G.SAVE.data.pad) || 0)) / 4, mix = (a, b) => a + (b - a) * q;
+      const cx = R - 50 + 26 * q, cy = Bt - 50 + 24 * q, ring = (an, d) => [cx + Math.cos(an * Math.PI / 180) * d, cy - Math.sin(an * Math.PI / 180) * d];
       B.atk = { x: cx, y: cy, r: 40, label: '斬' };
-      [[180, 'c1'], [135, 'c2'], [90, 'c3']].forEach(([an, k], i) => { const [x, y] = ring(an, 80); B[k] = { x, y, r: 22, label: '招' }; });   // 內圈：招式（組合技）
-      { const [x, y] = ring(197, 156); B.m1 = { x, y, r: 23, label: '閃' }; }   // 外圈下：身法
-      { const [x, y] = ring(168, 160); B.m2 = { x, y, r: 23, label: '身' }; }
-      { const [x, y] = ring(133, 160); B.skA = { x, y, r: 24, label: '技' }; }  // 外圈上：技
-      { const [x, y] = ring(104, 156); B.skB = { x, y, r: 24, label: '技' }; }
-      { const [x, y] = ring(73, 150); B.ult = { x: Math.min(x, R - 24), y, r: 24, label: '奧' }; }
+      [[180, 'c1'], [135, 'c2'], [90, 'c3']].forEach(([an, k], i) => { const [x, y] = ring(an, mix(80, 66)); B[k] = { x, y, r: 22, label: '招' }; });   // 內圈：招式（組合技）
+      { const [x, y] = ring(mix(197, 188), mix(156, 118)); B.m1 = { x, y, r: 23, label: '閃' }; }   // 外圈下：身法
+      { const [x, y] = ring(mix(168, 165), mix(160, 122)); B.m2 = { x, y, r: 23, label: '身' }; }
+      { const [x, y] = ring(mix(133, 138), mix(160, 122)); B.skA = { x, y, r: 24, label: '技' }; }  // 外圈上：技
+      { const [x, y] = ring(mix(104, 108), mix(156, 122)); B.skB = { x, y, r: 24, label: '技' }; }
+      { const [x, y] = ring(73, mix(150, 118)); B.ult = { x: Math.min(x, cx + 16), y, r: 24, label: '奧' }; }
       B.talk = { x: R - 160, y: Bt - 300, w: 150, h: 32 };   // r3.27.0：縮小上移，不壓技能鍵
       B.menu = { x: R - 58, y: T, w: 58, h: 30 };
       B.zoom = { x: R - 136, y: T, w: 70, h: 30 };

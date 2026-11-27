@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 144_rebirth.js
- * Version : r3.169.0  (2026-11-27)　r3.169.0：內殿換 ChatGPT 新圖，可走範圍／伊邪那美／出口位置重定，人物比例同野外
+ * Version : r3.201.0  (2026-11-28)　r3.201.0：內殿人物放大約 2 倍、鏡頭拉近
+ * 舊版    : r3.169.0  (2026-11-27)　r3.169.0：內殿換 ChatGPT 新圖，可走範圍／伊邪那美／出口位置重定，人物比例同野外
  * 舊版    : r3.121.0  (2026-11-26)　r3.121.0：轉生保留里歐外觀（等級、招式、按鍵）
  * 舊版    : r3.119.1  (2026-11-26)　r3.119.1：內殿鏡頭往上偏（祭壇入鏡）
  * 舊版    : r3.119.0  (2026-11-26)
@@ -26,7 +27,7 @@
   (function hkP() { const PY = G.PARTY; if (!PY || !PY.earned) return setTimeout(hkP, 80); const e0 = PY.earned; PY.earned = id => e0(id) + (((S().rb || {}).pb || {})[id] || 0); })();
   /* ---------- 內殿場景 ---------- */
   const OUT = [[0, 499], [1672, 499], [1672, 743], [0, 743]];   // r3.169.0：ChatGPT 新內殿圖（地板 50% 起；只取上半段）
-  function reg() { if (!G.D || !G.D.scenes || G.D.scenes[ID]) return; G.D.scenes[ID] = { name: '神社・內殿', w: 1672, h: 941, outer: OUT, obstacles: [], start: [120, 580], nodes: { west_arrival: [120, 580], center: [836, 600], altar: [836, 520] }, portals: [], safe: true, region: 'wind', lv: 1, foes: [], depth: [0.95, 1.12] };   /* r3.169.0：新圖比例同野外圖 */
+  function reg() { if (!G.D || !G.D.scenes || G.D.scenes[ID]) return; G.D.scenes[ID] = { name: '神社・內殿', w: 1672, h: 941, outer: OUT, obstacles: [], start: [120, 580], nodes: { west_arrival: [120, 580], center: [836, 600], altar: [836, 520] }, portals: [], safe: true, region: 'wind', lv: 1, foes: [], depth: [2.0, 2.4] };   /* r3.201.0：內殿的圖畫得比野外大（祭壇、燭台都是近景比例），人物放大約 2 倍才對得上 */   /* r3.169.0：新圖比例同野外圖 */
     if (G.WORLD && G.WORLD.meta) G.WORLD.meta[ID] = { safe: true, town: true, lv: 1, spawn: [0, 0], foes: [], mats: [] }; }
   const img0 = G.ASSET.img.bind(G.ASSET); G.ASSET.img = (k, src) => img0(k, k === ID ? 'a/m/N_EXSH.webp' : src);
   const boot0 = G.ASSET.boot.bind(G.ASSET); G.ASSET.boot = () => boot0().then(r => { try { reg(); } catch (e) { console.warn('rebirth reg', e); } return r; });
@@ -86,7 +87,7 @@
     d.uid = Math.max(d.uid || 2, od.uid || 2); G.SAVE.dirty = true; G.SAVE.flush();
     G.UI.banner('轉生', '第 ' + (s.rb.n + 1) + ' 輪・' + DN()[DIF]); setTimeout(() => { try { location.reload(); } catch (e) { G.toTitle && G.toTitle(); } }, 1600); }
   /* r3.119.1：內殿鏡頭拉遠（可視高度至少 75% 房間）並往上偏，祭壇與伊邪那美入鏡 */
-  (function hkC() { if (!SC.camTarget || !SC.view || !SC.zoom) return setTimeout(hkC, 60); const z0 = SC.zoom; SC.zoom = function () { const z = z0.apply(this, arguments); return SC.id === ID && SC.def ? Math.min(z, G.LH / (SC.def.h * 0.75)) : z; }; const ct0 = SC.camTarget.bind(SC); SC.camTarget = function () { const t = ct0(); if (SC.id !== ID || !SC.def) return t; const { vh } = SC.view();
+  (function hkC() { if (!SC.camTarget || !SC.view || !SC.zoom) return setTimeout(hkC, 60); const z0 = SC.zoom; SC.zoom = function () { const z = z0.apply(this, arguments); return SC.id === ID && SC.def ? Math.min(z, G.LH / (SC.def.h * 0.62)) : z; }; const ct0 = SC.camTarget.bind(SC); SC.camTarget = function () { const t = ct0(); if (SC.id !== ID || !SC.def) return t; const { vh } = SC.view();
       return { x: t.x, y: Math.max(vh / 2, Math.min(SC.def.h - vh / 2, t.y - vh * 0.28)) }; }; })();
   G.REBIRTH.ritual = ritual; G.REBIRTH.cleared = cleared; G.REBIRTH.ID = ID;
   G.REBIRTH._do = (sel, dif) => { SEL = new Set(sel); DIF = dif; doRebirth(); };

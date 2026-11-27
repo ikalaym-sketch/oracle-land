@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 110_katana_hiden.js
- * Version : r3.183.0  (2026-11-28)　開放 tintOf 給其他武器的秘傳共用（內容未變）
+ * Version : r3.201.0  (2026-11-28)　r3.201.0：里歐外型時秘傳分身剪影用里歐
+ * 舊版    : r3.183.0  (2026-11-28)　開放 tintOf 給其他武器的秘傳共用（內容未變）
  * 舊版    : r3.180.0  (2026-11-28)　r3.180.0：打刀五招秘傳運鏡（拉遠→追蹤→收招推近）、實心分身、地面月光、一閃・朧重做、千鳥十字與返脈・雷加大；r3.179.0：月下分身背景近全黑、鏡頭更遠、月亮更高更小；r3.178.0：月下分身重做（五個分身依序衝斬→本尊穿斬→斬月爆開）；燕返・真重做（把敵人來回打三次→巨大月牙刀氣）
  * 舊版    : r3.177.0  (2026-11-28)　r3.177.0：月下分身重做：象牙白大滿月高掛、月暈、夜色加深、最後一斬把月亮斬開
  * 舊版    : r3.173.0  (2026-11-28)　r3.173.0：五招秘傳加演出鏡頭（對準敵人群／挑飛高度）；返脈・雷的天雷連落三道
@@ -68,8 +69,9 @@
   const TINT = new Map();
   function tintOf(u, fr, col) { const key = u.key + ':' + (fr[7] || 0) + ':' + fr[0] + ',' + fr[1] + ':' + col; let cv = TINT.get(key); if (cv) return cv; cv = document.createElement('canvas'); cv.width = fr[2]; cv.height = fr[3]; const g = cv.getContext('2d');
     g.drawImage(u.imgs[fr[7] || 0], fr[0], fr[1], fr[2], fr[3], 0, 0, fr[2], fr[3]); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgb(' + col + ')'; g.fillRect(0, 0, fr[2], fr[3]); if (TINT.size > 80) TINT.clear(); TINT.set(key, cv); return cv; }
-  function cloneAt(x, y, face, life, clip, fi) { const u = G.WPN.unit && G.WPN.unit(), r = u && (u.act[clip || 'issen'] || u.act.issen || u.act.normal_3); const fr = r ? r.f[Math.min(r.f.length - 1, fi === undefined ? Math.floor(r.f.length * 0.55) : fi)] : (G.heroFrame && G.heroFrame()); if (!u || !fr) return;
-    const sc = HH() * S(y) * G.WPN.actK(clip || 'issen') / (u.refH || 130); life = life || 12; let rim, body; try { rim = tintOf(u, fr, '170,210,255'); body = tintOf(u, fr, '24,48,150'); } catch (x) { return; }
+  function cloneAt(x, y, face, life, clip, fi) { let u = G.WPN.unit && G.WPN.unit(), r = u && (u.act[clip || 'issen'] || u.act.issen || u.act.normal_3); let fr = r ? r.f[Math.min(r.f.length - 1, fi === undefined ? Math.floor(r.f.length * 0.55) : fi)] : (G.heroFrame && G.heroFrame()); if (!u || !fr) return;
+    let sc = HH() * S(y) * G.WPN.actK(clip || 'issen') / (u.refH || 130); life = life || 12;
+    { const lg = G.LEON && G.LEON.ghost && G.LEON.ghost({ y, face: 1 }); if (lg) { const lb = G.ANIM.get('lv_base'), lr = lb && lb.act.attack_3; if (lr) { u = lb; fr = lr.f[Math.floor(lr.f.length * 0.55)]; sc = G.LEON.kOf(S(y)) * (fr[8] || 1); } } }   /* r3.201.0：里歐外型時，秘傳分身的剪影也用里歐 */ let rim, body; try { rim = tintOf(u, fr, '170,210,255'); body = tintOf(u, fr, '24,48,150'); } catch (x) { return; }
     VX.custom((o, ctx) => { const a = Math.min(1, o.t / 2) * Math.min(1, (life - o.t) / (life * 0.5)); if (a <= 0) return; ctx.save(); if (face < 0) { ctx.translate(x * 2, 0); ctx.scale(-1, 1); }
       const dr = (im, kx, al) => { const w = fr[2] * sc * kx, h = fr[3] * sc * kx, mx = x - fr[4] * sc + fr[2] * sc / 2, my = y - fr[5] * sc + fr[3] * sc / 2; ctx.globalAlpha = al; ctx.drawImage(im, mx - w / 2, my - h / 2, w, h); };
       dr(rim, 1.09, 0.85 * a); dr(body, 1, 0.95 * a); ctx.globalCompositeOperation = 'lighter'; dr(rim, 1, 0.18 * a); ctx.restore(); }, life, 'o'); }

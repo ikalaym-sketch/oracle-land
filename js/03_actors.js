@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.199.0  (2026-11-28)　r3.199.0：塵土改手繪塵圈
+ * Version : r3.201.0  (2026-11-28)　r3.201.0：里歐外型時殘影改用里歐的圖
+ * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：塵土改手繪塵圈
  * 舊版    : r3.197.0  (2026-11-28)　r3.197.0：敵人普通近戰出手時有爪痕／揮擊弧光
  * 舊版    : r3.196.0  (2026-11-28)　受擊白閃減半、舊版預警改柔光、掉落光柱柔邊、秘傳時隱藏妖怪血條
  * 舊版    : r3.195.0  (2026-11-28)　會心傷害數字重做（大字、橘紅金黃漸層、斬痕、驚嘆號），跟一般數字拉開
@@ -454,7 +455,7 @@ G.ONI_RATIO = 1.38;
       else if (f.k === 'spark') { f.x += f.vx; f.y += f.vy; f.vy += 0.18; ctx.fillStyle = `rgba(255,${200 + (f.t * 3 | 0)},140,${a})`; ctx.fillRect(f.x, f.y, 2.4, 2.4); }
       else if (f.k === 'dust') { if (G.AFX && G.AFX.fr('x2_core', 'fx_dust', Math.min(5, Math.floor(f.t / f.life * 6)), f.x, f.y, { size: 110 + f.t * 2.5, by: 'w', a: Math.min(1, a * 1.6) })) continue;   /* r3.199.0：塵土＝手繪的塵圈（原本咖啡色半透明橢圓） */ ctx.fillStyle = `rgba(140,110,80,${a * 0.45})`; ctx.beginPath(); ctx.ellipse(f.x, f.y, 30 + f.t * 2, 8 + f.t * 0.5, 0, 0, 6.283); ctx.fill(); }
       else if (G.FXV && G.FXV[f.k]) G.FXV[f.k](f, a, ctx);
-      else if (f.k === 'ghost') { const u = A.get(f.u); if (u) A.draw(u, f.fr, f.x, f.y, G.HERO_H * f.s / (u.refH || 130), f.face < 0, a * 0.35); }
+      else if (f.k === 'ghost') { if (f.lv === undefined) f.lv = (G.LEON && G.LEON.ghost && G.LEON.ghost(f)) || 0;   /* r3.201.0：換成里歐外型時，殘影也用里歐的圖（原本還是主角原樣） */ if (f.lv) { A.draw(f.lv.u, f.lv.fr, f.x, f.y, f.lv.k, f.lv.flip, a * 0.35); continue; } const u = A.get(f.u); if (u) A.draw(u, f.fr, f.x, f.y, G.HERO_H * f.s / (u.refH || 130), f.face < 0, a * 0.35); }
       else if (f.k === 'lvup') { f.x = H.x; f.y = H.y; const h = 120 * Math.min(1, f.t / 12); const g = ctx.createLinearGradient(0, f.y - h, 0, f.y); g.addColorStop(0, 'rgba(255,230,150,0)'); g.addColorStop(1, `rgba(255,230,150,${a * 0.55})`);
         ctx.fillStyle = g; ctx.fillRect(f.x - 18, f.y - h, 36, h); }
       else if (f.k === 'bite') { ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = 2.5; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(f.x - 10, f.y + i * 6); ctx.lineTo(f.x + 10, f.y + i * 6 - 4); ctx.stroke(); } }
