@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 111_katana_fx.js
- * Version : r3.170.0  (2026-11-27)　r3.170.0：特效第三版（打刀樣板）：襯底暗影、墨邊、白熱亮芯、筆觸紋理、火花描墨邊、受擊染色與壓扁、地面刀痕；新增櫻色盤
+ * Version : r3.172.0  (2026-11-28)　r3.172.0：技／秘傳刀光多停留 50%、突刺光加粗、「架」字加墨底圓牌（打刀）
+ * 舊版    : r3.170.0  (2026-11-27)　r3.170.0：特效第三版（打刀樣板）：襯底暗影、墨邊、白熱亮芯、筆觸紋理、火花描墨邊、受擊染色與壓扁、地面刀痕；新增櫻色盤
  * 舊版    : r3.79.0  (2026-11-25)
  * 變更    : r3.79.0 槍色盤改白金；槍的突刺改由 116 槍影元件（KF.spear）畫。
  *           r3.78.0 和弓色盤 holy（金白偏暖）；箭命中＝十字星光＋金羽；和弓停頓表；修正：92_lab 每格把震動壓到 1～3（野太刀等的重震失效）→ 改由本模組分級、只做自然衰減。
@@ -67,7 +68,7 @@
     if (z !== undefined) add(life * 0.6, 'o', (ctx, u, q) => { ctx.globalCompositeOperation = 'screen'; spr(ctx, C.T.gd, x, y - z * k, r * k * 1.6, r * k * 1.6, (a || 0.5) * 0.45 * (1 - eo3(q))); }); }
   /* ---------- 刀光：實心漸細月牙 ---------- */
   /* o：x,y 腳底；cy 弧心高（身高倍）；f 面向；r 半徑；sq 透視壓扁；rot 弧面旋轉；a0→a1 掃過；w 厚；dur 掃過格數；life；tier 0 招式／1 技／2 秘傳；follow 跟著主角 */
-  function smear(o) { const C = cur, x3 = X3(); if (x3) o = Object.assign({}, o, { w: (o.w || 0.3) * 1.3 }); const y = o.y, k = K(y), dur = o.dur || 4, life = o.life || dur + 9, span = o.a1 - o.a0, dir = Math.sign(span) || 1, trailMax = Math.min(Math.abs(span), o.trail || 2.6), sq = o.sq === undefined ? 0.6 : o.sq, rot = o.rot || 0, cs = Math.cos(rot), sn = Math.sin(rot), tier = o.tier || 0;
+  function smear(o) { const C = cur, x3 = X3(); if (x3) o = Object.assign({}, o, { w: (o.w || 0.3) * 1.3 }, (o.tier || 0) > 0 ? { life: Math.round((o.life || (o.dur || 4) + 9) * 1.5) } : null);   /* r3.172.0：技／秘傳的刀光多停留 50%（原本一閃而過看不清） */ const y = o.y, k = K(y), dur = o.dur || 4, life = o.life || dur + 9, span = o.a1 - o.a0, dir = Math.sign(span) || 1, trailMax = Math.min(Math.abs(span), o.trail || 2.6), sq = o.sq === undefined ? 0.6 : o.sq, rot = o.rot || 0, cs = Math.cos(rot), sn = Math.sin(rot), tier = o.tier || 0;
     const P = (a, r, cx, cy) => { const lx = Math.cos(a) * r, ly = Math.sin(a) * r * sq; return [cx + (lx * cs - ly * sn) * o.f, cy + (lx * sn + ly * cs)]; };
     const nM = o.motes !== undefined ? o.motes : 5 + tier * 4, M = []; for (let i = 0; i < nM; i++) M.push({ v: rnd(0.15, 1), dr: rnd(0.1, 0.45), up: rnd(0.05, 0.35), sz: rnd(0.04, 0.08), l: rnd(14, 24) });
     add(life + 26, 'o', (ctx, u) => { const cx = o.follow ? H.x : o.x, cy = y - (o.cy === undefined ? 0.55 : o.cy) * k, R = o.r * k, W = (o.w || 0.3) * k;
@@ -112,7 +113,7 @@
     if (o.motes !== 0) c_mLine(o.x, y, o.z || 0.55, o.ang, o.len, o.motes || 8, dur + (life - dur) * 0.5); }
   function c_mLine(x, y, z, ang, len, n, delay) { const k = K(y); for (let i = 0; i < n; i++) { const t = (i + 0.5) / n - 0.5; motes(x + Math.cos(ang) * t * len * k, y, z - Math.sin(ang) * t * len, 1, { sp: 0.6, life: 22, stag: delay }); } }
   /* ---------- 突刺光：尖錐由身前射出 ---------- */
-  function stab(o) { const C = cur, x3 = X3(); const y = o.y, k = K(y), dur = o.dur || 3, life = o.life || 12;
+  function stab(o) { const C = cur, x3 = X3(); if (x3) o = Object.assign({}, o, { w: (o.w || 0.12) * 1.7, life: Math.round((o.life || 12) * 1.3) });   /* r3.172.0：突刺光加粗（踏步引刃、一息截隙原本只剩一條細線） */ const y = o.y, k = K(y), dur = o.dur || 3, life = o.life || 12;
     add(life + 4, 'o', (ctx, u) => { const ext = eo5(cl(u / dur, 0, 1)), fade = u <= dur ? 1 : cl(1 - (u - dur) / (life - dur), 0, 1), L = o.len * k * (0.25 + 0.75 * ext), b = L * 0.85 * ei2(1 - fade), w = (o.w || 0.12) * k * (0.4 + 0.6 * fade);
       if (fade <= 0) return; ctx.translate(o.x + o.f * 0.25 * k, y - (o.cy || 0.45) * k); ctx.scale(o.f, 1); ctx.rotate(o.ang || 0);
       ctx.globalCompositeOperation = 'screen'; for (const t of [0.35, 0.65, 0.92]) spr(ctx, C.T.gd, L * t, 0, w * 5, w * 4, 0.35 * fade);
@@ -148,10 +149,11 @@
     add(life, 'o', (ctx, u, q) => { ctx.globalCompositeOperation = 'screen'; spr(ctx, C.T.gm, x, y - z * k, k * 0.5 * eo3(q), 0, 0.6 * q);
       for (const p of P) { const t = cl((u - p.d) / (life - p.d), 0, 1); if (t <= 0) continue; const rr = p.r * k * (1 - ei2(t)), px = x + Math.cos(p.a + t * 1.5) * rr, py = y - z * k + Math.sin(p.a + t * 1.5) * rr * 0.5; spr(ctx, C.T.mote, px, py, p.s * k * 2 * (1 - t * 0.5), 0, Math.min(1, t * 3)); } }); }
   /* ---------- 架勢：刀身亮起＋光點緩緩上飄（跟著主角） ---------- */
-  function aura(life) { const C = cur; add(life, 'o', (ctx, u) => { const k = K(H.y), e = Math.min(1, u / 5) * Math.min(1, (life - u) / 6), p = 0.85 + 0.15 * Math.sin(u * 0.25), bx = H.x + H.face * 0.18 * k, by = H.y - 0.5 * k; ctx.globalCompositeOperation = 'screen';
+  function aura(life) { const C = cur, x3 = X3(); add(life, 'o', (ctx, u) => { const k = K(H.y), e = Math.min(1, u / 5) * Math.min(1, (life - u) / 6), p = 0.85 + 0.15 * Math.sin(u * 0.25), bx = H.x + H.face * 0.18 * k, by = H.y - 0.5 * k; ctx.globalCompositeOperation = 'screen';
       spr(ctx, C.T.gd, bx, by, k * 0.9 * p, k * 0.9 * p, 0.55 * e); spr(ctx, C.T.gl, bx, by, k * 0.3 * p, k * 0.3 * p, 0.6 * e);
       for (let i = 0; i < 6; i++) { const ph = ((u * 0.02 + i / 6) % 1), px = bx + Math.sin(i * 2.1 + u * 0.05) * 0.25 * k, py = by - ph * 0.7 * k; spr(ctx, C.T.mote, px, py, k * 0.09 * (1 - ph), 0, e * (1 - ph)); }
-      G.txt && G.txt('架', H.x, H.y - 1.28 * k, 11, 'rgba(' + C.lite + ',' + e + ')', 'center', G.FONT_S, 900); });
+      if (x3) { ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = 'rgba(' + C.ink + ',' + (0.75 * e) + ')'; ctx.beginPath(); ctx.arc(H.x, H.y - 1.3 * k, 9, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(' + C.lite + ',' + (0.8 * e) + ')'; ctx.lineWidth = 1; ctx.stroke(); }   /* r3.172.0：「架」字加墨底圓牌，亮地面上看得見 */
+      G.txt && G.txt('架', H.x, H.y - 1.28 * k, 11, 'rgba(' + (x3 ? C.hot : C.lite) + ',' + e + ')', 'center', G.FONT_S, 900); });
     add(life, 'g', (ctx, u) => { const k = K(H.y), e = Math.min(1, u / 5) * Math.min(1, (life - u) / 6); ctx.globalCompositeOperation = 'screen'; spr(ctx, C.T.gm, H.x, H.y, k * 1.3, k * 0.4, 0.35 * e); }); }
   /* ---------- 緩速：敵人腳下冰霧＋冰晶光點上飄（跟著敵人） ---------- */
   function frost(e, life) { const C = cur; add(life, 'o', (ctx, u) => { if (!e || e.st === 'dead' || !G.E.includes(e)) return; const k = K(e.y), a = Math.min(1, u / 4) * Math.min(1, (life - u) / 10); ctx.globalCompositeOperation = 'screen'; spr(ctx, C.T.gd, e.x, e.y - 0.1 * k, k * 0.9, k * 0.3, 0.35 * a);

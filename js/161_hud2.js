@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 161_hud2.js
- * Version : r3.168.0  (2026-11-27)
+ * Version : r3.172.0  (2026-11-28)　r3.172.0：秘傳／奧義演出時面板淡出
+ * 舊版    : r3.168.0  (2026-11-27)
  * 變更    : r3.168.0 新增。右上整合面板（取代右上「視角／選單」鈕、上方主線橫幅、世界事件長條、畫面邊緣出口箭頭）。
  *           ・標題列四個分頁：地圖／事件／主線／任務（有內容就亮燈，事件新出現時閃）＋右端鏡頭鍵（近／中／遠）。
  *           ・地圖：小地圖（點一下開行旅繪圖）。
@@ -53,6 +54,7 @@
   function setTab(k) { st.tab = k; if (!town()) { S().hudTab = k; G.SAVE.markDirty(); } }
   /* ---------- 畫 ---------- */
   function draw() { st.hits = []; G.UI.B.zoom = { x: -999, y: -999, w: 0, h: 0 }; MM.box = null; if (!MM.show()) return; syncTab();
+    const cine = G.VX && G.VX.dimT > 0 ? 1 : 0; st.fade = (st.fade || 0) + (cine - (st.fade || 0)) * 0.2; if (st.fade > 0.95) { st.box = null; return; } ctx.save(); ctx.globalAlpha = 1 - st.fade;   /* r3.172.0：秘傳／奧義演出（畫面壓暗）時右上面板淡出，不擋演出 */
     const L = lists(), fs = G.FS(), W = Math.min(236, G.LW * 0.27), R = G.LW - 10 - G.SAFE.r, X = R - W, T = 10 + G.SAFE.t, TH = 24, cur = st.tab === 'map' ? null : L[st.tab],
       BH = !cur ? (MM.cv ? 18 + Math.min(80, (W - 8) * MM.cv.height / MM.cv.width) : 90) : Math.max(26, Math.min(3, cur.length) * 27 + (cur.length > 3 ? 16 : 4));   // 任務分頁高度跟著條數（最多 3 條）
     const evKey = L.ev.map(e => e.title).join('|'); if (evKey && evKey !== st.evKey && st.tab !== 'ev') st.blink = 240; st.evKey = evKey; if (st.blink > 0) st.blink--;
@@ -82,7 +84,7 @@
     if (EH) { const y = by + BH + 2 + EH / 2, half = (W - 16) / 2; ctx.strokeStyle = 'rgba(227,194,122,.2)'; ctx.beginPath(); ctx.moveTo(X + 6, y - EH / 2); ctx.lineTo(X + W - 6, y - EH / 2); ctx.stroke();
       if (ex.L) otxt(fit('◀ ' + ex.L.n + ' ' + ex.L.dist + 'm', ex.R ? half : W - 16, 10, 700), X + 8, y, 10, '#f3d98a', 'left');
       if (ex.R) otxt(fit(ex.R.n + ' ' + ex.R.dist + 'm ▶', ex.L ? half : W - 16, 10, 700), X + W - 8, y, 10, '#f3d98a', 'right'); }
-    st.box = { x: X, y: T, w: W, h: TH + BH + 4 + EH }; }
+    st.box = { x: X, y: T, w: W, h: TH + BH + 4 + EH }; ctx.restore(); }
   HD.tap = function (p) { if (!st.box || !MM.show()) return false; for (const h of st.hits) if (p.x >= h.x && p.x <= h.x + h.w && p.y >= h.y && p.y <= h.y + h.h) { h.f(); return true; }
     if (MM.box && p.x >= MM.box.x && p.x <= MM.box.x + MM.box.w && p.y >= MM.box.y && p.y <= MM.box.y + MM.box.h) return false;   // 小地圖：交給 04_ui 開行旅繪圖
     const b = st.box; return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h; };

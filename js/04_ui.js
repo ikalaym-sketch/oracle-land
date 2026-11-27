@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 04_ui.js
- * Version : r3.168.0  (2026-11-27)　r3.168.0：右上視角／選單鈕與上方主線橫幅交給 161_hud2；點主角頭像開選單（頭像右上小☰）；畫面外目標只留箭頭
+ * Version : r3.172.0  (2026-11-28)　r3.172.0：戰鬥中的橫幅縮成上方小牌
+ * 舊版    : r3.168.0  (2026-11-27)　r3.168.0：右上視角／選單鈕與上方主線橫幅交給 161_hud2；點主角頭像開選單（頭像右上小☰）；畫面外目標只留箭頭
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：世界事件提醒的後備改開行旅繪圖
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：技能鍵冷卻改環狀（補滿閃一下）、按鈕間距加大，文字不變
  * 舊版    : r3.153.0  (2026-11-27)　r3.153.0：小地圖點擊→行旅繪圖；方向提示不壓小地圖
@@ -188,9 +189,13 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
       G.txt(lab, b.x + b.w / 2, b.y + b.h / 2 + 1, 13, C.ink, 'center', G.FONT_S, 900); }
     if (H.st === 'atk') G.txt(['一', '二', '三', '四', '五', '六'][H.combo] + '段', B.atk.x, B.atk.y - B.atk.r - 10, 12, C.gold, 'center', G.FONT_S, 900);
     if (UI.ban && !(G.DLG._endT && G.t - G.DLG._endT < 120)) { const T = UI.ban.t, a = Math.max(0, Math.min(1, T / 20, (170 - T) / 20)); ctx.globalAlpha = a;
+      if (G.HUD2 && G.E && G.E.some(e => e.st !== 'dead' && !(e.delay > 0))) {   /* r3.172.0：戰鬥中的橫幅（招式名、提示）縮成上方小牌，不再橫過整個畫面蓋住戰鬥 */
+        ctx.font = `900 ${14 * G.FS()}px ${G.FONT_S}`; const w1 = ctx.measureText(UI.ban.text).width; ctx.font = `700 ${10 * G.FS()}px ${G.FONT}`; const w2 = UI.ban.sub ? ctx.measureText(UI.ban.sub).width + 14 : 0, w = w1 + w2 + 28, x = (G.LW - w) / 2, y = y0 - 2;
+        ctx.fillStyle = 'rgba(12,8,10,.78)'; G.rr(x, y, w, 24, 12); ctx.fill(); ctx.strokeStyle = 'rgba(227,194,122,.5)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, w - 1, 23, 12); ctx.stroke();
+        G.txt(UI.ban.text, x + 14, y + 12.5, 14, C.ink, 'left', G.FONT_S, 900); if (UI.ban.sub) G.txt(UI.ban.sub, x + 14 + w1 + 14, y + 13, 10, C.gold, 'left', G.FONT, 700); ctx.globalAlpha = 1; } else {
       const y = G.LH * 0.3, gr = ctx.createLinearGradient(0, 0, G.LW, 0); gr.addColorStop(0, 'rgba(10,6,8,0)'); gr.addColorStop(.5, 'rgba(10,6,8,.72)'); gr.addColorStop(1, 'rgba(10,6,8,0)');
       ctx.fillStyle = gr; ctx.fillRect(0, y - 26, G.LW, UI.ban.sub ? 64 : 52); G.txt(UI.ban.text, G.LW / 2, y, 20, C.ink, 'center', G.FONT_S, 900);
-      if (UI.ban.sub) G.txt(UI.ban.sub, G.LW / 2, y + 26, 12, C.gold, 'center', G.FONT, 700); ctx.globalAlpha = 1; }
+      if (UI.ban.sub) G.txt(UI.ban.sub, G.LW / 2, y + 26, 12, C.gold, 'center', G.FONT, 700); ctx.globalAlpha = 1; } }
     if (UI.place && UI.place.t > 0) { UI.place.t--; const a = Math.min(1, UI.place.t / 20, (150 - UI.place.t) / 20); ctx.globalAlpha = Math.max(0, a);
       G.txt('― ' + UI.place.text + ' ―', G.LW / 2, y0 + 48 * G.FS(), 13, C.ink, 'center', G.FONT_S, 900); ctx.globalAlpha = 1; }
     G.BANTER.draw(); UI.drawToast();
