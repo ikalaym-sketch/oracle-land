@@ -1,7 +1,6 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 55_wpn_v2.js
- * Version : r3.170.0  (2026-11-27)　r3.170.0：櫻花亂舞／千本櫻：粉紅實線圓圈改柔光、白色硬邊斜線改櫻色雙尖劍氣
- * 舊版    : r3.19.5  （r3.19.5：走／跑恢復逐動作校正，跑步不再變大；整體仍 ×0.9）
+ * Version : r3.19.5  （r3.19.5：走／跑恢復逐動作校正，跑步不再變大；整體仍 ×0.9）
  * 舊版    : r3.18.2
  * 舊版    : r3.16.0  (2026-11-14)
  * 變更    : r3.12.0 新增。主角武器重做（依「武器招式重設計規格」，一次一種武器；本版：打刀）。
@@ -61,8 +60,6 @@
   const sp0 = G.spawnFx;
   G.spawnFx = function (name, tier, x, y, face, s) {
     if (name === 'hero_katana_sakura_fx_a') return VF('petalburst', { x, y, r: HH() * 1.2 * s0(), life: 22 }) && null;   // 千本櫻／櫻花亂舞：改用程式繪製的櫻花特效
-    if (name === 'hero_katana_sakura_fx_b' && G.KF && G.KF.X3) { const k = HH() * s0(), fy = y + k * 0.5; G.KF.use('sakura', () => { G.KF.qi({ x, y: fy, z: 0.5, ang: -0.5, len: 1.7, w: 0.065, dur: 2, life: 11, motes: 4 }); G.KF.qi({ x, y: fy, z: 0.5, ang: 0.45, len: 1.5, w: 0.05, dur: 3, life: 12, motes: 0 }); });   /* r3.170.0：白色硬邊斜線 → 櫻色雙尖劍氣 */
-      return VF('petalburst', { x, y, r: HH() * 1.2 * s0(), life: 22 }) && null; }
     if (name === 'hero_katana_sakura_fx_b') { VF('slashline', { x0: x - HH() * 0.5 * s0(), y0: y - HH() * 0.3 * s0(), x1: x + HH() * 0.5 * s0(), y1: y + HH() * 0.3 * s0(), w: 4, life: 12, col: '255,190,215' }); VF('slashline', { x0: x - HH() * 0.5 * s0(), y0: y + HH() * 0.25 * s0(), x1: x + HH() * 0.5 * s0(), y1: y - HH() * 0.25 * s0(), w: 3, life: 12, col: '255,235,245' }); return VF('petalburst', { x, y, r: HH() * 0.6 * s0(), life: 18 }) && null; }
     if (name === 'hero_katana_sakura_fall') return VF('petalfall', { x, y: y + HH() * 0.6 * s0(), r: HH() * 1.2 * s0(), life: 60 }) && null;
     if (name === 'skyarrow') return VF('skyarrow', { x, y: y + HH() * 0.5 * s0(), h: HH() * s0(), life: 12 }) && null;
@@ -153,7 +150,7 @@
     petalstorm(f, a, c) { f.x = H.x; f.y = H.y; const sz = HH() * s0() * 0.1;   // 櫻花風暴：花瓣繞身旋轉、半徑隨時間擴張
       for (let i = 0; i < f.n; i++) { const an = f.t * 0.16 + i * 6.283 / f.n, rr = f.r * (0.55 + 0.45 * ((i * 7) % 5) / 4) * (0.7 + 0.3 * Math.min(1, f.t / 12)), x = f.x + Math.cos(an) * rr, y = f.y - HH() * s0() * (0.25 + 0.5 * ((i * 3) % 4) / 3) + Math.sin(an) * rr * 0.35;
         petal(c, x, y, sz, an * 2 + i, Math.min(1, a * 2)); } },
-    petalburst(f, a, c) { const k = 1 - a, sz = HH() * s0() * 0.09; { const KF = G.KF, gy = f.y + HH() * s0() * 0.45, R = f.r * (0.7 + k * 0.7); if (KF && KF.PAL.sakura) { c.save(); KF.spr(c, KF.PAL.sakura.T.sh, f.x, gy, R * 2.4, R * 0.9, 0.3 * a); c.globalCompositeOperation = 'screen'; KF.spr(c, KF.PAL.sakura.T.gm, f.x, gy, R * 2.2, R * 0.8, 0.55 * a); c.restore(); } }   /* r3.170.0：粉紅實線圓圈 → 柔光＋襯底 */
+    petalburst(f, a, c) { const k = 1 - a, sz = HH() * s0() * 0.09; c.save(); c.strokeStyle = 'rgba(240,120,165,' + a * 0.9 + ')'; c.lineWidth = 3 + 4 * a; c.beginPath(); c.ellipse(f.x, f.y + HH() * s0() * 0.45, f.r * (0.5 + k * 0.6), f.r * (0.5 + k * 0.6) * 0.4, 0, 0, 6.283); c.stroke(); c.restore();
       for (let i = 0; i < 16; i++) { const an = i * 0.3927 + f.x * 0.01, rr = f.r * (0.2 + k * 0.9); petal(c, f.x + Math.cos(an) * rr, f.y + Math.sin(an) * rr * 0.45, sz, an + f.t * 0.3, a); } },
     petalfall(f, a, c) { const sz = HH() * s0() * 0.08; for (let i = 0; i < 18; i++) { const ph = (f.t * 1.2 + i * 29) % 70, x = f.x + (((i * 53) % 100) / 50 - 1) * f.r + Math.sin(ph * 0.1 + i) * 6, y = f.y - HH() * s0() * 1.6 + ph * HH() * s0() * 1.6 / 70;
         petal(c, x, y, sz, ph * 0.12 + i, Math.min(1, a * 2) * (1 - ph / 90)); } },

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 109_katana.js
- * Version : r3.143.0  (2026-11-27)　r3.143.0：完美閃避記時間（H._pfT），打刀特性「反擊 +30%」用
+ * Version : r3.171.0  (2026-11-27)　r3.171.0：普攻第 4 段（迴旋收尾）補上殘月藍刀光（原本漏改，還是白色月牙）
+ * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：完美閃避記時間（H._pfT），打刀特性「反擊 +30%」用
  * 舊版    : r3.74.0  (2026-11-24)
  * 變更    : r3.74.0 普攻換成殘月藍（新增 MV2.N.katana：出手時間與倍率照動作圖事件，刀光改實心藍月牙、命中改藍色）。
  *           r3.73.0 全部招式／技／特技的特效改由 111_katana_fx 繪製：實心漸細刀光（刀幕不再畫，判定照舊）、突刺光、聚氣、刀鍔閃、架勢刀身光、緩速冰霧、地面揚霧＋局部光取代所有地面圈；斷風改實心月牙。
@@ -100,7 +101,11 @@
   const NK = [
     { run(c, t) { const f = NAT(c); if (t === f - 2) nsl(c, { a0: -2.2, a1: 0.9, rot: -0.2, m: NDM(c), cutAng: -0.8 }); } },
     { run(c, t) { const f = NAT(c); if (t === f - 2) nsl(c, { a0: 1.1, a1: -2.0, rot: 0.25, sq: 0.5, m: NDM(c), cutAng: 0.8 }); } },
-    { run(c, t) { const f = NAT(c); if (t === f - 2) nsl(c, { a0: -2.3, a1: 1.0, sq: 0.75, r: 1.35, w: 0.34, m: NDM(c), lv: 'heavy', kb: 0.6 }); if (t > f - 4 && t < f) c.move(0.03, 0); } }];
+    { run(c, t) { const f = NAT(c); if (t === f - 2) nsl(c, { a0: -2.3, a1: 1.0, sq: 0.75, r: 1.35, w: 0.34, m: NDM(c), lv: 'heavy', kb: 0.6 }); if (t > f - 4 && t < f) c.move(0.03, 0); } },
+    /* r3.171.0：第 4 段（迴旋收尾）原本沒改到，還在用舊的白色月牙 → 補上殘月藍大橫斬（有第二下判定就再反手一斬） */
+    { run(c, t) { const f = NAT(c), f2 = c.a.ev0 && c.a.ev0[1] ? NAT(c, 1) : -1;
+        if (t === f - 2) nsl(c, { a0: -2.5, a1: 1.2, sq: 0.4, r: 1.5, w: 0.4, sw: 4, life: 15, m: NDM(c), lv: 'heavy', kb: 0.5, arc: 2.6, hr: 1.6 });
+        if (f2 > 0 && t === f2 - 2) nsl(c, { a0: 1.3, a1: -2.4, sq: 0.45, rot: 0.1, r: 1.55, w: 0.42, sw: 4, life: 15, m: NDM(c, 1), lv: 'heavy', kb: 0.5, arc: 2.6, hr: 1.6 }); } }];
   const regN = () => { if (MV2.N && MV2.N.katana !== NK) MV2.N.katana = NK; };
   function regMv() { MV2.reg('katana', D); const w = G.WPN.BY.katana; if (w) for (const m of w.mv) if (D[m.id]) m.d = D[m.id].d; }
   G.KT = { arcBlade, dust, BL, ST, stop, tag, stance };   // 110_katana_hiden 共用
