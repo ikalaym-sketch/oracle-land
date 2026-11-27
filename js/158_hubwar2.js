@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 158_hubwar2.js
- * Version : r3.161.0  (2026-11-27)　r3.161.0：援軍也會打 W8 的波次敵人；援軍講話者同名（對話不另生一個）；匯出援軍介面給 W8
+ * Version : r3.162.0  (2026-11-27)　r3.162.0：難度提高——出兵 14 秒一隊、一隊 4～6（每 3 隊 1 精英）、上限 28；兵糧開局 300、每秒 +2、擊倒 +5／精英 +20、攻下 +200；東方妖穴血量 ×2.7、援軍打據點減半、每掉 25% 噴一波精英
+ * 舊版    : r3.161.0  (2026-11-27)　r3.161.0：援軍也會打 W8 的波次敵人；援軍講話者同名（對話不另生一個）；匯出援軍介面給 W8
  * 舊版    : r3.160.0  (2026-11-27)
  * 變更    : r3.160.0 新增。兩岸城攻防篇 第二批：W7 城內爭奪（劇本 2026-11-27_1840_HUB_WAR_SCRIPT_v1 第十節）
  *           ・據點戰：我方本陣（西口，耐久）、南方道摩軍本陣（拒馬 3 座＋核心）、東方妖穴（核心）；北方妖穴只當背景（W8 才打）
@@ -54,7 +55,7 @@
   const abLeft = f => W.objs.some(o => o.hwObj === 'abatis' && o.fort === f && live(o));
   function forts() { const s = S7();
     if (!s.south) { for (const [x, y] of FORT.s.ab) obj('abatis', 's', x, y, 7); obj('core', 's', FORT.s.core[0], FORT.s.core[1], 30, { inv: () => abLeft('s') ? '先打壞前面的拒馬' : W.boss ? '玄符的結界' : null }); }
-    if (!s.east) obj('core', 'e', FORT.e.core[0], FORT.e.core[1], 60, { inv: () => W.ph < 2 ? '妖氣太濃，打不進去' : null }); }
+    if (!s.east) obj('core', 'e', FORT.e.core[0], FORT.e.core[1], 160, { inv: () => W.ph < 2 ? '妖氣太濃，打不進去' : null }); }
   /* 城的布景：三座敵據點（攻下＝被攻破版＋我方旗） */
   HW.forts7 = function () { const s = S7(), ph = HW.phase(); if (SC.id !== ID || (ph !== 'battle')) return;
     HW.prop(FORT.s.img + (s.south ? '_off' : '_on'), FORT.s.x, FORT.s.y, FORT.s.w, { hwF: 's' }); for (const [x, y] of FORT.s.ban) HW.wp(s.south ? 'war_banner_ours' : 'war_banner_enemy', x, y, 0.75).hwF = 's';
@@ -62,13 +63,15 @@
     if (!DN('hw8')) HW.prop(FORT.n.img + '_on', FORT.n.x, FORT.n.y, FORT.n.w, { hwF: 'n' }); };
   function capture(f) { const s = S7(); s[f === 's' ? 'south' : 'east'] = 1; G.SAVE.markDirty();
     for (const n of HW.props) if (n.hwF === f) { if (n.hwimg) n.hwimg = n.hwimg.replace('_on', '_off'); if (n.wp) n.s = 'war_banner_ours'; }
-    G.E = G.E.filter(e => !(e.hwObj && e.fort === f)); W.objs = W.objs.filter(o => o.fort !== f); W.rice += 100; G.NUMS.push({ x: H.x, y: H.y - 90, v: '兵糧 +100', t: 0 });
+    G.E = G.E.filter(e => !(e.hwObj && e.fort === f)); W.objs = W.objs.filter(o => o.fort !== f); W.rice += 200; G.NUMS.push({ x: H.x, y: H.y - 90, v: '兵糧 +200', t: 0 });
     for (const u of W.units) if (u.ord === f) u.ord = 'hold'; if (W.ord === f) W.ord = 'hold';
     G.UI.banner(f === 's' ? '攻下　南方道摩軍本陣' : '攻下　東方妖穴', f === 's' ? '旗子換成了我們的' : '只剩北面'); }
 
   /* ======================= 三、敵兵：沿街道進攻 ======================= */
-  function spawnSquad(f) { if (foes().length >= 16) return; const L = FOES[f], p = FORT[f].spawn, n = 3 + (Math.random() < 0.5 ? 1 : 0);
-    Q.load(L).then(() => { if (!W.on) return; for (let i = 0; i < n; i++) { const e = G.spawnOni(p[0] + (Math.random() - 0.5) * 70, p[1] + (Math.random() - 0.5) * 30, 10 + i * 18, lv(), L[Math.floor(Math.random() * L.length)]); if (e) Object.assign(e, { hw7: 1, kz: 1, route: f, ri: 0 }); } }); }
+  const CAP = 28;
+  function elite(e) { e.hp = e.hpMax = Math.round(e.hpMax * 4); e.atk = Math.round(e.atk * 1.35); e.ratio *= 1.12; e.elite = '精英'; }
+  function spawnSquad(f, o) { o = o || {}; if (foes().length >= CAP && !o.force) return; const L = FOES[f], p = FORT[f].spawn, n = o.n || 4 + Math.floor(Math.random() * 3), ne = o.el !== undefined ? o.el : (W.sq = (W.sq || 0) + 1) % 3 === 0 ? 1 : 0;   /* 一隊 4～6；每第 3 隊帶 1 隻精英 */
+    Q.load(L).then(() => { if (!W.on) return; for (let i = 0; i < n; i++) { const e = G.spawnOni(p[0] + (Math.random() - 0.5) * 80, p[1] + (Math.random() - 0.5) * 34, 10 + i * 16, lv(), L[Math.floor(Math.random() * L.length)]); if (e) { Object.assign(e, { hw7: 1, kz: 1, route: f, ri: 0 }); if (i < ne) elite(e); } } }); }
   function heroT(e) { return { x: H.x, y: H.y, hero: 1, hurt: d => G.hurtHero(d, e.x), alive: () => H.hp > 0 }; }
   function unitT(u) { return { x: u.x, y: u.y, r: 6, hurt: d => hurtUnit(u, d), alive: () => u.hp > 0 }; }
   const baseT = { x: BASE.x + 40, y: BASE.y, r: 40, base: 1, hurt: d => { W.dur -= d; W.bflash = 12; }, alive: () => W.dur > 0 };
@@ -184,7 +187,7 @@
   function stepAllies() { const k = HH();
     for (const a of W.allies) { if (a.cd > 0) a.cd--;
       if (a.kind) { const n = a.amb; if (!n || a.cd > 0 || !G.NPC.includes(n)) continue; const e = nearFoe(n.x, n.y, 420); if (!e) continue; a.cd = 180;   /* 狐火／鬼族的刀 */
-        if (a.kind === 'fox') { tracer(n.x, n.y - k * S(n.y) * 0.8, e.x, e.y - k * S(e.y) * 0.5, 'orb', '140,210,255'); G.STORY.later(14, () => { if (live(e)) G.damageOni(e, 1, false, false, opt(e, e.hwObj ? 0.15 : e.bb || e.boss ? 0.06 : 0.4, Math.sign(e.x - n.x) || 1)); }); }
+        if (a.kind === 'fox') { tracer(n.x, n.y - k * S(n.y) * 0.8, e.x, e.y - k * S(e.y) * 0.5, 'orb', '140,210,255'); G.STORY.later(14, () => { if (live(e)) G.damageOni(e, 1, false, false, opt(e, e.hwObj ? 0.08 : e.bb || e.boss ? 0.02 : 0.4, Math.sign(e.x - n.x) || 1)); }); }
         else if (Math.hypot(e.x - n.x, e.y - n.y) < 90) { G.damageOni(e, 1, true, false, opt(e, 0.6, Math.sign(e.x - n.x) || 1)); G.FX.push({ k: 'dust', x: e.x, y: e.y, t: 0, life: 14 }); } else { a.cd = 10; n.x += Math.sign(e.x - n.x) * 1.6; n.y += Math.sign(e.y - n.y) * 0.8; n.walking = true; } continue; }
       const D = a.D, u = A.get(D.key); a.ft++; if (!u) continue; if (a.busy > 0 && --a.busy === 0) { a.clip = 'idle'; a.ft = 0; }
       if (D.heal) { const L = [H].concat((G.PARTY && G.PARTY.list || []).filter(p => p.hp > 0 && p.st !== 'down')); if (!(a.busy > 0)) { const tx = H.x + 70, ty = H.y + 16, dx = tx - a.x, dy = ty - a.y, d = Math.hypot(dx, dy);
@@ -196,7 +199,7 @@
       if (d > 6) { const sp = k * S(a.y) * 0.06; a.x += dx / d * Math.min(d, sp); a.y += dy / d * Math.min(d, sp); a.face = dx > 0 ? 1 : -1; if (a.clip !== D.run) { a.clip = D.run; a.ft = 0; } continue; }
       a.face = -side; if (a.cd > 0) { if (a.clip !== 'idle') { a.clip = 'idle'; a.ft = 0; } continue; }
       a.cd = D.cd; a.busy = 32; a.clip = D.atk; a.ft = 0; aFx(D.key, D.fx, e.x, e.y, 1.05, 32); const R = k * S(e.y) * D.r, ex = e.x, ey = e.y;
-      const hit = () => { for (const q of G.E) if ((q.hw7 || q.hwq) && live(q) && Math.hypot(q.x - ex, (q.y - ey) * 1.6) < R + (q.hwObj ? 60 : 0)) G.damageOni(q, 1, true, false, opt(q, q.hwObj ? D.m * 0.5 : q.bb || q.boss ? D.m * 0.15 : D.m, -side));   /* 援軍打頭目只算一點（主角才是主力） */ };
+      const hit = () => { for (const q of G.E) if ((q.hw7 || q.hwq) && live(q) && Math.hypot(q.x - ex, (q.y - ey) * 1.6) < R + (q.hwObj ? 60 : 0)) G.damageOni(q, 1, true, false, opt(q, q.hwObj ? D.m * 0.25 : q.bb || q.boss ? D.m * 0.05 : D.m, -side));   /* 援軍打頭目只算一點（主角才是主力） */ };
       if (D.hits) for (let i = 0; i < D.hits; i++) G.STORY.later(4 + i * 9, hit); else hit(); SC.shake = Math.max(SC.shake || 0, 3); } }
   function clipOf(u, a) { const D = a.D; return u.act[D.pre + a.clip + D.suf] || u.act[D.pre + D.run + D.suf] || u.act[D.pre + 'idle' + D.suf]; }
   function drawAlly(a) { const u = A.get(a.D.key); if (!u) return; const r = clipOf(u, a); if (!r) return; const f = r.f[Math.floor(a.ft / 4) % r.f.length], s = S(a.y), sc = HH() * s * a.D.sz / vh(u, a.D);
@@ -205,9 +208,10 @@
 
   /* ======================= 七、每格 ======================= */
   function step() { if (!W.on) return; if (SC.id !== ID) { reset(); safeOn(); return; } if (HW.sc || G.DLG.active()) return; W.t++;
-    if (W.t % 60 === 0) { W.rice += 1; for (const q of [H].concat((G.PARTY && G.PARTY.list) || []).concat(W.units)) if (q && q.hp > 0 && Math.hypot(q.x - BRZ.x, (q.y - BRZ.y) * 1.4) < 110) { q.hp = Math.min(q.hpMax, q.hp + q.hpMax * 0.02); if (q === H && G.t % 120 === 0) G.NUMS.push({ x: H.x, y: H.y - 80, v: '篝火', t: 0, col: '#ffb070' }); } }
-    for (const e of G.E) if (e.hw7 && !e.hwObj && e.st === 'dead' && !e._rc) { e._rc = 1; W.rice += 2; }
-    const s = S7(); if (!s.south && !W.sOff && --W.sp.s <= 0) { W.sp.s = 1200; spawnSquad('s'); } if (!s.east && --W.sp.e <= 0) { W.sp.e = W.ph < 2 ? 1800 : 1200; spawnSquad('e'); }
+    if (W.t % 60 === 0) { W.rice += 2; for (const q of [H].concat((G.PARTY && G.PARTY.list) || []).concat(W.units)) if (q && q.hp > 0 && Math.hypot(q.x - BRZ.x, (q.y - BRZ.y) * 1.4) < 110) { q.hp = Math.min(q.hpMax, q.hp + q.hpMax * 0.02); if (q === H && G.t % 120 === 0) G.NUMS.push({ x: H.x, y: H.y - 80, v: '篝火', t: 0, col: '#ffb070' }); } }
+    for (const e of G.E) if (e.hw7 && !e.hwObj && e.st === 'dead' && !e._rc) { e._rc = 1; W.rice += e.elite ? 20 : 5; }
+    const s = S7(); if (!s.south && !W.sOff && --W.sp.s <= 0) { W.sp.s = 840; spawnSquad('s'); } if (!s.east && --W.sp.e <= 0) { W.sp.e = W.ph < 2 ? 1260 : 840; spawnSquad('e'); }
+    /* 東方妖穴每掉 25%：噴出一波（2 精英＋4 隻） */ const ce0 = W.ph === 2 && W.objs.find(o => o.hwObj === 'core' && o.fort === 'e'); if (ce0 && live(ce0)) { const q = Math.floor((1 - ce0.hp / ce0.hpMax) * 4); if (q > (W.eq || 0) && q < 4) { W.eq = q; spawnSquad('e', { n: 6, el: 2, force: 1 }); G.UI.banner('妖穴噴出了黑霧', '裂口在吐出更多東西'); SC.shake = 8; } }
     stepUnits(); stepAllies(); hazards(); if (W.boss) bossStep(W.boss); if (W.bflash > 0) W.bflash--;
     /* 南方核心倒下 → 玄符 */
     const cs = W.objs.find(o => o.hwObj === 'core' && o.fort === 's'); if (cs && cs.st === 'dead' && !W.boss && !W.bossDone && !W.bossT) { W.bossT = 1; W.sOff = 1; G.DLG.start(bossLines(), spawnBoss); }
@@ -215,7 +219,7 @@
     const ce = W.objs.find(o => o.hwObj === 'core' && o.fort === 'e'); if (ce && ce.st === 'dead' && !W.eT) { W.eT = 1; G.STORY.later(40, () => G.DLG.start(eastEnd(), () => { capture('e'); const d = W.done; W.done = null; end(true); d && d(); })); }
     if (W.dur <= 0 && !W.fail) { W.fail = 1; const again = W.again; end(true); G.DLG.start([nar('（本陣的旗倒了。拒馬被衝開，傷兵往神社的方向退。）'), say('孫六', '……退！全員退到西口外面！'), say('孫六', '（喘著氣）神社的劍士，再來一次。這一次，本陣我親自守。')], () => { H.x = 180; H.y = 612; H.face = 1; again && G.STORY.later(30, again); }); } }
   function end(keepAllies) { W.on = false; G.E = G.E.filter(e => !e.hw7); W.units = []; W.objs = []; W.bolts = []; W.warns = []; W.boss = null; if (!keepAllies) { for (const a of W.allies) if (a.amb && G.AMB) G.AMB.remove(a.amb); G.NPC = G.NPC.filter(n => !n.hwA); W.allies = []; } safeOn(); }
-  function start(ph, done, again, keepA) { reset(keepA); W.on = true; W.ph = ph; W.done = done; W.again = again; W.rice = ph === 2 ? 260 : 200; W.dur = 100; W.t = 0; W.sp = { s: 360, e: ph === 2 ? 240 : 900 }; W.sOff = 0; W.bossT = 0; W.bossDone = 0; W.eT = 0; W.fail = 0; W.resp = []; W.ord = 'hold';
+  function start(ph, done, again, keepA) { reset(keepA); W.on = true; W.ph = ph; W.done = done; W.again = again; W.rice = ph === 2 ? 360 : 300; W.eq = 0; W.sq = 0; W.dur = 100; W.t = 0; W.sp = { s: 360, e: ph === 2 ? 240 : 900 }; W.sOff = 0; W.bossT = 0; W.bossDone = 0; W.eT = 0; W.fail = 0; W.resp = []; W.ord = 'hold';
     safeOff(); Q.load(['yaribushi', 'ashiyumi', 'ashigun', 'yomigun'].concat(ph === 1 ? FOES.s : FOES.e)).then(() => { if (!W.on) return; defenders(); forts(); }); }
 
   /* ======================= 八、畫面 ======================= */

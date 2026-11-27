@@ -1,9 +1,10 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 159_hubwar3.js
- * Version : r3.161.0  (2026-11-27)
+ * Version : r3.162.0  (2026-11-27)　r3.162.0：幻影血量＝本體、75%／25% 藏進影子召一波強妖（打完才打得到）、援軍打幻影再降；鬼女支線完成＝鬼族友好、孩子台詞、鬼女路過台詞 6 句
+ * 舊版    : r3.161.0  (2026-11-27)
  * 變更    : r3.161.0 新增。兩岸城攻防篇 第三批（劇本 2026-11-27_1840_HUB_WAR_SCRIPT_v1 第十一、十二、十六、十七節）：
  *           ・W8 奪回兩岸城：出陣前（本陣，深夜）→ 城門前廣場被妖氣牆圍住（四個路口封住）→ 5 波強妖（每波有援軍喊話；
- *             第 2 波河童大將噴水讓火車熄火）→ 大禍津日神・幻影（半透明、血量為本體一半、只有面具形態、不轉真身、沒有常闇）
+ *             第 2 波河童大將噴水讓火車熄火）→ 大禍津日神・幻影（半透明、血量＝本體第一段＋第二段、只有面具形態、不轉真身、沒有常闇；75%／25% 藏進影子各召兩波強妖）
  *             → 50% 時屋頂站起黑影，文也念名字一個一個驅散 → 擊敗 → 天亮
  *           ・重建（hw9）：三天後的城（重建版），權六、鎌鼬、河童大將、梅乃婆婆、柚吉、時雨、文也、孫六；城恢復安全區
  *           ・重建後鎌鼬三兄弟、河童大將搬進兩岸城（東面街口、運河東岸），妖怪村不再有他們；
@@ -29,7 +30,7 @@
   SC.room = function (x, y) { if (W8.zone && SC.id === ID && !inZ(x, y)) return 0; return rm0(x, y); };
   function safeOff() { const d = SC.def; if (!d._hwS) d._hwS = { safe: d.safe, town: d.town }; d.safe = false; d.town = false; if (W8.lv0 === undefined) { W8.lv0 = d.lv; d.lv = Math.max(d.lv || 1, (G.RPG.d().lv || 1) - 1); } if (G.AMB) { G.AMB.bubs = []; G.AMB.chatT = 99999; } }
   function safeOn() { const d = SC.def; if (d && d._hwS) { d.safe = d._hwS.safe; d.town = d._hwS.town; delete d._hwS; } if (d && W8.lv0 !== undefined) { d.lv = W8.lv0; W8.lv0 = undefined; } if (G.AMB) G.AMB.chatT = 400; }
-  function stopAll() { if (W8.shadows.length) G.CAMLOOK = null; W8.zone = false; W8.fight = false; W8.boss = null; W8.shadows = []; W8.shout = null; HW.fight = null; G.E = G.E.filter(e => !e.hwq && !e.hw8); safeOn(); }
+  function stopAll() { if (W8.shadows.length) G.CAMLOOK = null; W8.gOn = 0; W8.zone = false; W8.fight = false; W8.boss = null; W8.shadows = []; W8.shout = null; HW.fight = null; G.E = G.E.filter(e => !e.hwq && !e.hw8); safeOn(); }
   const shout = (who, text) => { W8.shout = { who, text, t: 200 }; };
   const loadAllies = () => Promise.all(['b_kama', 'b_kappa'].map(k => Promise.resolve(A.load && A.load(k)).catch(() => 0)));
   function allies(at) { const W = W7.W, [x, y] = at; if (W.allies.length) { W.allies.forEach((a, i) => { const o = a.amb || a; if (!o) return; o.x = x + (i % 2 ? 1 : -1) * (80 + i * 22); o.y = y + (i % 3 - 1) * 26; }); return; }
@@ -63,8 +64,8 @@
     丸('（擋在小雪前面，全身的毛炸開）……我記得你。三百年前，你也是這樣說話的。'), say('大禍津日神・幻影', '狛犬。你又活下來了。……真可憐。'), 蒼('這座城不是你的。'), say('大禍津日神・幻影', '這座城的死人，是我的。')];
   function startBoss() { const B = G.BOSS; if (!B || !B.load) return winBoss(); Promise.resolve(B.load('omagatsuhi')).then(() => { if (SC.id !== ID || !W8.fight) return;
       const enc = B.start('omagatsuhi', { x: 800, y: 380, lv: Math.max(SC.def.lv || 1, (G.RPG.d().lv || 1)) + 2, sub: '三百年前的影子', onWin: winBoss }); if (!enc) return winBoss();
-      enc.name = '大禍津日神・幻影'; const e = enc.units[0]; e.hpMax = e.hp = Math.round(e.hpMax * 0.5); e.alpha = 0.72; e.hwPh = 1; e.hwq = 1; enc.v.H2 = -1e12; W8.boss = e; W8.enc = enc;   /* 不轉真身（第二段門檻設到碰不到） */
-      G.UI.banner('大禍津日神・幻影', '血量只有本體的一半——但它不會累'); }, () => winBoss()); }
+      enc.name = '大禍津日神・幻影'; const e = enc.units[0]; e.alpha = 0.72; W8.gate = 0; W8.gOn = 0; e.hwPh = 1; e.hwq = 1; enc.v.H2 = -1e12; W8.boss = e; W8.enc = enc;   /* 不轉真身（第二段門檻設到碰不到） */
+      G.UI.banner('大禍津日神・幻影', '三百年前的影子，不會累'); }, () => winBoss()); }
   /* 50%：屋頂上的黑影＝沒救到的人；文也念名字驅散 */
   const SHD = [[652, 372], [688, 430], [650, 492], [948, 372], [912, 430], [950, 492], [748, 318], [872, 318]];   /* 廣場兩側的屋簷下、城門階前 */
   const NAMES = ['茂作', '阿春', '清吉', '小六', '阿鶴', '源三', '彌助', '阿文'];
@@ -81,7 +82,14 @@
   function w8step() { if (SC.id !== ID) { if (W8.fight || W8.zone) stopAll(); return; } if (!W8.fight) return; waveTick(); if (!HW.sc && !G.DLG.active()) W7.stepAllies();
     if (W8.shout && --W8.shout.t <= 0) W8.shout = null;
     const e = W8.boss; if (e) { if (e.st !== 'dead' && e.hp <= e.hpMax * 0.04 && !G.DLG.active()) { e.hp = 0; e.st = 'dead'; e.t = 0; e.mv = null; }   /* 第一段原本打不死（墊血）：見底就倒下 */
-      if (!W8.read && live(e) && e.hp <= e.hpMax * 0.5 && !G.DLG.active()) { W8.read = 1; readNames(); } } }
+      if (!W8.read && live(e) && e.hp <= e.hpMax * 0.5 && !G.DLG.active()) { W8.read = 1; readNames(); }
+      for (const [k, pc] of [[1, 0.75], [2, 0.25]]) if ((W8.gate || 0) < k && live(e) && e.hp <= e.hpMax * pc && !G.DLG.active()) { W8.gate = k; e.hp = Math.max(e.hp, e.hpMax * pc); gateOn(k); }
+      if (W8.gOn) { e.inv = 3; e.hwGate = 1; W8.gT++; if (W8.gT > 90 && !G.E.some(q => q.hwG && live(q))) { if (W8.gW < 2) { W8.gW++; W8.gT = 0; spawnGate(W8.gate, W8.gW); shout('文也', '又來了……還有！'); } else { W8.gOn = 0; e.hwGate = 0; G.UI.banner('影子散了', '幻影的本體露出來了'); } } } } }
+  /* 75%／25%：幻影把自己藏進影子裡，召出一波強妖；打完才打得到本體 */
+  function gateOn(k) { W8.gOn = 1; W8.gT = 0; W8.gW = 1; spawnGate(k, 1);
+    G.UI.banner(k === 1 ? '幻影沉進影子裡' : '幻影最後的影子', '打倒召出的妖怪，才打得到本體'); shout(k === 1 ? '孫六' : '小雪', k === 1 ? '它躲起來了！先清掉身邊那些！' : '最後一次了……它在怕！'); }
+  function spawnGate(k, w) { const lv = Math.max(SC.def.lv || 1, (G.RPG.d().lv || 1) - 1) + 1, L = k === 1 ? ['ushioni', 'nue', 'kasha', 'hannya'] : ['akahannya', 'ushioni', 'nue', 'hannya'];
+    Q.load(L).then(() => { if (!W8.fight) return; [[720, 330], [880, 330], [660, 450], [940, 450], [700, 560], [900, 560]].forEach(([x, y], i) => { const e = G.spawnOni(x, y, 20 + i * 12, lv, L[i % L.length]); if (!e) return; e.hwq = 1; e.hwG = 1; if (i < 2) { e.hp = e.hpMax = Math.round(e.hpMax * 4); e.atk = Math.round(e.atk * 1.35); e.ratio *= 1.12; e.elite = '影之精英'; } }); }); }   /* 每段兩波 */
 
   /* ======================= 三、重建（hw9）與妖怪頭目搬家 ======================= */
   function w9(q, done) { F().hw_reloc = 1; G.SAVE.markDirty(); spawnRes(); H.x = 812; H.y = 560;
@@ -129,8 +137,9 @@
       { t: 'kill', map: 'W_R01_01', at: 'east_arrival', n: 6, foes: ['yomigun', 'skel'], text: '護送孩子回水車村（黃泉殘黨）' },
       { t: 'talk', map: 'W_R01_01', at: 'east_arrival', dx: -120, u: null, name: '鬼女', text: '把孩子交還給鬼女', lines: () => [nar('（鬼女抱住孩子，很久沒有說話。）'),
         say('鬼女', '……人類。對不起。那一晚，我想殺你們的孩子。'), say('阿松', '……小太也是被你們救回來的。第一章的時候，鎌鼬把他藏起來，不讓赤鬼抓走。……扯平了。'),
-        say('鬼女', '之後村子的山路，我們家來守。'), act(() => { F().kijo_guard = 1; G.SAVE.markDirty(); })] }],
-    after2: { map: 'W_R01_01', at: 'east_arrival', dx: -150, u: null, name: '鬼女', lines: () => [say('鬼女', ['山路很安靜。今天沒有東西下來。', '孩子在學磨刀了。……跟你們人類的孩子一起。', '你又要出門了？路上小心。'][Math.floor(Math.random() * 3)])] } });
+        say('鬼女', '之後村子的山路，我們家來守。'), say('鬼族的孩子', '（躲在鬼女身後，探出頭）……人類的哥哥。謝謝。'), 雪('（蹲下來）下次迷路，就往山上走。山上有人等你。'),
+        act(() => { F().kijo_guard = 1; F().oniFriend = 1; G.SAVE.markDirty(); G.UI.banner('鬼族友好 +1', '鬼女一家從此守著水車村的山路'); })] }],
+    after2: { map: 'W_R01_01', at: 'east_arrival', dx: -150, u: null, name: '鬼女', lines: () => [say('鬼女', ['山路很安靜。今天沒有東西下來。', '孩子在學磨刀了。……跟你們人類的孩子一起。', '你又要出門了？路上小心。', '（孩子在旁邊數石頭）……七十一、七十二……他說是小太教的。', '那件小衣服，我洗乾淨收起來了。……留著，提醒自己。', '河還是往下流。可是我現在知道，往上走的路了。'][Math.floor(Math.random() * 6)])] } });
 
   /* ======================= 五、任務登錄與掛鉤 ======================= */
   const T = (map, text, run, o) => Object.assign({ t: 'fn', map, text, run }, o || {});
@@ -154,7 +163,7 @@
     if (W8.dawn > 0) { W8.dawn = Math.min(1.6, W8.dawn + 0.004); const a = Math.max(0, Math.min(1, W8.dawn) * (W8.dawn > 1.2 ? (1.6 - W8.dawn) / 0.4 : 1)), g = c.createLinearGradient(0, 0, 0, G.LH);
       g.addColorStop(0, `rgba(255,190,120,${0.35 * a})`); g.addColorStop(1, 'rgba(255,220,170,0)'); c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.fillRect(0, 0, G.LW, G.LH); c.restore(); } }
   /* 幻影：紫色殘影 */
-  (function hkD() { if (!G.drawOni) return setTimeout(hkD, 50); const d0 = G.drawOni; G.drawOni = function (e) { if (e && e.hwPh && e.st !== 'dead') { const s = S(e.y), r = HH() * s * 1.3, pu = 0.5 + 0.3 * Math.sin(G.t * 0.06);
+  (function hkD() { if (!G.drawOni) return setTimeout(hkD, 50); const d0 = G.drawOni; G.drawOni = function (e) { if (e && e.hwPh && e.st !== 'dead') { const s = S(e.y), r = HH() * s * 1.3, pu = (0.5 + 0.3 * Math.sin(G.t * 0.06)) * (e.hwGate ? 2 : 1);
         ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(e.x, e.y, r * 0.1, e.x, e.y, r * 1.3); g.addColorStop(0, `rgba(130,40,190,${0.45 * pu})`); g.addColorStop(1, 'rgba(50,10,80,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(e.x, e.y, r * 1.3, r * 0.45, 0, 0, 6.283); ctx.fill(); ctx.restore(); }
       return d0.apply(this, arguments); }; })();
   setTimeout(() => G.ASSET && G.ASSET.img && G.ASSET.img('hw_wall_miasma', 'a/war/wall_miasma.webp').catch(() => 0), 4500);
