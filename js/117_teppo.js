@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 117_teppo.js
- * Version : r3.82.0  (2026-11-25)
+ * Version : r3.192.0  (2026-11-28)　r3.192.0：命中分三級（子彈火花／炸裂彈小爆／砲擊大爆）、曳光彈道、槍口火光、自繪火球與焦痕；地面火改用手繪火焰素材排成火帶
+ * 舊版    : r3.82.0  (2026-11-25)
  * 變更    : r3.82.0 改用現成素材：大筒＝合戰大筒 war_cannon、爆炸＝fx_blast＋fx_crack_glow＋fx_smoke＋fx_debris、焙烙＝fx_bomb、燃燒地帶＝刑部姬地面火帶＋鬼王火堆、
  *                   火龍放射＝酒吞童子烈焰、火車＝酒吞童子酒桶、槍口火光＝fx_muzzle_big；新增 clip（播頭目素材包片段）；燃燒狀態拿掉身上火苗，只留火星（G.FLAMES）。
  *           r3.81.0 新增。鐵砲「殺傷力強大的遠距離＋大範圍清怪」（普攻、奧義百連發不動）。
@@ -30,24 +31,90 @@
       const a = (o.a === undefined ? 1 : o.a) * Math.min(1, q.t / 3 + 0.34, (q.life - q.t) / Math.max(1, q.life * 0.25)); ctx.save(); if (o.add) ctx.globalCompositeOperation = 'lighter';
       ctx.translate(p[0], p[1] - (o.z || 0) * k); if (o.rot) ctx.rotate(o.rot); if (o.sy) ctx.scale(1, o.sy); A.draw(u, fr, 0, 0, sc, !!o.flip, a); ctx.restore(); }, life + (o.hold || 0), o.l || 'o', o.step ? { step: o.step } : undefined); }
   const smoke = (x, y, n, r, a) => VX.smoke({ x, y, z: 0.25 * K(y), n, r: r || 0.2, life: 50, a: a || 0.4, col: '70,62,58' });
+  /* ====================== r3.192.0 火藥表現重做（寫實火藥火：白芯→橘黃火球→黑煙；全部自繪、帶深色收邊） ======================
+   * 命中分三級：子彈＝火花＋破片＋一縷煙；炸裂彈＝小爆炸；砲擊／焙烙＝大爆炸＋黑煙＋焦痕。
+   * 彈道：槍口到彈頭一道曳光（亮芯＋深色襯底）；槍口火光加大＋硝煙。地面火：焦黑底＋邊緣火舌＋火苗＋火星＋黑煙。 */
+  const FD = '70,16,6', FR = '214,60,14', FO = '255,138,36', FY = '255,222,130', FW = '255,250,232', SMK = '46,40,38';
+  /* 柔邊光團：中心實、邊緣透明（火與煙都用這個疊，不留硬邊） */
+  function blob(ctx, x, y, r, col, a, hard) { if (a <= 0.01 || r < 0.5) return; const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(col, a)); g.addColorStop(hard || 0.45, rgba(col, a * 0.8)); g.addColorStop(1, rgba(col, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
+  /* r3.192.0：火苗改成「火團往上竄」——每簇火由幾顆柔邊火團組成：底部白黃、往上變橘、變紅、變小，最後化成一縷煙；
+   * 每顆有自己的節奏與左右飄動，所以整簇火會不規則地跳動（不再是固定形狀的尖錐）。貼圖預先畫好，繪製只用貼圖，不卡。 */
+  const TX = {}; function tex(col) { let c = TX[col]; if (c) return c; c = TX[col] = document.createElement('canvas'); c.width = c.height = 48; const g = c.getContext('2d'), gr = g.createRadialGradient(24, 24, 0, 24, 24, 24); gr.addColorStop(0, 'rgba(' + col + ',1)'); gr.addColorStop(0.4, 'rgba(' + col + ',0.75)'); gr.addColorStop(1, 'rgba(' + col + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, 48, 48); return c; }
+  const frac = v => v - Math.floor(v);
+  /* 火苗：用手繪的火焰動畫素材（鬼王火堆），跟遊戲畫風一致；每簇的大小、播放進度、左右翻面都不同。素材還沒載好時才用火團代替 */
+  function tongue(ctx, x, y, h, w, ph, a) { if (a <= 0.01 || h < 1) return; const u0 = pk('b_oni'), r = u0 && ((u0.act && u0.act.oniking_fire) || (u0.fx && u0.fx.oniking_fire));
+    if (r && r.f && r.f.length) { const fr = r.f[Math.floor(G.t / 4 + ph * 2.7) % r.f.length], sc = h * 1.25 / (r._mh || (r._mh = Math.max(...r.f.map(f => f[3])))); ctx.save(); ctx.globalAlpha = a; ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(tex(FO), x - h * 0.55, y - h * 0.75, h * 1.1, h * 1.1); ctx.globalCompositeOperation = 'source-over'; try { A.draw(u0, fr, x, y + h * 0.08, sc, frac(ph * 1.3) > 0.5, a); } catch (e) {} ctx.restore(); return; }
+    ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6 * a; ctx.drawImage(tex(FO), x - w * 2, y - h, w * 4, h * 1.1); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  /* 火球：白閃→幾團橘黃火翻滾膨脹→轉成往上飄的黑煙；R＝判定半徑（身高倍），畫面大小約 R×0.55 */
+  function fireball(x, y, R, o) { o = o || {}; const big = R >= 1.4, N = big ? 11 : R >= 0.9 ? 7 : 5, life = big ? 50 : 34, B = [], F = []; for (let i = 0; i < N; i++) { const a = rnd(0, TAU), r = Math.sqrt(Math.random()) * 0.34; B.push([Math.cos(a) * r, Math.sin(a) * r * 0.7 - 0.1, rnd(0.3, 0.46), rnd(0, 6), rnd(0.7, 1.3)]); }
+    for (let i = 0; i < (big ? 12 : 7); i++) F.push([rnd(-Math.PI, 0) * 1.1 + 0.15, rnd(0.6, 1.3), rnd(0.5, 1)]);
+    E(() => { KF().add(life, 'o', (ctx, u) => { const k = K(y), S0 = R * k * 0.62, q = u / life, cy = y - S0 * 0.5;
+        for (const b of B) { const g = eo3(Math.min(1, u / (9 * b[4]))), r = S0 * b[2] * (0.55 + 1.2 * g) * (1 + q * 0.6), bx = x + b[0] * S0 * (0.6 + 1.3 * g), by = cy + b[1] * S0 * (0.6 + 1.2 * g) - q * q * S0 * 1.7 * b[4], sm = Math.min(1, Math.max(0, (u - 5 * b[4]) / 9)), al = q < 0.5 ? 1 : Math.max(0, 1 - (q - 0.5) / 0.5);
+          if (sm > 0) blob(ctx, bx, by, r * 1.1, '74,66,60', 0.2 * sm * al, 0.5); }   /* 黑煙在底層 */
+        for (const b of B) { const g = eo3(Math.min(1, u / (9 * b[4]))), r = S0 * b[2] * (0.55 + 1.2 * g), bx = x + b[0] * S0 * (0.6 + 1.3 * g), by = cy + b[1] * S0 * (0.6 + 1.2 * g) - q * q * S0 * 1.2 * b[4], hot = Math.max(0, 1 - u / (13 * b[4])); if (hot > 0) blob(ctx, bx, by, r * 1.2, '150,40,10', 0.75 * hot, 0.6); }   /* 暗紅底：亮背景上也有火的體積 */
+        ctx.globalCompositeOperation = 'lighter';
+        for (const b of B) { const g = eo3(Math.min(1, u / (9 * b[4]))), r = S0 * b[2] * (0.55 + 1.2 * g), bx = x + b[0] * S0 * (0.6 + 1.3 * g), by = cy + b[1] * S0 * (0.6 + 1.2 * g) - q * q * S0 * 1.2 * b[4], hot = Math.max(0, 1 - u / (13 * b[4]));
+          if (hot > 0) { blob(ctx, bx, by, r * 1.25, FR, 0.42 * hot, 0.45); blob(ctx, bx, by, r * 0.9, FO, 0.4 * hot, 0.45); blob(ctx, bx, by, r * 0.5, FY, 0.4 * hot, 0.4); } }
+        if (u < 4) blob(ctx, x, cy, S0 * (0.45 + u * 0.1), FW, 0.9 * (1 - u / 4), 0.3);
+        ctx.globalCompositeOperation = 'source-over';
+        if (u < 12) { const a = 1 - u / 12, e = eo3(u / 12); ctx.lineCap = 'round'; for (const f of F) { const d0 = S0 * (0.4 + 1.0 * e) * f[1], d1 = d0 + S0 * 0.3 * f[2] * a, cx = Math.cos(f[0]), sy = Math.sin(f[0]) * 0.8; ctx.strokeStyle = rgba(FY, a); ctx.lineWidth = Math.max(1, k * 0.016); ctx.beginPath(); ctx.moveTo(x + cx * d0, cy + sy * d0); ctx.lineTo(x + cx * d1, cy + sy * d1); ctx.stroke(); } } });   /* 破片火線 */
+      if (!o.noScorch) scorch(x, y, R * 0.55, big ? 260 : 150);
+      KF().puff(x, y, 0.6 + R * 0.6); KF().light(x, y, R * 1.3, 18, 0.6, 0.5); KF().embers(x, y, 0.3, 3 + Math.round(R * 4), { sp: 0.9 + R * 0.35, life: 34 }); }); }
+  /* 焦痕：地面一塊焦黑＋幾點餘燼 */
+  function scorch(x, y, R, life) { const Em = []; for (let i = 0; i < 6; i++) { const a = rnd(0, TAU), r = Math.sqrt(Math.random()) * 0.8; Em.push([Math.cos(a) * r, Math.sin(a) * r, rnd(0, 6)]); }
+    KF().add(life, 'g', (ctx, u) => { const k = K(y), a = Math.min(1, u / 6) * Math.min(1, (life - u) / 40), rx = R * k, ry = rx * 0.38, g = ctx.createRadialGradient(x, y, 0, x, y, rx); g.addColorStop(0, 'rgba(18,12,10,' + (0.72 * a).toFixed(3) + ')'); g.addColorStop(0.65, 'rgba(26,16,12,' + (0.5 * a).toFixed(3) + ')'); g.addColorStop(1, 'rgba(26,16,12,0)');
+      ctx.save(); ctx.translate(x, y); ctx.scale(1, 0.38); ctx.translate(-x, -y); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rx, 0, TAU); ctx.fill(); ctx.restore();
+      for (const e of Em) { const gl = 0.5 + 0.5 * Math.sin(u * 0.2 + e[2]); ctx.fillStyle = rgba(FO, 0.8 * a * gl); ctx.beginPath(); ctx.arc(x + e[0] * rx, y + e[1] * ry, Math.max(1, k * 0.018), 0, TAU); ctx.fill(); } }); }
+  /* 子彈命中：火花四濺＋破片＋一縷煙（不炸火球） */
+  function hitSpark(x, y, z, f, pw) { const Sp = []; for (let i = 0; i < 8; i++) Sp.push([rnd(-1.3, 1.3), rnd(0.5, 1.2), rnd(0.5, 1)]);
+    E(() => KF().add(12, 'o', (ctx, u) => { const k = K(y), q = u / 12, e = eo3(q), a = 1 - q * q, cy = y - z * k; ctx.translate(x, cy); ctx.scale(f, 1); ctx.lineCap = 'round';
+      blob(ctx, -k * 0.04, -k * (0.06 + 0.16 * e), k * (0.1 + 0.14 * e) * pw, '110,100,92', 0.4 * a, 0.5);   /* 一縷煙 */
+      ctx.globalCompositeOperation = 'lighter'; if (u < 5) { const a5 = 1 - u / 5; blob(ctx, 0, 0, k * 0.26 * pw, FO, 0.5 * a5, 0.3); blob(ctx, 0, 0, k * 0.11 * pw, FW, 0.8 * a5, 0.4); ctx.fillStyle = rgba(FW, a5); for (let r = 0; r < 2; r++) { ctx.save(); ctx.rotate(r * Math.PI / 2 + 0.4); ctx.beginPath(); ctx.moveTo(-0.24 * k * pw, 0); ctx.quadraticCurveTo(0, -0.022 * k, 0.24 * k * pw, 0); ctx.quadraticCurveTo(0, 0.022 * k, -0.24 * k * pw, 0); ctx.fill(); ctx.restore(); } }
+      for (const s of Sp) { const d0 = k * 0.1 + k * 0.55 * e * s[1] * pw, d1 = d0 + k * 0.2 * s[2] * a * pw, cx = Math.cos(s[0]), sy = Math.sin(s[0]) + e * e * 0.5; ctx.strokeStyle = rgba(FO, 0.7 * a); ctx.lineWidth = Math.max(1.2, k * 0.022); ctx.beginPath(); ctx.moveTo(cx * d0, sy * d0); ctx.lineTo(cx * d1, sy * d1); ctx.stroke(); ctx.strokeStyle = rgba(FW, a); ctx.lineWidth = Math.max(0.7, k * 0.01); ctx.beginPath(); ctx.moveTo(cx * d0, sy * d0); ctx.lineTo(cx * d1, sy * d1); ctx.stroke(); } })); }
+  /* 槍口火光：錐形火舌＋十字閃＋硝煙團 */
+  function muzzleFx(x, y, f, ang, big) { const w0 = big ? 1.4 : 1, Pf = []; for (let i = 0; i < 4; i++) Pf.push([rnd(0.2, 0.7), rnd(-0.1, 0.1), rnd(0.1, 0.16)]);
+    E(() => KF().add(22, 'o', (ctx, u) => { const k = K(y) * w0; ctx.translate(x, y); ctx.scale(f, 1); ctx.rotate(ang || 0);
+      const q = u / 22, a2 = Math.min(1, u / 3) * (1 - q); for (const p of Pf) blob(ctx, k * (p[0] + q * 0.5), k * (p[1] - q * 0.25), k * p[2] * (0.8 + q * 1.4), '128,120,112', 0.4 * a2, 0.5);   /* 硝煙 */
+      if (u < 5) { const a = 1 - u / 5, L = k * (0.46 + 0.1 * u); ctx.globalCompositeOperation = 'lighter'; blob(ctx, L * 0.25, 0, k * 0.3, FO, 0.4 * a, 0.3);
+        const cone = (l, w, col, al) => { const g = ctx.createLinearGradient(0, 0, l, 0); g.addColorStop(0, rgba(col, al * a)); g.addColorStop(1, rgba(col, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-0.02 * k, 0); ctx.quadraticCurveTo(l * 0.3, -w, l, 0); ctx.quadraticCurveTo(l * 0.3, w, -0.02 * k, 0); ctx.fill(); };
+        cone(L, k * 0.12, FR, 0.7); cone(L * 0.8, k * 0.08, FO, 0.7); cone(L * 0.55, k * 0.04, FW, 0.8);
+        for (const sd of [-1, 1]) { ctx.save(); ctx.rotate(sd * 1.0); cone(k * 0.22, k * 0.03, FO, 0.95); ctx.restore(); } } })); }
+  /* 彈道：槍口到彈頭的曳光（走實際路徑），彈頭一顆亮點；w＝粗細，heavy＝重槍多一圈氣浪 */
+  function bulletFx(p, w, heavy) { const x0 = p.x, y0 = p.y - p.z, Pt = [[x0, y0]], d = Math.sign(p.vx) || 1, a0 = Math.atan2((p.vy || 0) * 0.6, Math.abs(p.vx) || 1); let fin = 0, hold = 0; muzzleFx(x0, y0, d, a0, w > 1.2);
+    E(() => KF().add(240, 'o', (ctx, u) => { const n = Pt.length; if (n < 2) return; const k = K(p.y); ctx.lineCap = 'round';
+      const pass = (ww, col, al) => { for (let i = 1; i < n; i++) { const v = Math.pow(i / (n - 1), 1.5); ctx.strokeStyle = rgba(col, al * v); ctx.lineWidth = Math.max(0.6, ww * k * w * (0.35 + 0.65 * v)); ctx.beginPath(); ctx.moveTo(Pt[i - 1][0], Pt[i - 1][1]); ctx.lineTo(Pt[i][0], Pt[i][1]); ctx.stroke(); } };
+      pass(0.03, FD, 0.28); ctx.globalCompositeOperation = 'lighter'; pass(0.022, FO, 0.8); pass(0.009, FW, 1);
+      if (!p.dead) blob(ctx, Pt[n - 1][0], Pt[n - 1][1], k * 0.12 * w, FY, 0.9, 0.3); ctx.globalCompositeOperation = 'source-over';
+      if (heavy && u < 8) { const q = u / 8, a = 1 - q; ctx.save(); ctx.translate(x0, y0); ctx.scale(d, 1); ctx.rotate(a0); ctx.strokeStyle = rgba(FW, 0.8 * a); ctx.lineWidth = Math.max(1, k * 0.02 * a); for (let i = 0; i < 2; i++) { ctx.beginPath(); ctx.ellipse(k * (0.5 + i * 0.6 + q * 0.5), 0, k * 0.04 * (1 + q), k * (0.14 + i * 0.06) * (1 + q), 0, -1.2, 1.2); ctx.stroke(); } ctx.restore(); } },
+      (o) => { if (!p.dead) { Pt.push([p.x, p.y - p.z]); if (Pt.length > 6) Pt.shift(); } else { if (!fin) { fin = 1; Pt.push([p.x, p.y - p.z]); hold = Pt.length <= 3 ? 3 : 1; } if (hold > 0) { hold--; return; } Pt.shift(); if (Pt.length > 3) Pt.shift(); if (Pt.length < 2) o.t = o.life; } })); }
+  /* 地面火：焦黑底＋外圈火舌＋裡面零星火苗＋火星＋黑煙；R 身高倍，frames 持續 */
+  function fireField(x, y, R, frames, o) { o = o || {}; const T2 = [], n = Math.max(4, Math.round(R * 5)); for (let i = 0; i < n; i++) { const a = i / n * TAU + rnd(-0.2, 0.2); T2.push([Math.cos(a) * 0.82, Math.sin(a) * 0.82, i % 3 === 0 ? rnd(0.42, 0.6) : rnd(0.2, 0.34), rnd(0, 6), rnd(0, 14)]); }
+    for (let i = 0; i < Math.round(R * 2.5); i++) { const a = rnd(0, TAU), r = Math.sqrt(Math.random()) * 0.6; T2.push([Math.cos(a) * r, Math.sin(a) * r, i % 2 ? rnd(0.5, 0.75) : rnd(0.25, 0.4), rnd(0, 6), rnd(4, 20)]); }
+    T2.sort((a, b) => a[1] - b[1]);
+    E(() => { if (!o.noScorch) scorch(x, y, R * 1.05, frames + 60); KF().add(frames, 'o', (ctx, u) => { const k = K(y), rx = R * k, ry = rx * 0.38, fa = Math.min(1, u / 8) * Math.min(1, (frames - u) / 20); ctx.globalCompositeOperation = 'lighter'; ctx.save(); ctx.translate(x, y); ctx.scale(1, 0.4); blob(ctx, 0, 0, rx * 1.25, FR, 0.34 * fa * (0.85 + 0.15 * Math.sin(u * 0.3)), 0.5); ctx.restore(); ctx.globalCompositeOperation = 'source-over';   /* 地面火光 */
+        for (const t of T2) { const a = Math.min(1, Math.max(0, (u - t[4]) / 8)) * Math.min(1, (frames - u) / 24); tongue(ctx, x + t[0] * rx, y + t[1] * ry, t[2] * k * 1.1, (0.07 + t[2] * 0.12) * k, t[3], a); } },
+        (q, tt) => { if (tt % 9 === 0 && tt < frames - 20) KF().embers(x + rnd(-R, R) * K(y) * 0.7, y + rnd(-0.3, 0.3) * R * K(y), 0.2, 1, { sp: 0.5, life: 30 }); if (tt % 22 === 4 && tt < frames - 20) smoke(x + rnd(-R, R) * K(y) * 0.6, y, 1, 0.12, 0.25); }); }); }
+  /* 火線：沿一條線燒過去（火舌排成一列，一段一段點燃） */
+  function fireLine(x0, y0, f, len, frames) { const T2 = [], n = Math.round(len * 4); for (let i = 0; i < n; i++) T2.push([(i + rnd(0.1, 0.9)) / n, rnd(-0.1, 0.1), i % 3 === 0 ? rnd(0.5, 0.72) : rnd(0.22, 0.38), rnd(0, 6)]); T2.sort((a, b) => a[1] - b[1]);
+    E(() => { KF().add(frames + 40, 'g', (ctx, u) => { const k = K(y0), a = Math.min(1, u / 10) * Math.min(1, (frames + 40 - u) / 30), L = len * k * Math.min(1, u / (len * 3)); const g = ctx.createLinearGradient(x0, 0, x0 + f * L, 0); g.addColorStop(0, 'rgba(20,13,10,' + (0.6 * a).toFixed(3) + ')'); g.addColorStop(1, 'rgba(20,13,10,' + (0.5 * a).toFixed(3) + ')'); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x0 + f * L / 2, y0, L / 2, 0.11 * k, 0, 0, TAU); ctx.fill(); });   /* 燒黑的地面 */
+      KF().add(frames, 'o', (ctx, u) => { const k = K(y0); ctx.globalCompositeOperation = 'lighter'; const L = len * k * Math.min(1, u / (len * 3)), fa = Math.min(1, (frames - u) / 20); ctx.save(); ctx.translate(x0 + f * L / 2, y0); ctx.scale(1, 0.3); blob(ctx, 0, 0, L * 0.6, FR, 0.3 * fa, 0.6); ctx.restore(); ctx.globalCompositeOperation = 'source-over';
+        for (const t of T2) { const st = t[0] * len * 3, a = Math.min(1, Math.max(0, (u - st) / 6)) * Math.min(1, (frames - u) / 24); tongue(ctx, x0 + f * t[0] * len * k, y0 + t[1] * k, t[2] * k * 1.1, (0.07 + t[2] * 0.12) * k, t[3], a); } },
+        (q, tt) => { if (tt % 8 === 0 && tt < frames - 20) KF().embers(x0 + f * rnd(0, len) * K(y0), y0, 0.2, 1, { sp: 0.5, life: 28 }); }); }); }
   /* ---------- 爆炸：素材火球 fx_blast＋地裂 fx_crack_glow＋煙 fx_smoke＋碎石 fx_debris；柔光與火星補色；m 有值才判定 ---------- */
   function boom(c, x, y, R, m, lv, o) { o = o || {};
-    VX.s2('fx_blast', { x, y, k: Math.min(1.7, R * 0.75), life: 30 }); if (R >= 1.1) VX.s2(R >= 2 ? 'fx_crack_glow_l' : 'fx_crack_glow_m', { x, y, k: R * 0.8, sy: 0.55, l: 'g', life: 60 });
-    VX.s2('fx_smoke', { x: x + rnd(-0.2, 0.2) * K(y), y, z: 0.2 * K(y), k: R * 0.75, life: 54, a: 0.8 }); if (R >= 1) VX.s2('fx_debris', { x, y, k: 0.5 + R * 0.2, life: 30 });
-    E(() => { KF().light(x, y, R * 1.3, 20, 0.5, 0.5); KF().embers(x, y, 0.3, 3 + Math.round(R * 3), { sp: 0.9 + R * 0.3 }); });
-    SC.shake = Math.max(SC.shake || 0, Math.min(12, 2 + R * 3));
+    if (o.spark) hitSpark(x, y, o.z || 0.5, o.f || H.face, 1);   /* 子彈命中：只有火花，不炸火球（判定照舊） */
+    else { fireball(x, y, R); if (R >= 1.4) { VX.s2(R >= 2 ? 'fx_crack_glow_l' : 'fx_crack_glow_m', { x, y, k: R * 0.8, sy: 0.55, l: 'g', life: 60 }); VX.s2('fx_debris', { x, y, k: 0.5 + R * 0.2, life: 30 }); E(() => KF().rocks && KF().rocks(x, y, 8, R * 0.7)); }
+      SC.shake = Math.max(SC.shake || 0, Math.min(12, 2 + R * 3)); }
     if (m) return hitT(c, { shape: 'circle', x, y, r: R, m, lv: lv || 'heavy', kind: 'blunt', kb: o.kb !== undefined ? o.kb : 1, ign: o.ign }); return []; }
   /* ---------- 燃燒地帶：地面火帶（刑部姬 fire_field）＋散落火堆（鬼王 fire），每 15 格判定 ---------- */
-  function burnZone(c, x, y, R, frames, m) { const k = K(y), n = 1 + Math.round(R * 1.5);
-    clip({ u: 'b_osakabe', n: 'osakabe_fire_field', x, y: y + 0.02 * k, w: R * 2.1, sy: 0.75, loop: 1, l: 'g', life: frames, a: 0.95 });
-    for (let i = 0; i < n; i++) { const a = rnd(0, TAU), r = Math.sqrt(Math.random()) * R * 0.75; clip({ u: 'b_oni', n: 'oniking_fire', x: x + Math.cos(a) * r * k, y: y + Math.sin(a) * r * 0.4 * k, w: rnd(0.38, 0.55), loop: 1, spd: rnd(0.8, 1.2), life: frames - rnd(0, 20) | 0, a: 0.95 }); }
-    VX.custom(() => {}, frames, 'g', { step: (o, tt) => { if (tt % 15 === 8) hitT(c, { shape: 'circle', x, y, r: R, m, lv: 'light', kind: 'blunt', kb: 0 }); if (tt % 14 === 0) smoke(x + rnd(-R, R) * K(y) * 0.8, y, 1, 0.12, 0.25); } }); }
+  function burnZone(c, x, y, R, frames, m) { fireField(x, y, R, frames);
+    VX.custom(() => {}, frames, 'g', { step: (o, tt) => { if (tt % 15 === 8) hitT(c, { shape: 'circle', x, y, r: R, m, lv: 'light', kind: 'blunt', kb: 0 }); } }); }
   /* ---------- 彈道：子彈後方一道短而亮的光（跟著彈頭） ---------- */
   function tracer(p, w) { E(() => KF().add(200, 'o', (ctx) => { if (p.dead) return; const k = K(p.y), d = Math.sign(p.vx) || 1, a = Math.atan2(p.vy || 0, Math.abs(p.vx) || 1) * d, L = k * 0.9, C = P(); ctx.translate(p.x, p.y - p.z); ctx.scale(d, 1); ctx.rotate(d > 0 ? a : -a);
       ctx.globalCompositeOperation = 'screen'; KF().spr(ctx, C.T.gm, -L * 0.4, 0, L * 1.2, k * 0.14 * (w || 1), 0.55); ctx.globalCompositeOperation = 'source-over';
       const g = ctx.createLinearGradient(-L, 0, 0, 0); g.addColorStop(0, rgba(C.mid, 0)); g.addColorStop(1, rgba(C.lite, 0.95)); ctx.fillStyle = g; const hw = k * 0.022 * (w || 1); ctx.beginPath(); ctx.moveTo(-L, 0); ctx.lineTo(0, -hw); ctx.quadraticCurveTo(hw * 2, 0, 0, hw); ctx.closePath(); ctx.fill(); },
       (o) => { if (p.dead) o.t = o.life; })); }
-  (function sh() { const s0 = VX.shot; VX.shot = function (o) { const p = s0.apply(this, arguments); if (p && isT() && o && !o.enemy && H.act && (o.k === 'bullet' || o.k === 'pellet')) tracer(p, o.k === 'bullet' ? (o.big ? 1.6 : 1) : 0.6); return p; }; })();
+  (function sh() { const s0 = VX.shot; VX.shot = function (o) { const p = s0.apply(this, arguments); if (p && isT() && o && !o.enemy && H.act && (o.k === 'bullet' || o.k === 'pellet')) bulletFx(p, o.k === 'bullet' ? (o.big || o.lv === 'heavy' || o.lv === 'hiden' ? 1.7 : 1) : 0.55, o.k === 'bullet' && (o.big || o.lv === 'heavy' || o.lv === 'hiden')); return p; }; })();
   /* ---------- 子彈／散彈 ---------- */
   const bullet = (c, o) => { c.muzzle(!!o.big); return c.shoot('bullet', Object.assign({ spd: 0.85, range: 9, lv: 'mid' }, o)); };
   const pellets = (c, n, spread, o) => { c.muzzle(true); for (let i = 0; i < n; i++) c.shoot('pellet', Object.assign({ m: 0.35, ang: (i - (n - 1) / 2) * (spread / Math.max(1, n - 1)) + rnd(-0.04, 0.04), spd: 0.55, range: 3.6, kb: 0.8, lv: 'mid' }, o)); SC.shake = Math.max(SC.shake || 0, 3); };
@@ -103,9 +170,9 @@
           if (tt % 5 === 0) hitT(c, { shape: 'circle', x, y, r: 0.55, m: m * 0.2, lv: 'light', kind: 'blunt', kb: 0.4, skip: sk }).forEach(e => sk.push(e)); } });
     c.later(T, () => { const k = K(y0), x = x0 + f * Math.cos(ang) * dist * k, y = y0 + Math.sin(ang) * dist * k * 0.5; boom(c, x, y, R, m, 'hiden'); burnZone(c, x, y, R * 0.7, 120, 0.12); }); }
   /* 前方燃燒火藥線 */
-  function powderLine(c, len, frames, m) { const x0 = c.x + c.f * 0.5 * c.hh, y0 = c.y, f = c.f;   // 火藥線：地面火帶一段段往前點燃
-    for (let i = 0; i < 3; i++) c.later(i * 4, () => clip({ u: 'b_osakabe', n: 'osakabe_fire_field', x: x0 + f * (i + 0.5) * len / 3 * c.hh, y: y0, w: len / 3 * 1.25, sy: 0.7, loop: 1, l: 'g', life: frames - i * 4, flip: i % 2 === 1 }));
+  function powderLine(c, len, frames, m) { const x0 = c.x + c.f * 0.5 * c.hh, y0 = c.y, f = c.f; fireLine(x0, y0, f, len, frames);   // 火藥線：沿線燒過去
     VX.custom(() => {}, frames, 'g', { step: (o, tt) => { if (tt % 15 === 8) hitT(c, { shape: 'line', x: x0, y: y0, len, w: 0.35, m: m / 2, lv: 'light', kind: 'blunt', kb: 0 }); } }); }
+  (function b2() { if (!VX.burn2) return setTimeout(b2, 50); const b0 = VX.burn2; VX.burn2 = function (o) { if (isT() && H.act) { fireField(o.x, o.y, (o.r || 1) * 0.8, o.life || 120); return {}; } return b0.apply(this, arguments); }; })();   /* 招式（火花斷進）的地面火也換成同一套 */
   /* ==================== 技・特技 ==================== */
   const RL = c => Math.max(6, Math.round(c.a.T * 0.35));
   const DU = {
@@ -148,7 +215,7 @@
   };
   /* ==================== 身法：子彈命中小爆、散彈多 2 顆 ==================== */
   function mvWrap(base) { const f = function (c, t) { const sh = c.shoot; c.shoot = function (k, o) { o = Object.assign({}, o);
-      if (k === 'bullet' && o.m) { const h0 = o.onHit, sk = new Set(); o.onHit = e => { const r = h0 ? h0(e) : undefined; if (!sk.has(e)) { sk.add(e); boom(c, e.x, e.y, 0.8, 0.35, 'mid', { kb: 0.3 }); } return r; }; }
+      if (k === 'bullet' && o.m) { const h0 = o.onHit, sk = new Set(); o.onHit = e => { const r = h0 ? h0(e) : undefined; if (!sk.has(e)) { sk.add(e); boom(c, e.x, e.y, 0.8, 0.35, 'mid', { kb: 0.3, spark: 1, z: (e.ratio || 1) * 0.5, f: c.f }); } return r; }; }
       if (k === 'pellet' && !o.__x && Math.abs(o.ang || 0) > 0.3) { const s = Math.sign(o.ang); sh.call(c, k, Object.assign({}, o, { ang: o.ang + s * 0.17, __x: 1 })); }
       return sh.call(c, k, o); }; try { return base.apply(this, arguments); } finally { c.shoot = sh; } }; f.__tp = 1; return f; }
   /* ---------- 名稱 ---------- */
@@ -171,8 +238,9 @@
   const HT2 = { light: [1, 0], mid: [2, 1], heavy: [4, 3], hiden: [6, 5] };
   const im0 = VX.impact; VX.impact = function (e, lv, kind) { const A = H.act; if (A && A.mvx) skT = G.t; if (!isT() || !e || (!(A && A.mvx) && G.t - skT > 240) || (kind !== 'blunt' && kind !== 'shot' && kind !== 'pierce' && kind !== 'cut')) return im0.apply(this, arguments);
     const F = HT2[lv] || HT2.mid, k = K(e.y), z = (e.ratio || 1) * 0.5; G.hitstop = Math.max(G.hitstop || 0, F[0]); SC.shake = Math.max(SC.shake || 0, F[1]); e.flash = (e._vxf && G.playT - e._vxf < 8) ? 1 : 2; e._vxf = G.playT;
-    E(() => { const C = P(); KF().add(10, 'o', (ctx, u, q) => { ctx.globalCompositeOperation = 'screen'; const r = k * (0.18 + (lv === 'heavy' || lv === 'hiden' ? 0.14 : 0)) * (0.7 + 0.6 * q); KF().spr(ctx, C.T.gm, e.x, e.y - z * k, r * 2.2, r * 2, 0.8 * (1 - q)); KF().spr(ctx, C.T.gl, e.x, e.y - z * k, r, r, 1 - q); }); KF().embers(e.x, e.y, z, lv === 'light' ? 1 : 3, { sp: 0.8, life: 20 }); }); };
+    if (kind === 'shot' || kind === 'pierce') hitSpark(e.x + H.face * 0.1 * k, e.y, z, H.face, lv === 'heavy' || lv === 'hiden' ? 1.5 : lv === 'light' ? 0.7 : 1); else E(() => KF().embers(e.x, e.y, z, lv === 'light' ? 1 : 3, { sp: 0.8, life: 20 })); };
   G.KF && (G.KF.boom = boom, G.KF.clip = clip);
   /* 燃燒狀態：拿掉身上火苗與橘色橢圓，只留少量上飄火星（88_rune 與茨木灼燒共用 G.FLAMES） */
-  G.FLAMES = (e) => { if ((G.t + (e._fsd || (e._fsd = Math.random() * 12 | 0))) % 12 === 0) E(() => KF().embers(e.x, e.y, (e.ratio || 1) * 0.45, 1, { sp: 0.35, life: 24, rx: 0.15 * (e.ratio || 1) })); };
+  G.FLAMES = (e) => { const ph = e._fsd || (e._fsd = Math.random() * 12 | 0); if ((G.t + ph) % 8 === 0) E(() => { const ox = rnd(-0.28, 0.28) * (e.ratio || 1), hh = rnd(0.22, 0.36); KF().add(14, 'o', (ctx, u) => { const k = K(e.y); tongue(ctx, e.x + ox * k, e.y + 0.02 * k, hh * k, hh * k * 0.3, ph + ox * 9, Math.min(1, u / 3) * Math.min(1, (14 - u) / 5)); }); });   /* r3.192.0：腳邊小火苗 */
+    if ((G.t + (e._fsd || (e._fsd = Math.random() * 12 | 0))) % 12 === 0) E(() => KF().embers(e.x, e.y, (e.ratio || 1) * 0.45, 1, { sp: 0.35, life: 24, rx: 0.15 * (e.ratio || 1) })); };
 })();
