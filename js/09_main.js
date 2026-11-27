@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 09_main.js
- * Version : r3.19.1  （r3.19.1：開始畫面按鈕同字級、副標改故事大綱）
+ * Version : r3.138.0  (2026-11-27)　r3.138.0：首頁背景改富士山頂（title_bg）、標語改寫
+ * 舊版    : r3.19.1  （r3.19.1：開始畫面按鈕同字級、副標改故事大綱）
  * 舊版    : r3.10.0  (2026-11-13)
  * 變更    : r3.10.0 主迴圈加入夥伴出戰（G.PARTY.step）。
  * 變更    : r3.9.1 主迴圈加入劇情過場（G.STORY.cutStep）：過場中不處理玩家輸入、妖怪與出口。
@@ -69,10 +70,10 @@
     G.CHEAT && G.CHEAT.drawFps();
   };
   function drawTitle() {
-    G.backdrop(G.IMG.W_R01_04, 0.35);
+    G.backdrop(G.IMG.title_bg || G.IMG.W_R01_04, 0.35);   // r3.138.0：首頁背景改富士山頂
     const g = ctx.createLinearGradient(0, G.LH * 0.4, 0, G.LH); g.addColorStop(0, 'rgba(8,5,8,0)'); g.addColorStop(1, 'rgba(8,5,8,.82)'); ctx.fillStyle = g; ctx.fillRect(0, 0, G.LW, G.LH);
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 18; G.txt('神諭之地', G.LW / 2, G.LH * 0.36, 56, G.C.ink, 'center', G.FONT_S, 900); ctx.restore();
-    G.txt('妖異四起、神玉失落——一段守護人與妖共存之地的旅程，等你開創。', G.LW / 2, G.LH * 0.36 + 46, 14, G.C.gold, 'center', G.FONT_S, 600);   // r3.19.1：改為故事大綱
+    G.txt('寶珠碎裂，封印將盡——人與妖，還能再站在一起嗎？', G.LW / 2, G.LH * 0.36 + 46, 14, G.C.gold, 'center', G.FONT_S, 600);   // r3.19.1：改為故事大綱
     for (const b of titleB) { if (b.pill) { G.UI.pill(b, b.n); continue; }
       const main = b === titleB[0]; ctx.fillStyle = main ? 'rgba(120,70,30,.78)' : 'rgba(16,10,14,.78)'; G.rr(b.x, b.y, b.w, b.h, 8); ctx.fill();
       ctx.strokeStyle = 'rgba(227,194,122,.75)'; ctx.lineWidth = 1; G.rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 8); ctx.stroke();

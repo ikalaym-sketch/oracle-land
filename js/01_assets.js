@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 01_assets.js
- * Version : r3.9.1  (2026-11-13)
+ * Version : r3.138.0  (2026-11-27)　r3.138.0：開機多載首頁背景 title_bg（富士山頂上半部）
+ * 舊版    : r3.9.1  (2026-11-13)
  * 變更    : r3.9.1 圖片網址改經 G.PACK.src（在素材包內就從包切片）。
  * 變更    : r3.0.1 主角頭像換新版（武士・平常），舊頭像停用；素材網址加版本參數避免快取舊圖。
  * 變更    : r3.0.0 主角改用武器圖集（12_anim）：開機只載入目前武器＋共用特效＋本章妖怪；舊 hero.webp 不再載入。
@@ -36,7 +37,7 @@ G.ASSET = {
       ['face_soma', 'a/face_soma.webp'], ['face_shiro', 'a/face_shiro.webp'], ['npc', 'a/npc.webp'],
       ['face_xue', 'a/face_xue.webp'], ['face_matsu', 'a/face_matsu.webp'], ['face_okan', 'a/face_okan.webp'], ['face_gen', 'a/face_gen.webp'], ['face_kota', 'a/face_kota.webp'], ['face_smith', 'a/face_smith.webp'],
       ['hub_shrine', 'a/hub_shrine.webp'],
-      ['W_R01_01', 'a/W_R01_01.webp'], ['W_R01_03', 'a/W_R01_03.webp'], ['W_R01_04', 'a/W_R01_04.webp'], ['W_R01_07', 'a/W_R01_07.webp']
+      ['W_R01_01', 'a/W_R01_01.webp'], ['W_R01_03', 'a/W_R01_03.webp'], ['W_R01_04', 'a/W_R01_04.webp'], ['W_R01_07', 'a/W_R01_07.webp'], ['title_bg', 'a/title_bg.webp']
     ])]).then(r => { this.legacy(); return r; });
   }
 };
