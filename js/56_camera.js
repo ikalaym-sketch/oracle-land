@@ -44,7 +44,7 @@
   SC.snapCam = function () { st.vis = targetVis(); st.lead = 0; st.leadY = 0; sn0(); };
   const sp0 = SC.step.bind(SC);
   SC.step = function () { if (SC.def) {
-      const tv = targetVis(); st.vis = st.vis ? st.vis + (tv - st.vis) * (tv > st.vis ? (G.CAMZOOM && G.t < G.CAMZOOM.until ? 0.12 : 0.04) : 0.025) : tv;   // 拉遠快一點、拉回慢一點
+      const tv = targetVis(); st.vis = st.vis ? st.vis + (tv - st.vis) * (G.CAMZOOM && G.t < G.CAMZOOM.until ? 0.13 : tv > st.vis ? 0.04 : 0.025) : tv;   // 拉遠快一點、拉回慢一點
       const moving = H.st === 'walk' && !(G.DLG && G.DLG.active()) && !(G.STORY && G.STORY.cut), ux = moving ? (H.ux !== undefined ? H.ux : H.face) : 0, uy = moving ? (H.uy || 0) : 0, k = H.run ? 0.18 : 0.1;
       const talk = G.DLG && G.DLG.active() ? 0.14 : 0;   // 對話時鏡頭下移，讓主角落在對話框上方
       st.lead += (ux * k - st.lead) * 0.035; st.leadY += (uy * k * 0.5 + talk - st.leadY) * 0.035; }

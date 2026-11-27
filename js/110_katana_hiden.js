@@ -1,6 +1,6 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 110_katana_hiden.js
- * Version : r3.178.0  (2026-11-28)　r3.179.0：月下分身背景近全黑、鏡頭更遠、月亮更高更小；r3.178.0：月下分身重做（五個分身依序衝斬→本尊穿斬→斬月爆開）；燕返・真重做（把敵人來回打三次→巨大月牙刀氣）
+ * Version : r3.180.0  (2026-11-28)　r3.180.0：打刀五招秘傳運鏡（拉遠→追蹤→收招推近）、實心分身、地面月光、一閃・朧重做、千鳥十字與返脈・雷加大；r3.179.0：月下分身背景近全黑、鏡頭更遠、月亮更高更小；r3.178.0：月下分身重做（五個分身依序衝斬→本尊穿斬→斬月爆開）；燕返・真重做（把敵人來回打三次→巨大月牙刀氣）
  * 舊版    : r3.177.0  (2026-11-28)　r3.177.0：月下分身重做：象牙白大滿月高掛、月暈、夜色加深、最後一斬把月亮斬開
  * 舊版    : r3.173.0  (2026-11-28)　r3.173.0：五招秘傳加演出鏡頭（對準敵人群／挑飛高度）；返脈・雷的天雷連落三道
  * 舊版    : r3.73.0  (2026-11-24)
@@ -63,23 +63,32 @@
         if (t % 12 === 0) KF().bolt(x + rnd(-0.3, 0.3) * k, y - rnd(1.8, 3.6) * k, x + rnd(-0.3, 0.3) * k, y - rnd(0.3, 1.2) * k, 6, 1.6);
         if (t % 10 === 5) { const hs = foes(x, y, R * k); for (const e of hs) { G.damageOni(e, m * c.mul, false); KF().burst(e.x, e.y, 0.55 * (e.ratio || 1), 0.6); e.stun = Math.max(e.stun || 0, 12); if (canLift(e) && !(e.lz > 0)) lift(e, 0.4); } } } }); }
   /* r3.178.0：分身（指定動作圖的某一格，預設「一閃」出刀那格）；dashClone＝分身從 A 衝到 B，沿路留殘影 */
-  function cloneAt(x, y, face, life, clip, fi) { const u = G.WPN.unit && G.WPN.unit(), r = u && (u.act[clip || 'issen'] || u.act.issen || u.act.normal_3); const fr = r ? r.f[Math.min(r.f.length - 1, fi === undefined ? Math.floor(r.f.length * 0.55) : fi)] : (G.heroFrame && G.heroFrame());
-    if (u && fr) G.FX.push({ k: 'ghost', u: u.key, fr, x, y, face, s: S(y) * G.WPN.actK(clip || 'issen'), t: 0, life: life || 12 }); }
-  function dashClone(c, x0, y0, x1, y1, n, onMid) { const f = x1 > x0 ? 1 : -1; for (let i = 0; i <= n; i++) c.later(i, () => { const u = i / n, x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u; cloneAt(x, y, f, i === n ? 16 : 7, 'issen'); if (i % 2 === 0) dust(x, y, 0.3, 1, 0.5, 14); if (i === Math.round(n / 2) && onMid) onMid(f); }); }
+  /* r3.180.0：分身＝實心剪影（深藍身體＋亮邊），不再是半透明殘影；shot＝運鏡（焦點、高度、遠近） */
+  const TINT = new Map();
+  function tintOf(u, fr, col) { const key = u.key + ':' + (fr[7] || 0) + ':' + fr[0] + ',' + fr[1] + ':' + col; let cv = TINT.get(key); if (cv) return cv; cv = document.createElement('canvas'); cv.width = fr[2]; cv.height = fr[3]; const g = cv.getContext('2d');
+    g.drawImage(u.imgs[fr[7] || 0], fr[0], fr[1], fr[2], fr[3], 0, 0, fr[2], fr[3]); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgb(' + col + ')'; g.fillRect(0, 0, fr[2], fr[3]); if (TINT.size > 80) TINT.clear(); TINT.set(key, cv); return cv; }
+  function cloneAt(x, y, face, life, clip, fi) { const u = G.WPN.unit && G.WPN.unit(), r = u && (u.act[clip || 'issen'] || u.act.issen || u.act.normal_3); const fr = r ? r.f[Math.min(r.f.length - 1, fi === undefined ? Math.floor(r.f.length * 0.55) : fi)] : (G.heroFrame && G.heroFrame()); if (!u || !fr) return;
+    const sc = HH() * S(y) * G.WPN.actK(clip || 'issen') / (u.refH || 130); life = life || 12; let rim, body; try { rim = tintOf(u, fr, '170,210,255'); body = tintOf(u, fr, '24,48,150'); } catch (x) { return; }
+    VX.custom((o, ctx) => { const a = Math.min(1, o.t / 2) * Math.min(1, (life - o.t) / (life * 0.5)); if (a <= 0) return; ctx.save(); if (face < 0) { ctx.translate(x * 2, 0); ctx.scale(-1, 1); }
+      const dr = (im, kx, al) => { const w = fr[2] * sc * kx, h = fr[3] * sc * kx, mx = x - fr[4] * sc + fr[2] * sc / 2, my = y - fr[5] * sc + fr[3] * sc / 2; ctx.globalAlpha = al; ctx.drawImage(im, mx - w / 2, my - h / 2, w, h); };
+      dr(rim, 1.09, 0.85 * a); dr(body, 1, 0.95 * a); ctx.globalCompositeOperation = 'lighter'; dr(rim, 1, 0.18 * a); ctx.restore(); }, life, 'o'); }
+  function shot(c, x, y, up, zoom, T) { G.CAMFOCUS = { x, y: y - up * c.hh, until: G.t + T }; G.CAMZOOM = { k: zoom, until: G.t + T }; }
+  function dashClone(c, x0, y0, x1, y1, n, onMid) { const f = x1 > x0 ? 1 : -1; for (let i = 0; i <= n; i++) c.later(i, () => { const u = i / n, x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u; if (i === n || i % 2 === 0) cloneAt(x, y, f, i === n ? 12 : 4, 'issen'); if (i % 2 === 0) dust(x, y, 0.3, 1, 0.5, 14); if (i === Math.round(n / 2) && onMid) onMid(f); }); }
   /* ---------- 五招秘傳 ---------- */
   const NEW = {
     /* r3.178.0 燕返・真（重做）：一刀把敵人打飛出去 → 瞬移到落點後方再打回來 → 來回三次（越打越快）→ 最後一道巨大月牙刀氣追上去斬穿。頭目、大型妖打不動，就原地被來回斬。 */
     k_tsubame: { T: 84, run(c, t) { const m = c.a.mvx, k = c.hh, TT = 84;
         if (t === 1) { intro(c, TT); m.e = tgt(c, 6); m.dir = c.f; m.kt = 0; }
         const e = m.e && m.e.st !== 'dead' ? m.e : null;
-        if (e) { const fx = (H.x + e.x) / 2, F = G.CAMFOCUS; G.CAMFOCUS = { x: F && F.until > G.t ? F.x + (fx - F.x) * 0.2 : fx, y: e.y - 0.5 * k, until: G.t + 10 }; }
+        if (t === 1 && e) { VX.dim && VX.dim(TT, 0.86); m.cx = e.x; shot(c, e.x, e.y, 0.55, 1.75, 58); KF().light(e.x, e.y, 4, TT, 0.3); }   /* r3.180.0：鏡頭固定拉遠，看得到敵人左右被打飛 */
         if (e && m.kt > 0) { m.kt--; const nx = e.x + m.kv; if (canLift(e) && SC.walkable(nx, e.y)) e.x = nx; else m.kt = 0; e.stun = Math.max(e.stun || 0, 20); if (m.kt % 2 === 0) dust(e.x, e.y, 0.2, 1, 0.6, 16); }   /* 被打飛：沿地面滑出去，揚塵 */
-        const strike = (i, pw) => { if (!e) return; const d = m.dir, x = e.x - d * 0.75 * k; ghostAt(H.x, H.y, H.face, 14); if (SC.walkable(x, e.y)) { H.x = x; H.y = e.y; } H.face = d; c.a.face0 = d; KF().glint(H.x, H.y, 0.6, 0.45, 8);
+        const strike = (i, pw) => { if (!e) return; const d = m.dir, x = e.x - d * 0.75 * k; cloneAt(H.x, H.y, H.face, 12, 'issen'); if (SC.walkable(x, e.y)) { H.x = x; H.y = e.y; } H.face = d; c.a.face0 = d; KF().glint(H.x, H.y, 0.6, 0.45, 8);
           arcBlade(H.x, H.y, 0.55, d, 1.35, i % 2 ? 1.3 : -2.0, i % 2 ? -1.9 : 1.0, 16, 0.24, 0); for (const q of foes(e.x, e.y, 1.1 * k)) hitE(c, q, pw); m.hit = 1;
           m.kv = d * (0.34 + i * 0.05) * k; m.kt = 8; KF().burst(e.x, e.y, 0.55 * (e.ratio || 1), 2.2, d > 0 ? 0 : Math.PI); KF().puff(e.x, e.y, 0.8, 20); SC.shake = Math.max(SC.shake || 0, 4 + i); stop(5); m.dir = -d; };
         if (t === 8) { if (e) tag(e, '燕返', '#9fd0ff'); strike(0, 0.9); }
         if (t === 24) strike(1, 0.9);
         if (t === 38) strike(2, 1.0);
+        if (t === 50 && e) shot(c, (H.x + e.x) / 2, e.y, 0.5, 1.2, 36);   /* 收招推近 */
         if (t === 50 && e) { const d = m.dir, x = e.x - d * 2.4 * k; ghostAt(H.x, H.y, H.face, 14); if (SC.walkable(x, e.y)) { H.x = x; H.y = e.y; } H.face = d; c.a.face0 = d; KF().charge(H.x + d * 0.15 * k, H.y, 0.5, 8, 14); }
         if (t === 60 && e) { const d = m.dir, x0 = H.x + d * 0.5 * k, y = H.y, L = 5.2 * k, hitS = [];   /* 巨大月牙刀氣飛出去 */
           arcBlade(H.x, H.y, 0.55, d, 1.5, -2.2, 1.1, 18, 0.26, 0);
@@ -87,21 +96,21 @@
           VX.custom(() => {}, 14, 'o', { step: (o, tt) => { const x = x0 + d * L * KF().eo3(Math.min(1, tt / 12)); for (const q of foes(x, y, 1.2 * k)) if (!hitS.includes(q)) { hitS.push(q); hitE(c, q, 2.2, { crit: true }); KF().scar && KF().scar(q.x, q.y, d, 3); } if (tt % 2 === 0) dust(x, y, 0.1, 2, 1.2, 24); } });
           SC.shake = Math.max(SC.shake || 0, 8); stop(10); }
         if (!e && t === 20) { arcBlade(H.x, H.y, 0.55, c.f, 1.4, -2.0, 1.0, 18, 0.2); c.hit({ shape: 'sector', r: 1.6, arc: 2.2, m: 2.0, lv: 'hiden', kind: 'cut' }); } } },
-    k_issen: { T: 66, run(c, t) { const m = c.a.mvx, k = c.hh;
-        if (t === 1) { intro(c, 66); m.e = tgt(c, 6); if (m.e) focus(c, m.e.x, m.e.y, 0.25, 66); m.x0 = c.x; const x = c.x, y = c.y;   // 朧：霧
-          KF().mist(c.x + c.f * 1.3 * k, y, 1.5, 66, 1.3); }
-        const e = m.e && m.e.st !== 'dead' ? m.e : null, cx = e ? e.x : c.x + c.f * 1.6 * k, cy = e ? e.y : c.y;
-        if (t >= 5 && t <= 10) { const x = H.x + c.f * 0.6 * k; if (SC.walkable(x, H.y)) H.x = x; ghostAt(H.x, H.y, H.face, 12); H.inv = 30; }
-        const Q = [[-1.1, -0.35], [1.1, 0.35], [-0.9, 0.4], [0.9, -0.4]];
-        Q.forEach(([dx, dy], i) => { const tt = 14 + i * 5, x = cx + dx * k, y = cy + dy * k, f = dx < 0 ? 1 : -1;
-          if (t === tt) { ghostAt(x, y, f, 22); dust(x, y, 0.6, 5, 0.6, 24); }
-          if (t === tt + 3) { arcBlade(x, y, 0.55, f, 0.9, -1.6, 1.0, 14, 0.16, 0); if (e) hitE(c, e, 0.5); for (const q of foes(cx, cy, 0.9 * k)) if (q !== e) hitE(c, q, 0.5); m.hit = 1; } });
-        if (t === 38) { KF().glint(H.x + c.f * 0.12 * k, H.y, 0.45, 0.32, 12); dust(H.x + c.f * 0.12 * k, H.y, 0.45, 5, 0.4); }
-        if (t === 42) { for (const an of [0.75, -0.75, 0.05]) KF().qi({ x: cx, y: cy, z: 0.55, ang: an, len: 2.8, w: 0.13, dur: 3, life: 18, motes: 6 }); KF().light(cx, cy, 1.6, 24, 0.6, 0.55);
-          for (const q of foes(cx, cy, 1.4 * k)) hitE(c, q, 2.3, { crit: true }); dust(cx, cy, 0.5, 22, 2.0, 40); SC.shake = Math.max(SC.shake || 0, 7); stop(12); } } },
+    /* r3.180.0 一閃・朧（重做）：濃霧漫開、畫面沉入夜色 → 本尊一閃穿過敵人 → 四個朧影從四角依序現身、各衝斬一刀 → 鏡頭推近，收刀的瞬間一道橫貫畫面的刀光，所有斬痕同時爆開 */
+    k_issen: { T: 78, run(c, t) { const m = c.a.mvx, k = c.hh, TI = 78;
+        if (t === 1) { intro(c, TI); VX.dim && VX.dim(TI, 0.9); m.e = tgt(c, 6); const e0 = m.e; m.cx = e0 ? e0.x : c.x + c.f * 1.6 * k; m.cy = e0 ? e0.y : c.y; shot(c, m.cx, m.cy, 0.6, 1.5, 50);
+          for (const d of [-1.6, 0, 1.6]) KF().mist(m.cx + d * k, m.cy, 1.8, TI, 1.6); KF().light(m.cx, m.cy, 3, TI, 0.3); }
+        const cx = m.cx, cy = m.cy, e = m.e && m.e.st !== 'dead' ? m.e : null;
+        if (t === 6) { cloneAt(H.x, H.y, H.face, 14, 'issen'); const x1 = cx + c.f * 1.9 * k; for (let i = 1; i <= 5; i++) cloneAt(H.x + (x1 - H.x) * i / 6, H.y + (cy - H.y) * i / 6, c.f, 5 + i * 2, 'issen'); if (SC.walkable(x1, cy)) { H.x = x1; H.y = cy; } H.inv = 40;
+          KF().qi({ x: cx, y: cy, z: 0.55, ang: 0, len: 5, w: 0.1, dur: 2, life: 12, motes: 6 }); for (const q of foes(cx, cy, 1.3 * k)) hitE(c, q, 0.6); m.hit = 1; stop(3); }
+        [[16, -1, -0.5], [24, 1, 0.5], [32, -1, 0.5], [40, 1, -0.5]].forEach(([tt, sd, dy], i) => { if (t !== tt) return; const x0 = cx + sd * 2.6 * k, y0 = cy + dy * k, x1 = cx - sd * 2.6 * k, y1 = cy - dy * k;
+          KF().glint(x0, y0, 0.6, 0.4, 8); dashClone(c, x0, y0, x1, y1, 6, f => { arcBlade(cx, cy, 0.55, f, 1.1, i % 2 ? 1.2 : -1.8, i % 2 ? -1.8 : 1.0, 26, 0.2, (dy * sd) * 0.9); for (const q of foes(cx, cy, 1.2 * k)) hitE(c, q, 0.5); SC.shake = Math.max(SC.shake || 0, 2); stop(2); }); });
+        if (t === 52) { shot(c, cx, cy, 0.5, 1.08, 30); H.face = -c.a.face0; KF().glint(H.x, H.y, 0.45, 0.5, 14); dust(H.x, H.y, 0.45, 6, 0.4); }   /* 收刀：鏡頭推近 */
+        if (t === 60) { KF().qi({ x: cx, y: cy, z: 0.55, ang: 0, len: 9, w: 0.2, dur: 2, life: 20, motes: 12 }); for (const an of [0.75, -0.75]) KF().qi({ x: cx, y: cy, z: 0.55, ang: an, len: 3.2, w: 0.14, dur: 3, life: 18, motes: 6 }); KF().light(cx, cy, 2, 24, 0.65, 0.55);
+          for (const q of foes(cx, cy, 1.6 * k)) hitE(c, q, 2.3, { crit: true }); dust(cx, cy, 0.5, 24, 2.0, 40); KF().puff(cx, cy, 2); SC.shake = Math.max(SC.shake || 0, 9); stop(14); } } },
     /* r3.178.0 月下分身（重做）：滿月高掛、鏡頭拉遠 → 五個分身依序從左右兩側衝過敵人各斬一刀（一個接一個，越來越快）→ 本尊最後穿過敵人，收刀時斬痕一起爆開、月亮被斬開 */
     k_bunshin: { T: 92, run(c, t) { const m = c.a.mvx, k = c.hh, TB = 92;
-        if (t === 1) { intro(c, TB); const e = tgt(c, 6); m.e = e; m.p = e ? [e.x, e.y] : [c.x + c.f * 1.4 * k, c.y]; const [px, py] = m.p; focus(c, px, py, 2.05, TB); m.h0 = [c.x, c.y];
+        if (t === 1) { intro(c, TB); const e = tgt(c, 6); m.e = e; m.p = e ? [e.x, e.y] : [c.x + c.f * 1.4 * k, c.y]; const [px, py] = m.p; focus(c, px, py, 2.05, TB); m.h0 = [c.x, c.y]; KF().light(px, py, 2.6, TB, 0.42); KF().light(c.x, c.y, 1.2, TB, 0.3);   /* 地面月光 */
           VX.dim && VX.dim(TB, 0.93); G.CAMZOOM = { k: 1.62, until: G.t + TB };   /* r3.179.0：背景幾乎全黑，只留人物、月亮、特效；鏡頭再拉遠 */   /* r3.177.0：月下分身重做——夜色更深、象牙白大滿月從敵人身後高處升起（半徑 1.5 身高、月心離地 2.9 身高）、月暈＋光芒、最後一斬把月亮斬開 */
           VX.custom((o, ctx) => { const s = S(py), kk = HH() * s, rise = KF().eo3(Math.min(1, o.t / 16)), a = Math.min(1, o.t / 10) * Math.min(1, (o.life - o.t) / 10), R = 1.15 * kk, mx = px - c.f * 0.2 * kk, my = py - (3.3 + 0.9 * rise) * kk, cut = o.t >= 70, fl = o.t > 66 && o.t < 76 ? 1.5 : 1;
               ctx.save(); ctx.globalCompositeOperation = 'screen';
@@ -119,25 +128,29 @@
           KF().glint(x0, y0, 0.6, 0.4, 8); dashClone(c, x0, y0, x1, y1, 7, f => { arcBlade(px, py, 0.55, f, 1.15, i % 2 ? 1.2 : -1.8, i % 2 ? -1.8 : 1.0, 16, 0.2, (i - 2) * 0.25); KF().qi({ x: px, y: py, z: 0.55, ang: (i - 2) * 0.22 * f, len: 3.4, w: 0.07, dur: 2, life: 10, motes: 3 });
             for (const q of foes(px, py, 1.3 * k)) hitE(c, q, 0.5); m.hit = 1; SC.shake = Math.max(SC.shake || 0, 2); stop(2); }); });
         if (t === 56) { KF().charge(H.x + c.f * 0.15 * k, H.y, 0.5, 10, 14); }
-        if (t === 66) { ghostAt(H.x, H.y, H.face, 18); const x1 = px + c.f * 1.6 * k; for (let i = 1; i <= 5; i++) cloneAt(H.x + (x1 - H.x) * i / 6, H.y + (py - H.y) * i / 6, c.f, 6 + i * 2, 'issen'); if (SC.walkable(x1, py)) { H.x = x1; H.y = py; }
+        if (t === 62) shot(c, px, py, 0.9, 1.15, 34);   /* 收招：鏡頭推近 */
+        if (t === 66) { cloneAt(H.x, H.y, H.face, 18, 'issen'); const x1 = px + c.f * 1.6 * k; for (let i = 1; i <= 5; i++) cloneAt(H.x + (x1 - H.x) * i / 6, H.y + (py - H.y) * i / 6, c.f, 6 + i * 2, 'issen'); if (SC.walkable(x1, py)) { H.x = x1; H.y = py; }
           KF().qi({ x: px, y: py, z: 0.55, ang: 0, len: 7, w: 0.14, dur: 2, life: 16, motes: 10 }); SC.shake = Math.max(SC.shake || 0, 4); }
         if (t === 76) { for (let i = 0; i < 5; i++) arcBlade(px, py, 0.55, i % 2 ? 1 : -1, 1.3 + i * 0.08, -2.2 + i * 0.5, 1.1 - i * 0.4, 22, 0.24, (i - 2) * 0.5); for (const q of foes(px, py, 1.7 * k)) hitE(c, q, 2.2, { crit: true });
           KF().puff(px, py, 2); KF().light(px, py, 2, 24, 0.6, 0.6); for (let i = 0; i < 12; i++) dust(px + rnd(-1.2, 1.2) * k, py, rnd(0.4, 2.6), 1, 0.4, 50); SC.shake = Math.max(SC.shake || 0, 9); stop(14); } } },
     k_raimyaku: { T: 58, run(c, t) { const m = c.a.mvx, k = c.hh;
-        if (t === 1) { intro(c, 58); stance(16); const e0 = tgt(c, 4); focus(c, e0 ? (c.x + e0.x) / 2 + c.f * 0.4 * k : c.x + c.f * 1.2 * k, c.y, 0.75, 58); }
+        if (t === 1) { intro(c, 58); VX.dim && VX.dim(64, 0.88); stance(16); const e0 = tgt(c, 4), fx = e0 ? (c.x + e0.x) / 2 + c.f * 0.4 * k : c.x + c.f * 1.2 * k; m.fx = fx; shot(c, fx, c.y, 0.7, 1.3, 30); KF().light(fx, c.y, 3, 60, 0.3); }   /* r3.180.0：夜色＋運鏡 */
+        if (t === 28) shot(c, m.fx, c.y, 2.0, 1.75, 40);   /* 天雷落下前：鏡頭拉遠抬高，看得到整道雷 */
         if (t > 1 && t < 14 && t % 3 === 0) KF().bolt(c.x + c.f * 0.15 * k, c.y - 0.5 * k, c.x + c.f * rnd(0.5, 0.9) * k, c.y - rnd(0.8, 1.15) * k, 5, 1.4);
         if (t === 16) { const L = G.E.filter(e => e.st !== 'dead' && e.delay <= 0 && Math.hypot(e.x - c.x, (e.y - c.y) * 1.5) < 3.6 * k).sort((a, b) => Math.abs(a.x - c.x) - Math.abs(b.x - c.x)).slice(0, 5); m.L = L; let [x0, y0] = [c.x + c.f * 0.5 * k, c.y - 0.6 * k];
           L.forEach((e, i) => c.later(i * 3, () => { if (e.st === 'dead') return; const [x1, y1] = chest(e); KF().bolt(x0, y0, x1, y1, 18, 2.6, 1); x0 = x1; y0 = y1; hitE(c, e, 1.0, { stun: 50 }); tag(e, '雷', '#9fd0ff'); dust(x1, e.y, (e.y - y1) / k, 6, 1.2); m.hit = 1; }));
           arcBlade(c.x, c.y, 0.55, c.f, 1.1, -1.2, 0.9, 14, 0.16); }
         if (t === 34) { const e = (m.L || [])[0] || tgt(c, 4), x = e ? e.x : c.x + c.f * 1.4 * k, y = e ? e.y : c.y;
           KF().bolt(x + rnd(-12, 12), y - 5.5 * k, x, y - 0.3 * k, 26, 4.5, 3); KF().bolt(x + rnd(-24, 24), y - 5 * k, x, y - 0.3 * k, 18, 2, 1); c.later(4, () => KF().bolt(x + rnd(-30, 30), y - 5.2 * k, x + rnd(-0.3, 0.3) * k, y - 0.2 * k, 16, 3, 2)); c.later(9, () => KF().bolt(x + rnd(-30, 30), y - 5.2 * k, x + rnd(-0.4, 0.4) * k, y - 0.2 * k, 14, 2.4, 1)); KF().scar && [-0.5, 0, 0.5].forEach(d => KF().scar(x + d * k, y, c.f, 3));   /* r3.173.0：天雷連落三道＋地面焦痕 */
-          arcBlade(H.x, H.y, 0.55, c.f, 1.35, -2.1, 0.95, 18, 0.2, 0); KF().puff(x, y, 2); KF().light(x, y, 1.8, 24, 0.65, 0.6);
-          for (const q of foes(x, y, 1.3 * k)) hitE(c, q, 2.0, { crit: true, stun: 40 }); dust(x, y, 0.1, 16, 1.6, 36); SC.shake = Math.max(SC.shake || 0, 8); stop(12); } } },
+          pillar(c, x, y, 30, 0.1, 1.2); for (let i = 0; i < 4; i++) c.later(i * 3, () => KF().bolt(x + rnd(-50, 50), y - 6.5 * k, x + rnd(-0.5, 0.5) * k, y - 0.2 * k, 14, 3.4, 2)); VX.flash && 0;
+          arcBlade(H.x, H.y, 0.55, c.f, 1.35, -2.1, 0.95, 18, 0.2, 0); KF().puff(x, y, 2); KF().light(x, y, 3, 28, 0.8, 0.6);
+          for (const q of foes(x, y, 1.3 * k)) hitE(c, q, 2.0, { crit: true, stun: 40 }); dust(x, y, 0.1, 16, 1.6, 36); SC.shake = Math.max(SC.shake || 0, 10); stop(14); } } },
     k_chidori: { T: 60, run(c, t) { const m = c.a.mvx, k = c.hh;
-        if (t === 1) { intro(c, 60); const e = tgt(c, 4); m.p = e ? [e.x, e.y] : [c.x + c.f * 1.2 * k, c.y]; focus(c, m.p[0] - c.f * 0.3 * k, m.p[1], 0.85, 64); }
+        if (t === 1) { intro(c, 60); const e = tgt(c, 4); m.p = e ? [e.x, e.y] : [c.x + c.f * 1.2 * k, c.y]; VX.dim && VX.dim(120, 0.88); shot(c, m.p[0] - c.f * 0.3 * k, m.p[1], 0.8, 1.3, 38); KF().light(m.p[0], m.p[1], 3, 120, 0.3); }   /* r3.180.0：夜色＋運鏡；X 字放大 */
+        if (t === 38) shot(c, m.p[0], m.p[1], 2.1, 1.8, 90);   /* 光柱升起：鏡頭拉遠抬高 */
         const [px, py] = m.p || [c.x, c.y];
         if (t === 7) { arcBlade(H.x, H.y, 0.3, c.f, 1.0, -0.25, 0.2, 10, 0.12, 0); for (const q of foes(px, py, 1.0 * k)) hitE(c, q, 0.6); m.hit = 1; }
-        const X = (an, life) => KF().qi({ x: px, y: py, z: 0.6, ang: an, len: 2.6, w: 0.12, dur: 3, life, pulse: 1, motes: 5 });
+        const X = (an, life) => KF().qi({ x: px, y: py, z: 0.6, ang: an, len: 5.2, w: 0.2, dur: 3, life, pulse: 1, motes: 8 });
         if (t === 14) { arcBlade(H.x, H.y, 0.55, c.f, 1.15, 1.2, -1.9, 12, 0.18, 0); X(-0.85 * c.f, 30); for (const q of foes(px, py, 1.1 * k)) { hitE(c, q, 0.8); } stop(3); }
         if (t === 22) { arcBlade(H.x, H.y, 0.55, c.f, 1.15, -1.9, 1.0, 12, 0.18, 0); X(0.85 * c.f, 22); for (const q of foes(px, py, 1.1 * k)) { hitE(c, q, 0.8); } stop(3); }
         if (t > 24 && t < 40) for (const q of foes(px, py, 2.2 * k)) if (!q.boss) { q.x += (px - q.x) * 0.06; q.y += (py - q.y) * 0.06; }   // 十字把敵人吸向中心
