@@ -363,7 +363,7 @@ G.ONI_RATIO = 1.38;
     else if (e.st === 'dead') { const r = eRec(e, 'death', 'fall', 'hit', 'hurt'); rec = r || walk; fr = r ? A.frameAt(r, e.t * TK) : walk.f[0]; }
     else fr = A.frameAt(walk, G.t * TK + e.ph);
     const sc = sc0 * (rec.k || 1);
-    shadow(e.x, e.y, 22 * s * e.ratio / 1.2);
+    shadow(e.x, e.y, 22 * s * e.ratio / 1.2); e._fx3 = [u, fr, sc];   /* r3.170.0：給受擊染色用（162_fx3） */
     A.draw(u, fr, e.x, e.y, sc, e.face < 0, e.alpha);
     if (e.flash > 0) { const w = A.white(u, fr); ctx.save(); ctx.globalAlpha = e.flash / 10 * e.alpha; if (e.face < 0) { ctx.translate(e.x * 2, 0); ctx.scale(-1, 1); }
       ctx.drawImage(w, e.x - fr[4] * sc, e.y - fr[5] * sc, fr[2] * sc, fr[3] * sc); ctx.restore(); }
