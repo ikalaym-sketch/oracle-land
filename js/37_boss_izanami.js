@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 37_boss_izanami.js
- * Version : r3.10.0  (2026-11-13)
+ * Version : r3.205.0  (2026-11-28)　r3.205.0：修正伊邪那美身體動畫每格的左右對位（不再抖）
+ * 舊版    : r3.10.0  (2026-11-13)
  * 變更    : r3.10.0 主角參照改為 G.BTGT（頭目依仇恨鎖定主角或夥伴；範圍招兩者都會判定）。
  * 變更    : r3.9.0 新增。第十一章頭目「伊邪那美」（第十一章頭目地圖 W_R11_05），P3 原圖（白衣女神，面向右）。
  *           ‧ 場上三棵桃樹：必殺時桃樹發光，站進桃光就不受千人之詛。身邊常駐三團鬼火。
@@ -130,4 +131,8 @@
       enc.cd = S(1.2); },
     finish(enc) { const v = enc.v; for (const k of v.kids.concat(v.army)) if (k.st !== 'dead') { k.st = 'dead'; k.t = 0; } v.mists = []; v.shots = []; v.rows = null; v.gaze = 0; v.light = 0; v.cursed = 0; },
     onDamage(e) { if (e.open > 0) { e.st = e.mv ? 'atk' : 'walk'; return true; } return false; } });
+  /* r3.205.0：伊邪那美的身體動畫每一格的左右對位點有誤（圖集每往右一欄就多偏 8.6 像素，三欄一輪）→ 看起來一直左右抖。
+   * 圖集載入後修正一次（只修 6 格的身體動畫 *_right3q；特效圖不動），頭目戰、內殿、對話登場都一起變穩。 */
+  (function fixOx() { const A = G.ANIM; if (!A || !A.load) return setTimeout(fixOx, 50); const ld0 = A.load.bind(A); const fix = u => { if (!u || u._oxFix || !u.act) return u; u._oxFix = 1; for (const k in u.act) { const r = u.act[k]; if (!/_right3q$/.test(k) || !r || !r.f || r.f.length !== 6) continue; r.f.forEach((f, i) => { f[4] -= (i % 3) * 8.6; }); } return u; };
+    A.load = function (key, json) { const p = ld0(key, json); return key === 'b_izanami' && p && p.then ? p.then(fix) : p; }; const u0 = A.get && A.get('b_izanami'); if (u0) fix(u0); })();
 })();

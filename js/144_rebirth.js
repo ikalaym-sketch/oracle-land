@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 144_rebirth.js
- * Version : r3.204.0  (2026-11-28)　r3.204.0：伊邪那美的名字標籤移到頭上
+ * Version : r3.205.0  (2026-11-28)　r3.205.0：內殿伊邪那美恢復待機動畫、面向主角；對話時不再多走出一個
+ * 舊版    : r3.204.0  (2026-11-28)　r3.204.0：伊邪那美的名字標籤移到頭上
  * 舊版    : r3.202.0  (2026-11-28)　r3.202.0：內殿拿掉祈願石；伊邪那美縮小、固定站姿不再抖
  * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：內殿人物放大約 2 倍、鏡頭拉近
  * 舊版    : r3.169.0  (2026-11-27)　r3.169.0：內殿換 ChatGPT 新圖，可走範圍／伊邪那美／出口位置重定，人物比例同野外
@@ -35,12 +36,12 @@
   const boot0 = G.ASSET.boot.bind(G.ASSET); G.ASSET.boot = () => boot0().then(r => { try { reg(); } catch (e) { console.warn('rebirth reg', e); } return r; });
   /* ---------- 伊邪那美（祭壇前，頭目圖待機） ---------- */
   let IZ = null;
-  function placeIz() { G.NPC = G.NPC.filter(n => !n._iz); IZ = null; if (SC.id !== ID) return; const n = { _iz: 1, name: '', x: 836, y: 530, t: 0 }; IZ = n; G.NPC.push(n);
+  function placeIz() { G.NPC = G.NPC.filter(n => !n._iz); IZ = null; if (SC.id !== ID) return; const n = { _iz: 1, name: '', label: '伊邪那美', x: 836, y: 530, t: 0 };   /* r3.205.0：label＝讓對話登場系統知道她已經在場，不要再走出第二個 */ IZ = n; G.NPC.push(n);
     Promise.resolve(G.BOSS && G.BOSS.load && G.BOSS.load('izanami')).catch(() => 0); }
   (function hkD() { if (!G.drawNpc) return setTimeout(hkD, 60); const d0 = G.drawNpc; G.drawNpc = function (n) { if (!n || !n._iz) return d0.apply(this, arguments);
-      const u = G.ANIM.get('b_izanami'), r = u && u.act.izanami_idle_right3q; if (!r) return; n.t++; const f = r.f[0], L = r.f.map(q => q[5]).sort((a, b) => a - b), vh = L[L.length >> 1] || 200, s = SC.depth(n.y), sc = G.HERO_H * 1.05 * s / vh, c = G.ctx;   /* r3.202.0：伊邪那美固定站姿（原本各格對位不齊，看起來一直抖）、縮到跟主角差不多高 */
+      const u = G.ANIM.get('b_izanami'), r = u && u.act.izanami_idle_right3q; if (!r) return; n.t++; const f = r.f[Math.floor(n.t / 10) % r.f.length], L = r.f.map(q => q[5]).sort((a, b) => a - b), vh = L[L.length >> 1] || 200, s = SC.depth(n.y), sc = G.HERO_H * 1.05 * s / vh, c = G.ctx;   /* r3.205.0：對位修好後恢復待機動畫（衣袖、頭髮會動，不再左右抖）；面向主角 */   /* r3.202.0：伊邪那美固定站姿（原本各格對位不齊，看起來一直抖）、縮到跟主角差不多高 */
       c.save(); c.fillStyle = 'rgba(20,14,8,.25)'; c.beginPath(); c.ellipse(n.x, n.y, G.HERO_H * s * 0.35, G.HERO_H * s * 0.08, 0, 0, 6.283); c.fill(); c.restore();
-      G.ANIM.draw(u, f, n.x, n.y, sc, true, Math.min(1, n.t / 30)); }; })();
+      G.ANIM.draw(u, f, n.x, n.y, sc, G.H.x < n.x, Math.min(1, n.t / 30)); }; })();
   /* ---------- 入口／出口／伊邪那美互動點 ---------- */
   function marks() { if (!G.HUB || !G.HUB.marks) return; const M = G.HUB.marks;
     if (SC.id === 'hub_shrine' && cleared() && !M.some(m => m.id === 'rb_in')) { const d = SC.def, c = (d.nodes || {}).center || d.start || [800, 575], p = (SC.snap && SC.snap(c[0] + 140, c[1] - 30, 'open', 200)) || c;
