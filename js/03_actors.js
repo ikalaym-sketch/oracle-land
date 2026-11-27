@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.148.0  (2026-11-27)　r3.148.0：衝刺 Lv5 穿過的敵人停頓 0.5 秒
+ * Version : r3.151.0  (2026-11-27)　r3.151.0：劇情人物靜態圖站著時加呼吸起伏
+ * 舊版    : r3.148.0  (2026-11-27)　r3.148.0：衝刺 Lv5 穿過的敵人停頓 0.5 秒
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：「此鍵尚未設定」提示加前往按鈕
  * 舊版    : r3.145.0  (2026-11-27)　掉落物：稀品以上才顯示名字，光柱高度依品質拉開；r3.145.0：傷害數字放大（一般 19、暴擊 28），出現與合併時彈一下，暴擊上跳
  * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：和弓特性：普攻出箭中可移動（不轉身，速度 ×0.6）
@@ -378,7 +379,8 @@ G.ONI_RATIO = 1.38;
       if (n.talkTo) { if (Math.abs(n.talkTo.x - n.x) > 4) n.face = Math.sign(n.talkTo.x - n.x); }
       else if (!n.walking && Math.abs(G.H.x - n.x) > 6 && Math.hypot(G.H.x - n.x, G.H.y - n.y) < 160) n.face = Math.sign(G.H.x - n.x);
       const wb = n.walking ? Math.abs(Math.sin(G.t * 0.28)) * 3 : 0;   // 走位時上下踏步
-      shadow(n.x, n.y, 13 * s * d.ratio); sprite(G.IMG.npc, f, n.x, n.y - wb, sc, n.face < 0, 1); return;
+      shadow(n.x, n.y, 13 * s * d.ratio); const br = n.walking ? 1 : 1 + Math.sin(G.t * 0.06 + n.x * 0.01) * 0.022;   // r3.151.0：劇情人物（小雪、阿松…）站著時呼吸起伏
+      ctx.save(); ctx.translate(n.x, n.y); ctx.scale(1, br); ctx.translate(-n.x, -n.y); sprite(G.IMG.npc, f, n.x, n.y - wb, sc, n.face < 0, 1); ctx.restore(); return;
     }
     const s = SC.depth(n.y), img = G.IMG[n.img], h = G.HERO_H * (n.ratio || 0.78) * s, w = h * img.width / img.height, st = n.stone || 0, b = st >= 1 ? 0 : Math.sin(G.t * 0.05) * 0.8;
     shadow(n.x, n.y, w * 0.36);
