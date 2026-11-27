@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 144_rebirth.js
- * Version : r3.202.0  (2026-11-28)　r3.202.0：內殿拿掉祈願石；伊邪那美縮小、固定站姿不再抖
+ * Version : r3.204.0  (2026-11-28)　r3.204.0：伊邪那美的名字標籤移到頭上
+ * 舊版    : r3.202.0  (2026-11-28)　r3.202.0：內殿拿掉祈願石；伊邪那美縮小、固定站姿不再抖
  * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：內殿人物放大約 2 倍、鏡頭拉近
  * 舊版    : r3.169.0  (2026-11-27)　r3.169.0：內殿換 ChatGPT 新圖，可走範圍／伊邪那美／出口位置重定，人物比例同野外
  * 舊版    : r3.121.0  (2026-11-26)　r3.121.0：轉生保留里歐外觀（等級、招式、按鍵）
@@ -45,7 +46,7 @@
     if (SC.id === 'hub_shrine' && cleared() && !M.some(m => m.id === 'rb_in')) { const d = SC.def, c = (d.nodes || {}).center || d.start || [800, 575], p = (SC.snap && SC.snap(c[0] + 140, c[1] - 30, 'open', 200)) || c;
       M.push({ id: 'rb_in', q: 1, x: p[0], y: p[1], label: '內殿', kind: 'look', main: false, run: () => G.HUB.travel(0, '你們推開內殿的門，空氣忽然冷了下來……', [], ID) }); }
     if (SC.id === ID) { if (!M.some(m => m.id === 'rb_out')) M.push({ id: 'rb_out', q: 1, x: 150, y: 580, label: '離開內殿', kind: 'look', main: false, run: () => G.HUB.travel(0, '', [], 'hub_shrine') });
-      if (!M.some(m => m.id === 'rb_iz')) M.push({ id: 'rb_iz', q: 1, x: 836, y: 560, label: '伊邪那美', kind: 'talk', main: false, run: ritual }); } }
+      if (!M.some(m => m.id === 'rb_iz')) M.push({ id: 'rb_iz', q: 1, x: 836, y: 560, label: '伊邪那美', kind: 'talk', main: false, lh: 1.3, run: ritual }); } }
   (function hkE() { if (!G.STORY || !G.STORY.onEnter) return setTimeout(hkE, 60); const en0 = G.STORY.onEnter.bind(G.STORY); G.STORY.onEnter = function (id) { const r = en0(id); try { reg(); placeIz(); } catch (e) {} G.STORY.later(10, marks); return r; };
     const st0 = G.STORY.step.bind(G.STORY); let tk = 0; G.STORY.step = function () { st0(); if (++tk % 30 === 0) try { marks(); } catch (e) {} }; })();
   /* ======================= 轉生儀式 ======================= */

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 04_ui.js
- * Version : r3.201.0  (2026-11-28)　r3.201.0：右下角按鍵位置可調（五段，越後面越密、越靠角落）
+ * Version : r3.204.0  (2026-11-28)　r3.204.0：普攻鍵上方不再顯示段數
+ * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：右下角按鍵位置可調（五段，越後面越密、越靠角落）
  * 舊版    : r3.172.0  (2026-11-28)　r3.172.0：戰鬥中的橫幅縮成上方小牌
  * 舊版    : r3.168.0  (2026-11-27)　r3.168.0：右上視角／選單鈕與上方主線橫幅交給 161_hud2；點主角頭像開選單（頭像右上小☰）；畫面外目標只留箭頭
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：世界事件提醒的後備改開行旅繪圖
@@ -191,7 +192,7 @@ G.IN = { mx: 0, my: 0, stick: null, keys: new Set(), atk: false, c1: false, c2: 
       ctx.font = `900 ${13 * G.FS()}px ${G.FONT_S}`; b.w = Math.min(220, ctx.measureText(lab).width + 30); b.x = G.LW - 16 - G.SAFE.r - b.w;
       ctx.globalAlpha = a; ctx.fillStyle = 'rgba(150,92,36,.92)'; G.rr(b.x, b.y, b.w, b.h, 16); ctx.fill(); ctx.strokeStyle = '#f3d98a'; ctx.lineWidth = 2; G.rr(b.x + 1, b.y + 1, b.w - 2, b.h - 2, 15); ctx.stroke(); ctx.globalAlpha = 1;
       G.txt(lab, b.x + b.w / 2, b.y + b.h / 2 + 1, 13, C.ink, 'center', G.FONT_S, 900); }
-    if (H.st === 'atk') G.txt(['一', '二', '三', '四', '五', '六'][H.combo] + '段', B.atk.x, B.atk.y - B.atk.r - 10, 12, C.gold, 'center', G.FONT_S, 900);
+    /* r3.204.0：普攻鍵上方不再顯示「一段／二段…」（跟其他按鍵不協調） */
     if (UI.ban && !(G.DLG._endT && G.t - G.DLG._endT < 120)) { const T = UI.ban.t, a = Math.max(0, Math.min(1, T / 20, (170 - T) / 20)); ctx.globalAlpha = a;
       if (G.HUD2 && G.E && G.E.some(e => e.st !== 'dead' && !(e.delay > 0))) {   /* r3.172.0：戰鬥中的橫幅（招式名、提示）縮成上方小牌，不再橫過整個畫面蓋住戰鬥 */
         ctx.font = `900 ${14 * G.FS()}px ${G.FONT_S}`; const w1 = ctx.measureText(UI.ban.text).width; ctx.font = `700 ${10 * G.FS()}px ${G.FONT}`; const w2 = UI.ban.sub ? ctx.measureText(UI.ban.sub).width + 14 : 0, w = w1 + w2 + 28, x = (G.LW - w) / 2, y = y0 - 2;

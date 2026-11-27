@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 06_story_ch1.js
- * Version : r3.195.0  (2026-11-28)　互動標記：支線改米白、地面柔邊光暈（不畫實線圈）、光柱柔邊
+ * Version : r3.204.0  (2026-11-28)　r3.204.0：互動標籤高度跟著場景人物比例
+ * 舊版    : r3.195.0  (2026-11-28)　互動標記：支線改米白、地面柔邊光暈（不畫實線圈）、光柱柔邊
  * 舊版    : r3.166.0  (2026-11-27)  r3.166.0：鐵心改成先聊天，「鍛冶」放在對話選項
  * 舊版    : r3.39.0  (2026-11-17)  r3.39.0：打完鎌鼬不再直接對話／章節完成；改設 kamaBeat，由 87 的戰後定點（巢邊三兄弟）走近觸發 kamaWin
  * 舊版    : r3.18.2  （r3.18.2：神社升級改找小雪奉納）
@@ -333,7 +334,7 @@ function again(who) { const L = AGAIN[who]; const i = AGAIN_I[who] = ((AGAIN_I[w
         const col = m.main ? '255,214,120' : '236,226,206', hgt = G.HERO_H * 1.35;   /* r3.195.0：支線由淡青改米白；地面不再畫實線圈，改柔邊光暈；光柱左右淡出 */
         { const rx = 26 + a * 5; ctx.save(); ctx.translate(x, y); ctx.scale(1, 0.3); const gg = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); gg.addColorStop(0, `rgba(${col},${0.3 + 0.2 * a})`); gg.addColorStop(0.6, `rgba(${col},${0.14 + 0.1 * a})`); gg.addColorStop(1, `rgba(${col},0)`); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, rx, 0, 6.283); ctx.fill(); ctx.restore(); }
         { const al = 0.2 + 0.16 * a; for (let i = 0; i < 4; i++) { const w = 3 + i * 3, g = ctx.createLinearGradient(0, y - hgt, 0, y); g.addColorStop(0, `rgba(${col},0)`); g.addColorStop(1, `rgba(${col},${al * (1 - i * 0.22) * 0.5})`); ctx.fillStyle = g; ctx.fillRect(x - w, y - hgt, w * 2, hgt); } }
-        const ly = y - G.HERO_H * 1.15 - Math.sin(G.t * 0.08) * 3; ctx.save(); ctx.translate(x, ly); ctx.scale(1 / Z, 1 / Z);
+        const ly = y - G.HERO_H * (G.SC.depth ? G.SC.depth(y) : 1) * (m.lh || 1.15) - Math.sin(G.t * 0.08) * 3;   /* r3.204.0：標籤高度跟著該場景的人物比例（內殿人物放大後，標籤才不會被身體擋住）；m.lh＝個別指定高度 */ ctx.save(); ctx.translate(x, ly); ctx.scale(1 / Z, 1 / Z);
         const lab = (m.kind === 'look' ? '◇ ' : '◆ ') + m.label, fs = 12 * G.FS(); ctx.font = `900 ${fs}px ${G.FONT_S}`; const w = ctx.measureText(lab).width + 16;
         ctx.fillStyle = near ? 'rgba(150,92,36,.95)' : 'rgba(12,8,10,.78)'; G.rr(-w / 2, -fs, w, fs * 2, fs); ctx.fill(); ctx.strokeStyle = `rgba(${col},.9)`; ctx.lineWidth = 1; G.rr(-w / 2 + .5, -fs + .5, w - 1, fs * 2 - 1, fs); ctx.stroke();
         ctx.fillStyle = `rgb(${col})`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, 0, 1);

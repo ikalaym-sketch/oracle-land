@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 52_hub.js
- * Version : r3.129.0  (2026-11-27)　r3.129.0：新兩岸城圖：時雨渡口座標
+ * Version : r3.204.0  (2026-11-28)　r3.204.0：互動標籤高度跟著場景人物比例
+ * 舊版    : r3.129.0  (2026-11-27)　r3.129.0：新兩岸城圖：時雨渡口座標
  * 舊版    : r3.128.3  (2026-11-27)　r3.128.3：時雨（渡口）移到西邊往神社傳點下方
  * 舊版    : r3.125.0  (2026-11-26)　r3.125.0：第 1 章插入新圖（停輪匠院、風折觀護台兩段、誓紙回舟灘），一本道 4→8 張
  * 舊版    : r3.104.2  (2026-11-26)　r3.104.2：互動點地上光暈改柔邊漸層
@@ -266,7 +267,7 @@
   G.STORY.drawMarks = function () { dm0(); const ctx = G.ctx, Z = SC.zoom();
     for (const m of HUB.marks) { if (m.hide) continue; const a = 0.55 + 0.45 * Math.sin(G.t * 0.1), ex = /^ex[:_]/.test(m.id), col = ex ? '236,226,206' : '255,214,120';
       if (!m._obj) { const rx = 24 + a * 5, ry = 7.5 + a * 2; ctx.save(); ctx.translate(m.x, m.y); ctx.scale(1, ry / rx); const gg = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); gg.addColorStop(0, `rgba(${col},${0.22 + 0.2 * a})`); gg.addColorStop(0.6, `rgba(${col},${0.12 + 0.12 * a})`); gg.addColorStop(1, `rgba(${col},0)`); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, rx, 0, 6.283); ctx.fill(); ctx.restore(); }   // r3.104.2：柔邊（不畫硬邊橢圓）   // r3.91.0：有物件（路標、調查物）就不畫地上黃圈；探索入口文字改米白
-      const ly = m.y - G.HERO_H * 1.0; ctx.save(); ctx.translate(m.x, ly); ctx.scale(1 / Z, 1 / Z); const fs = 12 * G.FS(), lab = '◇ ' + m.label;
+      const ly = m.y - G.HERO_H * (G.SC.depth ? G.SC.depth(m.y) : 1) * (m.lh || 1.0);   /* r3.204.0：標籤高度跟著場景人物比例；m.lh＝個別指定（例：站著人的互動點要高過頭） */ ctx.save(); ctx.translate(m.x, ly); ctx.scale(1 / Z, 1 / Z); const fs = 12 * G.FS(), lab = '◇ ' + m.label;
       ctx.font = `900 ${fs}px ${G.FONT_S}`; const w = ctx.measureText(lab).width + 16; ctx.fillStyle = G.UI.near === m ? 'rgba(150,92,36,.95)' : 'rgba(12,8,10,.78)';
       G.rr(-w / 2, -fs, w, fs * 2, fs); ctx.fill(); ctx.fillStyle = `rgb(${col})`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, 0, 1); ctx.restore(); } };
   let cT = -1; const card = () => { if (cT !== G.t) { cT = G.t; cardStep(); } cardDraw(); };   // 過場卡每幀推進一次（UI／對話／選單任一繪製路徑都會呼叫）
