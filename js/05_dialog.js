@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 05_dialog.js
- * Version : r3.154.0  (2026-11-27)　r3.154.0：出選項時上方保留上一句台詞（誰在問、問什麼）
+ * Version : r3.157.0  (2026-11-27)　r3.157.0：接入 68 張對話半身像（a/bust，講話時才載入；茨木／景綱／晴明等簡稱也對得到）
+ * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：出選項時上方保留上一句台詞（誰在問、問什麼）
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：記錄對話結束時間（_endT，橫幅延後用）
  * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：對話改成半身頭像：框外上方站人，位置在一段對話內固定（蒼真右、對方左），講話的人亮、其他人暗；名字牌移到講話者那側；有底色的頭像自動去背
  * 舊版    : r3.90.0  (2026-11-26)　r3.90.0：選項框加寬（440→560）；選項文字太長先縮字、再分兩行，不再超出框
@@ -16,10 +17,23 @@
 (function () {
   const ctx = G.ctx, SPEED = [0.45, 0.8, 1.6];
   const FACE = { '蒼真': 'face_soma', '白丸': 'face_shiro', '小雪': 'face_xue', '阿松': 'face_matsu', '勘婆': 'face_okan', '權爺': 'face_gen', '小太': 'face_kota', '鐵心': 'face_smith' };
+  /* r3.157.0：對話半身像（a/bust/bust_*.webp，512×512 去背、朝右）——講話時才載入，載好之前先用舊頭像 */
+  const BN = { '蒼真': 'soma', '小雪': 'xue', '白丸': 'shiro', '茨木童子': 'ibaraki', '茨木': 'ibaraki', '葛葉': 'kuzuha', '役小角': 'enno', '汐音': 'shion', '源賴光': 'yorimitsu', '颯': 'hayate',
+    '建御雷': 'takemikazuchi', '小太': 'kota', '鐵心': 'smith', '阿松': 'matsu', '權爺': 'gen', '勘婆': 'okan', '文也': 'fumiya', '道摩': 'doma', '河童長者': 'kappa_elder', '須佐之男': 'susanoo',
+    '酒吞童子': 'shuten', '酒吞': 'shuten', '綾小路景綱': 'kagetsuna', '景綱': 'kagetsuna', '茂兵衛爺': 'mohei', '狐族長者': 'fox_elder', '天狗長者': 'tengu_elder', '白衣的巫女': 'yuki', '平八': 'heihachi', '岩藏': 'iwakura',
+    '牛若丸': 'ushiwaka', '伊邪那美': 'izanami', '綿津見': 'watatsumi', '冬乃': 'fuyuno', '八絃': 'yatsuo', '弁慶': 'benkei', '時雨': 'shigure', '傳送役・時雨': 'shigure', '五平': 'gohei', '鬼鍛冶權六': 'gonroku', '權六': 'gonroku',
+    '長壁姬': 'osakabe', '源義經': 'yoshitsune', '鬼灘': 'onada', '道滿': 'doman', '澄岳': 'chogaku', '宗八': 'sohachi', '鬼王': 'oniou', '雷獸': 'raiju', '花澄': 'hanasumi', '砂狐': 'sagitsune',
+    '阿德婆婆': 'otoku', '阿德': 'otoku', '蓬庵': 'hoan', '汀江': 'migiwae', '潮丸的娘': 'migiwae', '巡檢孫六': 'magoroku', '九尾': 'kyubi', '鬼族使者': 'oni_envoy', '阿紺': 'okon', '染布的阿紺': 'okon', '爐火女神': 'hearth_goddess',
+    '海邊的河童': 'kappa_sea', '安倍晴明': 'seimei', '晴明': 'seimei', '阿春': 'oharu', '劍士的亡魂': 'swordsman_ghost', '鎌鼬': 'kamaitachi', '鎌鼬長兄': 'kamaitachi', '阿菊': 'okiku', '河童大將': 'kappa_general',
+    '村長': 'village_chief', '鬼族守爐人': 'oni_keeper', '貓又': 'nekomata', '茶屋婆婆': 'teahouse_granny', '梅乃婆婆': 'umeno', '受傷的人魚': 'mermaid', '真穗': 'maho' };
+  const BREQ = {};
+  function bustKey(n) { const b = BN[n]; if (!b) return null; const k = 'bust_' + b; if (G.IMG[k]) return k;
+    if (!BREQ[k]) { BREQ[k] = 1; G.ASSET.img(k, 'a/bust/' + k + '.webp').catch(() => {}); } return null; }
   const D = G.DLG = { list: null, i: 0, shown: 0, done: null, choice: null, log: false, skip: false, B: {},
     active() { return !!this.list; },
     get who() { const L = this.list && this.list[this.i]; return L && L.who; },
-    start(list, done) { this.list = list.slice(); this.i = 0; this.done = done; this.skip = false; this.log = false; G.IN.stick = null; this.prep(); },
+    start(list, done) { for (const L of list || []) if (L && L.who) bustKey(L.who);   /* r3.157.0：先載這段對話會用到的半身像 */
+      this.list = list.slice(); this.i = 0; this.done = done; this.skip = false; this.log = false; G.IN.stick = null; this.prep(); },
     prep() {
       while (this.list && this.list[this.i] && this.list[this.i].do) { const f = this.list[this.i].do; this.i++; f(); }
       const L = this.list && this.list[this.i]; this.shown = 0; this.choice = L && L.choice ? L.choice : null;
@@ -81,7 +95,7 @@
     G.UI.pill(B.log, '記錄'); G.UI.pill(B.skip, this.skip ? '快進中' : '快進', this.skip);
   };
   /* ---------- r3.145.0：半身頭像——位置在一段對話內固定（蒼真右、其他人左；第三人接替最久沒講話的一側），講話的人亮、其他人暗 ---------- */
-  const faceOf = n => { if (!n) return null; if (FACE[n]) return FACE[n]; const PD = G.PARTY && G.PARTY.DEF; if (PD) for (const id in PD) if (PD[id].name === n && PD[id].face) return PD[id].face; return null; };
+  const faceOf = n => { if (!n) return null; const bk = bustKey(n); if (bk) return bk; if (FACE[n]) return FACE[n]; const PD = G.PARTY && G.PARTY.DEF; if (PD) for (const id in PD) if (PD[id].name === n && PD[id].face) return PD[id].face; return null; };
   const BUST = {}; let castL = null, cast = { L: null, R: null };
   function bustImg(k, dim) { const im = G.IMG[k]; if (!im) return null; const c0 = BUST[k]; if (c0 && c0.src === im) return dim ? c0.d : c0.c;   /* 有底色的頭像去背一次後快取 */
     let c = im; try { const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const x = cv.getContext('2d'); x.drawImage(im, 0, 0); const d = x.getImageData(0, 0, cv.width, cv.height), a = d.data;
@@ -91,7 +105,7 @@
     BUST[k] = { src: im, c, d: dc }; return dim ? dc : c; }
   const bustP = () => Math.round(Math.min(G.LH * 0.6, 300));
   function stage(D, L) { if (D.list !== castL) { castL = D.list; cast = { L: null, R: null }; } const n = L.who, f = faceOf(n); if (!n || !f) return null;
-    for (const s of ['L', 'R']) if (cast[s] && cast[s].n === n) { cast[s].t = G.t; return s; }
+    for (const s of ['L', 'R']) if (cast[s] && cast[s].n === n) { cast[s].t = G.t; cast[s].f = f; return s; }   /* 半身像載好後換掉暫用的舊頭像 */
     const pf = n === '蒼真' ? 'R' : 'L', ot = pf === 'L' ? 'R' : 'L', s = !cast[pf] ? pf : !cast[ot] ? ot : (cast.L.t <= cast.R.t ? 'L' : 'R');
     cast[s] = { n, f, t: G.t }; return s; }
   function busts(D, L, x, y, w) { const P = bustP(), narr = !L.who || L.text[0] === '（';
