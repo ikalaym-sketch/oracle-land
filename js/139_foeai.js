@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 139_foeai.js
- * Version : r3.197.0  (2026-11-28)　r3.197.0：敵人招式改播手繪素材（近戰爪痕／揮擊弧光、法球、地爆、重踩震波）
+ * Version : r3.198.0  (2026-11-28)　r3.198.0：地面預警減量（普通攻擊改身上起手閃光、招式預警出手前才出現、同色重疊合併、底色變淡）
+ * 舊版    : r3.197.0  (2026-11-28)　r3.197.0：敵人招式改播手繪素材（近戰爪痕／揮擊弧光、法球、地爆、重踩震波）
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：重擊時一般妖怪後仰約 0.2 秒；妖怪互相推開（被吸住、擊退中先不推，結束後才散開）
  * 舊版    : r3.145.0  (2026-11-27)　r3.145.0：預警調淡（底色約減半、圖示平常 30%，出手前才亮）
  * 舊版    : r3.127.2  (2026-11-27)　r3.127.2：突進（踏步斬）、群撲、盾擊改約主角跑速 1.1 倍，巨體衝撞 1.3 倍（原本 3～5 倍）
@@ -65,11 +66,26 @@
   function art(u, n, fi, col, x, y, sx, sy, rot, a) { const T = G.BOSS && G.BOSS.tinted; if (!T) return; const [c, fr] = T(u, n, fi, col), ctx = G.ctx; ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); if (rot) ctx.rotate(rot); ctx.scale(sx, sy); ctx.drawImage(c, -fr[4], -fr[5]); ctx.restore(); }
   function drawWarn(t, u) { const ctx = G.ctx, q = Math.min(1, t.t / t.life), pul = (0.3 + 0.5 * Math.max(0, (q - 0.65) / 0.35)) * (0.85 + 0.15 * Math.sin(t.t * 0.35));   /* r3.145.0：預警調淡，出手前 35% 才變亮 */
     if (t.k === 'lane') { const ang = Math.atan2(t.y1 - t.y0, t.x1 - t.x0), L = Math.hypot(t.x1 - t.x0, t.y1 - t.y0), bh = t.w * 0.6;
-      ctx.save(); ctx.translate(t.x0, t.y0); ctx.rotate(ang); ctx.fillStyle = `rgba(${t.col},${0.07 + 0.17 * q})`; ctx.fillRect(0, -bh / 2, L * q, bh); ctx.restore();
-      if (u) art(u, 'fx_warn_line', 0, t.col, (t.x0 + t.x1) / 2, (t.y0 + t.y1) / 2, L / 610, bh / 88, ang, pul); return; }
-    ctx.save(); ctx.fillStyle = `rgba(${t.col},${0.05 + 0.15 * q})`; ctx.beginPath(); ctx.ellipse(t.x, t.y, t.r * q, t.r * 0.42 * q, 0, 0, 6.283); ctx.fill(); ctx.restore();
-    if (!u) return; if (t.r <= HH() * 0.8) { const fi = Math.min(3, Math.floor(q / 0.35 * 4)), k = 2 * t.r / 80; art(u, 'fx_warn_target', fi, t.col, t.x, t.y, k, k * 0.42, 0, pul); }
-    else { const k = 2 * t.r / 300; art(u, 'fx_warn_circle', 0, t.col, t.x, t.y, k, k * 0.42, 0, pul); } }
+      if (u) art(u, 'fx_warn_line', 0, t.col, (t.x0 + t.x1) / 2, (t.y0 + t.y1) / 2, L / 610, bh / 88, ang, pul * (t._vis || 0)); return; }
+    if (!u) return; const pv = pul * (t._vis || 0); if (t.r <= HH() * 0.8) { const fi = Math.min(3, Math.floor(q / 0.35 * 4)), k = 2 * t.r / 80; art(u, 'fx_warn_target', fi, t.col, t.x, t.y, k, k * 0.42, 0, pv); }
+    else { const k = 2 * t.r / 300; art(u, 'fx_warn_circle', 0, t.col, t.x, t.y, k, k * 0.42, 0, pv); } }
+  /* r3.198.0：地面預警減量——
+   * A 普通攻擊（近戰、遠程單發）不畫地面，改成怪物身上起手閃光＋紅色氣焰（越接近出手越亮，出手前再閃一次）；
+   * B 招式預警在出手前 45% 才出現（原本一起手就畫）；
+   * C 同色預警疊在一起時合成一塊，不再越疊越深；
+   * D 底色改成很淡，只有出手前一瞬間才填亮，平常以邊框圖為主。 */
+  const SHOW = 0.55;
+  function halo(t) { const e = t.e; if (!e || e.hp <= 0 || e.st !== 'atk') return; const ctx = G.ctx, q = Math.min(1, t.t / t.life), k = HH() * S(e.y) * Math.min(1.8, e.ratio || 1), x = e.x + e.face * k * 0.12, y = e.y - k * 0.55, R = k * 0.58, a = 0.05 + 0.24 * q * q;   /* 氣焰縮小、調淡：一群怪同時起手時不會連成一片紅霧 */
+    const g = ctx.createRadialGradient(x, y, R * 0.15, x, y, R); g.addColorStop(0, `rgba(255,96,56,${a})`); g.addColorStop(0.6, `rgba(230,50,36,${a * 0.55})`); g.addColorStop(1, 'rgba(230,50,36,0)'); ctx.save(); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, R * 0.8, R, 0, 0, 6.283); ctx.fill(); ctx.restore();
+    const late = t.life > 18 && t.t >= t.life - 10; if ((!t._g1 || (late && !t._g2)) && G.KF && G.KF.use) { if (late) t._g2 = 1; t._g1 = 1; try { G.KF.use('ember', () => G.KF.glint(e.x + e.face * k * 0.3, e.y, 0.8 * Math.min(1.8, e.ratio || 1), late ? 0.5 : 0.34, late ? 10 : 12)); } catch (x2) {} } }
+  function drawAll(u) { const ctx = G.ctx, GP = {};
+    for (const t of W) { if (t.basic) { halo(t); continue; } const q = Math.min(1, t.t / t.life); t._vis = 0; if (q < SHOW) continue; const vis = Math.min(1, (t.t - t.life * SHOW + 1) / 4), fin = t.life - t.t <= 5; t._vis = vis;
+      const g = GP[t.col] || (GP[t.col] = { p: new Path2D(), a: 0 }); g.a = Math.max(g.a, vis * (fin ? 0.26 : u ? 0.06 : 0.12));
+      if (t.k === 'lane') { const dx = t.x1 - t.x0, dy = t.y1 - t.y0, L = Math.hypot(dx, dy) || 1, h = t.w * 0.3, ux = dx / L, uy = dy / L, nx = -uy * h, ny = ux * h; g.p.moveTo(t.x0 - nx, t.y0 - ny); g.p.lineTo(t.x1 - nx, t.y1 - ny); g.p.lineTo(t.x1 + nx, t.y1 + ny); g.p.lineTo(t.x0 + nx, t.y0 + ny); g.p.closePath(); }
+      else { g.p.moveTo(t.x + t.r, t.y); g.p.ellipse(t.x, t.y, t.r, t.r * 0.42, 0, 0, 6.283); g.p.closePath(); } }
+    for (const c in GP) { ctx.save(); ctx.fillStyle = `rgba(${c},${GP[c].a.toFixed(3)})`; ctx.fill(GP[c].p, 'nonzero'); ctx.restore(); }
+    for (const t of W) if (!t.basic && t._vis > 0) drawWarn(t, u); }
+
   /* ======================= 4. 招式 ======================= */
   const dist = e => Math.hypot(H.x - e.x, (H.y - e.y) * 1.6) / (HH() * S(e.y));
   const el = e => !!e.elite, wk = (e, f) => Math.round(f * (el(e) ? 0.8 : 1)), cd2 = (e, f) => Math.round(f * (el(e) ? 0.5 : 1));
@@ -202,7 +218,7 @@
   (function hkH() { if (!G.heroStep) return setTimeout(hkH, 50); const hs0 = G.heroStep; G.heroStep = function () {
       for (let i = W.length - 1; i >= 0; i--) { const t = W[i]; t.t++; if (t.t >= t.life || (t.e && (t.e.st === 'dead' || !(t.e.hp > 0) || (t.basic && t.e.st !== 'atk')))) W.splice(i, 1); }
       if (ORB.length) orbStep(); if (H._stn > 0) { H._stn--; return; } return hs0.apply(this, arguments); }; })();   /* r3.112.0：盾擊暈眩＝主角停 0.5 秒 */
-  (function hkD() { if (!G.drawLoot) return setTimeout(hkD, 50); const d0 = G.drawLoot; G.drawLoot = function () { if (W.length) { const u2 = G.ANIM.get('x2_boss'); if (!u2 && G.VX && G.VX.x2) G.VX.x2('x2_boss'); for (const t of W) drawWarn(t, u2 && u2.fx && u2.fx.fx_warn_circle ? u2 : null); }
+  (function hkD() { if (!G.drawLoot) return setTimeout(hkD, 50); const d0 = G.drawLoot; G.drawLoot = function () { if (W.length) { const u2 = G.ANIM.get('x2_boss'); if (!u2 && G.VX && G.VX.x2) G.VX.x2('x2_boss'); drawAll(u2 && u2.fx && u2.fx.fx_warn_circle ? u2 : null); }
       d0.apply(this, arguments); if (ORB.length) orbDraw(); }; })();
   /* ======================= 5. 妖怪村入口 ======================= */
   let tk = 0; (function hkY() { if (!G.STORY || !G.STORY.step) return setTimeout(hkY, 60); const st0 = G.STORY.step.bind(G.STORY); G.STORY.step = function () { st0();
