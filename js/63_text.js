@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 63_text.js
- * Version : r3.56.0  (2026-11-24)　r3.56.0：封印檢查改成找封印石旁的小雪說話、對話時鏡頭移到封印石　r3.53.0：章末封印檢查改在後山封印石前觸發（回神社只提示、加指引）　r3.27.7：party 條件改為「在出戰位上」；還沒加入的角色才看畫面上有沒有同名 NPC（劇情登場）　r3.27.6：條件新增 joined／notjoined（夥伴已／未加入）、ending（true／storm／nameless）；原台詞函式先執行（結局計算與旗標寫入在前）再挑新台詞　r3.27.4：條件新增 gte／lt（數值：xue 小雪好感、bond 人妖羈絆）　r3.27.2：條件新增 notchoice、done、notdone　r3.27.0：保留原台詞裡的指令（夥伴加入等）　r3.26.1：選項結果台詞忽略自身抉擇條件；記錄未套用的 slot
+ * Version : r3.164.0  (2026-11-27)　r3.164.0：修正——站在城裡路人旁邊時，劇情過場被換成那個路人的一句閒聊（過場裡的旗標也沒寫入）
+ * 舊版    : r3.56.0  (2026-11-24)　r3.56.0：封印檢查改成找封印石旁的小雪說話、對話時鏡頭移到封印石　r3.53.0：章末封印檢查改在後山封印石前觸發（回神社只提示、加指引）　r3.27.7：party 條件改為「在出戰位上」；還沒加入的角色才看畫面上有沒有同名 NPC（劇情登場）　r3.27.6：條件新增 joined／notjoined（夥伴已／未加入）、ending（true／storm／nameless）；原台詞函式先執行（結局計算與旗標寫入在前）再挑新台詞　r3.27.4：條件新增 gte／lt（數值：xue 小雪好感、bond 人妖羈絆）　r3.27.2：條件新增 notchoice、done、notdone　r3.27.0：保留原台詞裡的指令（夥伴加入等）　r3.26.1：選項結果台詞忽略自身抉擇條件；記錄未套用的 slot
  * 變更    : r3.26.0 新增。對話擴寫匯入（a/text/chNN.json，格式見交接包 00 說明）。
  *           ・任務 slot（qid:giver／:sN／:sN:optM／:sN:spotM／:after、doma:qid）→ 開機時直接換掉任務資料的台詞（函式，播放當下才判斷條件）。
  *           ・寫死在流程裡的台詞（06_story_ch1／52_hub／11_npclife）→ 對話開始時，以「第一句原文」比對，整段連續台詞換掉；選項與動作保留。
@@ -68,7 +69,7 @@
     tnI[name] = (tnI[name] || 0) + 1; return [L[tnI[name] % L.length]]; }
   const st0 = G.DLG.start.bind(G.DLG);
   G.DLG.start = function (list, done) { try { if (Array.isArray(list) && (Object.keys(T.keys).length || T.slots)) {
-        const nr = G.UI.near && G.UI.near.amb; if (nr && G.SC.id === 'hub_city' && !list.some(e => e && e.choice)) { const t = townLine(nr.name); if (t) list = t; }
+        const nr = G.UI.near && G.UI.near.amb; if (nr && G.SC.id === 'hub_city' && !list.some(e => e && (e.choice || e.do)) && list.length <= 3 && list.every(e => !e || !e.who || e.who === nr.name)) {   /* r3.164.0：只換「跟這個路人閒聊」的對話；劇情過場（含指令、多人、長段）不再被換掉 */ const t = townLine(nr.name); if (t) list = t; }
         else list = rewrite(list); } } catch (e) { console.warn('text', e); }
     return st0(list, done); };
   /* ---------- 章末封印檢查（r3.53.0：改在後山封印石前觸發；回神社只提示） ---------- */
