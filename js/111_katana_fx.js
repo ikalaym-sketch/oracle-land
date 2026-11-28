@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 111_katana_fx.js
- * Version : r3.227.0  (2026-11-28)　r3.227.0：普攻的刀光、突刺光、命中碎光改走 168_wfx
+ * Version : r3.232.0  (2026-11-28)　r3.232.0：招式的刀光改走 168_wfx 的新軌跡（秘傳不變）
+ * 舊版    : r3.227.0  (2026-11-28)　r3.227.0：普攻的刀光、突刺光、命中碎光改走 168_wfx
  * 舊版    : r3.194.0  (2026-11-28)　和弓普攻命中光效縮小（妖怪不再整隻染金）
  * 舊版    : r3.190.0  (2026-11-28)　和弓命中改用射穿表現（KF.pierce 金色）
  * 舊版    : r3.186.0  (2026-11-28)　長槍刺擊命中改用 116 的刺穿表現（KF.pierce）
@@ -75,7 +76,7 @@
     if (z !== undefined) add(life * 0.6, 'o', (ctx, u, q) => { ctx.globalCompositeOperation = 'screen'; spr(ctx, C.T.gd, x, y - z * k, r * k * 1.6, r * k * 1.6, (a || 0.5) * 0.45 * (1 - eo3(q))); }); }
   /* ---------- 刀光：實心漸細月牙 ---------- */
   /* o：x,y 腳底；cy 弧心高（身高倍）；f 面向；r 半徑；sq 透視壓扁；rot 弧面旋轉；a0→a1 掃過；w 厚；dur 掃過格數；life；tier 0 招式／1 技／2 秘傳；follow 跟著主角 */
-  function smear(o) { if (G.WFX && G.WFX.norm()) return G.WFX.smear(o);   /* r3.227.0：普攻改走 168_wfx */ const C = cur, x3 = X3(); if (x3) o = Object.assign({}, o, { w: (o.w || 0.3) * 1.3 }, (o.tier || 0) > 0 ? { life: Math.round((o.life || (o.dur || 4) + 9) * 1.5) } : null);   /* r3.172.0：技／秘傳的刀光多停留 50%（原本一閃而過看不清） */ const y = o.y, k = K(y), dur = o.dur || 4, life = o.life || dur + 9, span = o.a1 - o.a0, dir = Math.sign(span) || 1, trailMax = Math.min(Math.abs(span), o.trail || 2.6), sq = o.sq === undefined ? 0.6 : o.sq, rot = o.rot || 0, cs = Math.cos(rot), sn = Math.sin(rot), tier = o.tier || 0;
+  function smear(o) { if (G.WFX && G.WFX.norm()) return G.WFX.smear(o); if (G.WFX && G.WFX.mv && G.WFX.mv(o)) return G.WFX.msmear(o);   /* r3.232.0：招式也走新軌跡（168 排除秘傳） */   /* r3.227.0：普攻改走 168_wfx */ const C = cur, x3 = X3(); if (x3) o = Object.assign({}, o, { w: (o.w || 0.3) * 1.3 }, (o.tier || 0) > 0 ? { life: Math.round((o.life || (o.dur || 4) + 9) * 1.5) } : null);   /* r3.172.0：技／秘傳的刀光多停留 50%（原本一閃而過看不清） */ const y = o.y, k = K(y), dur = o.dur || 4, life = o.life || dur + 9, span = o.a1 - o.a0, dir = Math.sign(span) || 1, trailMax = Math.min(Math.abs(span), o.trail || 2.6), sq = o.sq === undefined ? 0.6 : o.sq, rot = o.rot || 0, cs = Math.cos(rot), sn = Math.sin(rot), tier = o.tier || 0;
     const P = (a, r, cx, cy) => { const lx = Math.cos(a) * r, ly = Math.sin(a) * r * sq; return [cx + (lx * cs - ly * sn) * o.f, cy + (lx * sn + ly * cs)]; };
     const nM = o.motes !== undefined ? o.motes : 5 + tier * 4, M = []; for (let i = 0; i < nM; i++) M.push({ v: rnd(0.15, 1), dr: rnd(0.1, 0.45), up: rnd(0.05, 0.35), sz: rnd(0.04, 0.08), l: rnd(14, 24) });
     add(life + 26, 'o', (ctx, u) => { const cx = o.follow ? H.x : o.x, cy = y - (o.cy === undefined ? 0.55 : o.cy) * k, R = o.r * k, W = (o.w || 0.3) * k;

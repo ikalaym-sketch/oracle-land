@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 168_wfx.js
- * Version : r3.230.0  (2026-11-28)　r3.230.0：弧線可給技／特技用（o.free），匯出 arc
+ * Version : r3.232.0  (2026-11-28)　r3.232.0：招式（12 招）的揮砍軌跡也改用普攻的新畫法（打刀／野太刀／薙刀；秘傳不變）
+ * 舊版    : r3.230.0  (2026-11-28)　r3.230.0：弧線可給技／特技用（o.free），匯出 arc
  * 舊版    : r3.227.0  (2026-11-28)　r3.227.0：新增。四把近戰武器的普攻新畫法（試作頁第五版定案）
  * 內容    : 打刀／野太刀／薙刀／長槍的普攻特效：
  *           ・軌跡＝每段普攻各自設計的弧線，寬度等於刀身（外緣實、往握柄漸淡），不描邊、沒有白芯。
@@ -111,5 +112,8 @@ G.WFX = (function () {
         else if (l.k === 'bolt') part(ctx, l, x + l.dx, y + l.dy, u, a, k, f);
         else part(ctx, l, x + (l.k === 'flame' ? l.vx * u : l.vx * u * 1.2), y + l.vy * u + (l.k === 'flame' ? 0 : 0.04 * u * u), u, a, k, f); } }); return true; }
   const norm = () => { const A = G.H.act; return !!(A && A.mvx && A.mvx.norm && WP[wid()]); };
-  return { norm, hit, WP, arc, smear: o => arc(o, o.r || 1.2), swing: o => arc(Object.assign({}, o, { sq: o.sq || 1 }), o.R || 1.7), spear: thrust, stab: o => thrust(Object.assign({ len: (o.len || o.r || 1.3) }, o)) };
+  /* r3.232.0：招式（12 招）也用普攻的新軌跡（秘傳不變）——主角正在出的動作不是普攻、也不是技／特技／奧義，且是打刀／野太刀／薙刀 */
+  const mv = o => { const A = G.H.act, w = wid(); if (!A || !A.mvx || A.mvx.norm || A.mvx.hiden || !WP[w] || w === 'yari') return false;   /* 秘傳維持原樣 */ if (o && !o.follow && Math.abs((o.x || 0) - G.H.x) > 4) return false; const U = G.MV2 && G.MV2.U && G.MV2.U[w]; if (U) for (const k in U) if (U[k] === A.mvx.def) return false; return true; };
+  const msmear = o => arc(Object.assign({}, o, { free: 1, dur: Math.max(3, Math.min(8, o.dur || 4)), sq: o.sq === undefined ? 0.6 : o.sq }), o.r || 1.2);
+  return { norm, mv, msmear, hit, WP, arc, smear: o => arc(o, o.r || 1.2), swing: o => arc(Object.assign({}, o, { sq: o.sq || 1 }), o.R || 1.7), spear: thrust, stab: o => thrust(Object.assign({ len: (o.len || o.r || 1.3) }, o)) };
 })();
