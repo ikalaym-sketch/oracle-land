@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 55_wpn_v2.js
- * Version : r3.19.5  （r3.19.5：走／跑恢復逐動作校正，跑步不再變大；整體仍 ×0.9）
+ * Version : r3.227.0  (2026-11-28)　r3.227.0：四把近戰普攻判定距離對齊新軌跡
+ * 舊版    : r3.19.5  （r3.19.5：走／跑恢復逐動作校正，跑步不再變大；整體仍 ×0.9）
  * 舊版    : r3.18.2
  * 舊版    : r3.16.0  (2026-11-14)
  * 變更    : r3.12.0 新增。主角武器重做（依「武器招式重設計規格」，一次一種武器；本版：打刀）。
@@ -68,7 +69,7 @@
 
   /* ---------- 4. 普攻判定（身高 H 為單位；reach 換回合約單位 ÷1.4） ---------- */
   const EVP = { teppo: { normal_1: { pk: 'lead', d: 7 }, combo_finisher_1: { pk: 'pellet', d: 3, arc: 60, pellets: 5, kb: 0.5 } },
-    yumi: { normal_1: { pk: 'arrow', d: 9 }, normal_2: { pk: 'arrow', d: 9 }, combo_finisher_1: { pk: 'arrow', d: 10, pierce: 3, trail: 1 } }, katana: { normal_1: { d: 1.0, arc: 90 }, normal_2: { d: 1.0, arc: 90 }, normal_3: { d: 1.0, arc: 90 }, combo_finish_1: { d: 1.3, arc: 120, kb: 0.5 } } };
+    yumi: { normal_1: { pk: 'arrow', d: 9 }, normal_2: { pk: 'arrow', d: 9 }, combo_finisher_1: { pk: 'arrow', d: 10, pierce: 3, trail: 1 } }, katana: { normal_1: { d: 1.3, arc: 90 }, normal_2: { d: 1.3, arc: 90 }, normal_3: { d: 1.3, arc: 90 }, combo_finish_1: { d: 1.4, arc: 120, kb: 0.5 } } };   /* r3.227.0：普攻判定距離對齊新軌跡（1.0 → 1.3） */
   W.patchAct = function (name, r) { r._p = 1; const P = (EVP[W.curId()] || {})[name]; if (!P || P.pk || !r.c || !r.c.ev) return;
     r.c = Object.assign({}, r.c, { ev: r.c.ev.map(e => Object.assign({}, e, { reach: P.d * HH() / 1.4, arc: P.arc * Math.PI / 180 }, P.kb ? { kb: P.kb } : {})) }); };
 
@@ -297,7 +298,7 @@
   Object.assign(MAPMV, { yari: { double_thrust: 'long_pierce', fixed_line: 'shaft_gate', focused_point: 'shaft_break', intercept_thrust: 'shaft_gate', pulling_retreat: 'long_pierce', rising_point: 'shaft_break', side_gap: 'long_pierce', tip_probe: 'long_pierce' },
     ono: { falling_ground: 'heavy_sweep', hook_probe: 'wedge_break', lifting_weight: 'heavy_sweep', low_pivot: 'heavy_sweep', peeling_drag: 'stepping_cleave', pivot_face: 'axe_brace', retreat_axe: 'axe_brace', shoulder_advance: 'stepping_cleave' } });
   for (const id of ['yari', 'ono']) { const w = W.BY[id]; w.mv = KEEP_MV[id].map(([i, n, k, u, cd]) => ({ id: i, n, k, u, cd })); w.MV = {}; for (const m of w.mv) w.MV[m.id] = m; }
-  Object.assign(EVP, { yari: { normal_1: { shape: 'line', d: 1.8, tfx: 1 }, normal_2: { shape: 'line', d: 1.8, tfx: 1 }, combo_finisher_1: { shape: 'line', d: 1.8, tfx: 1 }, combo_finisher_2: { shape: 'line', d: 2.2, kb: 1, tfx: 2 } },
+  Object.assign(EVP, { yari: { normal_1: { shape: 'line', d: 2.0, tfx: 1 }, normal_2: { shape: 'line', d: 2.0, tfx: 1 }, combo_finisher_1: { shape: 'line', d: 2.0, tfx: 1 }, combo_finisher_2: { shape: 'line', d: 2.2, kb: 1, tfx: 2 } },
     ono: { normal_1: { d: 1.2, arc: 100, bleed: 1 }, normal_2: { d: 1.2, arc: 100, bleed: 1 }, combo_finisher_1: { shape: 'circle', d: 0.9, cx: 0.8, crack: 1 } } });
   const pa0 = W.patchAct; W.patchAct = function (name, r) { pa0(name, r); const P = (EVP[W.curId()] || {})[name]; if (!P || P.pk || !r.c || !r.c.ev || !P.shape) return; r.c = Object.assign({}, r.c, { ev: r.c.ev.map(e => Object.assign({}, e, { shape: P.shape }, P.cx ? { cx: P.cx } : {})) }); };
   /* 普攻追加：槍尖刺光（從槍尖往前）、下劈裂口 */
@@ -532,8 +533,8 @@
     naginata: { around_diagonal: 'wide_leaf', fan_sweep: 'wide_leaf', retreat_swallow: 'gliding_wing', reverse_leaf: 'low_leaf', reverse_whirl: 'wide_leaf', side_wave: 'gliding_wing', sinking_leaf: 'low_leaf', upright_deny: 'wing_brace' },
     kusarigama: { chain_recall: 'chain_probe', close_sickle: 'low_reap', diagonal_cast: 'chain_probe', diagonal_loop: 'chain_arc', hand_exchange: 'low_reap', line_sickle: 'chain_arc', pull_retreat: 'retreat_tether', pulling_wrist: 'chain_probe' } });
   for (const id of ['nodachi', 'naginata', 'kusarigama']) { const w = W.BY[id]; w.mv = KEEP_MV[id].map(([i, n, k, u, cd]) => ({ id: i, n, k, u, cd })); w.MV = {}; for (const m of w.mv) w.MV[m.id] = m; }
-  Object.assign(EVP, { nodachi: { normal_1: { d: 1.3, arc: 100 }, normal_2: { d: 1.3, arc: 100 }, normal_3: { d: 1.6, arc: 140, kb: 1 } },
-    naginata: { normal_1: { d: 1.5, arc: 120 }, normal_2: { d: 1.5, arc: 120 }, combo_finisher_1: { shape: 'circle', d: 1.3, ring: 1 }, combo_finisher_2: { d: 1.7, arc: 160, kb: 1 } },
+  Object.assign(EVP, { nodachi: { normal_1: { d: 1.85, arc: 100 }, normal_2: { d: 1.85, arc: 100 }, normal_3: { d: 2.0, arc: 140, kb: 1 } },
+    naginata: { normal_1: { d: 2.05, arc: 120 }, normal_2: { d: 2.05, arc: 120 }, combo_finisher_1: { shape: 'circle', d: 1.7, ring: 1 }, combo_finisher_2: { d: 2.2, arc: 160, kb: 1 } },
     kusarigama: { normal_1: { d: 1.2, arc: 90 }, normal_2: { d: 1.2, arc: 90 }, normal_3: { d: 1.2, arc: 90 }, combo_finisher_1: { shape: 'line', d: 3, chain: 1, slow: 20 }, combo_finisher_2: { shape: 'line', d: 3, chain: 1, drag: 1.5 } } });
   const BF3 = /^fx_tier_(nodachi|naginata|kusarigama)_/; const sp2 = G.spawnFx;
   G.spawnFx = function (name, tier, x, y, face, s) { if (name === 'swordarr') return VF('swordarr', { x, y: y + 14, r: HH() * 2 * s0(), life: 42 }) && null;

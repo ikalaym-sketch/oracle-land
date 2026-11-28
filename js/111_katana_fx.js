@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 111_katana_fx.js
- * Version : r3.194.0  (2026-11-28)　和弓普攻命中光效縮小（妖怪不再整隻染金）
+ * Version : r3.227.0  (2026-11-28)　r3.227.0：普攻的刀光、突刺光、命中碎光改走 168_wfx
+ * 舊版    : r3.194.0  (2026-11-28)　和弓普攻命中光效縮小（妖怪不再整隻染金）
  * 舊版    : r3.190.0  (2026-11-28)　和弓命中改用射穿表現（KF.pierce 金色）
  * 舊版    : r3.186.0  (2026-11-28)　長槍刺擊命中改用 116 的刺穿表現（KF.pierce）
  * 舊版    : r3.176.0  (2026-11-28)　r3.176.0：特效第三版套用到全部色盤（薙刀、長槍、和弓）
@@ -74,7 +75,7 @@
     if (z !== undefined) add(life * 0.6, 'o', (ctx, u, q) => { ctx.globalCompositeOperation = 'screen'; spr(ctx, C.T.gd, x, y - z * k, r * k * 1.6, r * k * 1.6, (a || 0.5) * 0.45 * (1 - eo3(q))); }); }
   /* ---------- 刀光：實心漸細月牙 ---------- */
   /* o：x,y 腳底；cy 弧心高（身高倍）；f 面向；r 半徑；sq 透視壓扁；rot 弧面旋轉；a0→a1 掃過；w 厚；dur 掃過格數；life；tier 0 招式／1 技／2 秘傳；follow 跟著主角 */
-  function smear(o) { const C = cur, x3 = X3(); if (x3) o = Object.assign({}, o, { w: (o.w || 0.3) * 1.3 }, (o.tier || 0) > 0 ? { life: Math.round((o.life || (o.dur || 4) + 9) * 1.5) } : null);   /* r3.172.0：技／秘傳的刀光多停留 50%（原本一閃而過看不清） */ const y = o.y, k = K(y), dur = o.dur || 4, life = o.life || dur + 9, span = o.a1 - o.a0, dir = Math.sign(span) || 1, trailMax = Math.min(Math.abs(span), o.trail || 2.6), sq = o.sq === undefined ? 0.6 : o.sq, rot = o.rot || 0, cs = Math.cos(rot), sn = Math.sin(rot), tier = o.tier || 0;
+  function smear(o) { if (G.WFX && G.WFX.norm()) return G.WFX.smear(o);   /* r3.227.0：普攻改走 168_wfx */ const C = cur, x3 = X3(); if (x3) o = Object.assign({}, o, { w: (o.w || 0.3) * 1.3 }, (o.tier || 0) > 0 ? { life: Math.round((o.life || (o.dur || 4) + 9) * 1.5) } : null);   /* r3.172.0：技／秘傳的刀光多停留 50%（原本一閃而過看不清） */ const y = o.y, k = K(y), dur = o.dur || 4, life = o.life || dur + 9, span = o.a1 - o.a0, dir = Math.sign(span) || 1, trailMax = Math.min(Math.abs(span), o.trail || 2.6), sq = o.sq === undefined ? 0.6 : o.sq, rot = o.rot || 0, cs = Math.cos(rot), sn = Math.sin(rot), tier = o.tier || 0;
     const P = (a, r, cx, cy) => { const lx = Math.cos(a) * r, ly = Math.sin(a) * r * sq; return [cx + (lx * cs - ly * sn) * o.f, cy + (lx * sn + ly * cs)]; };
     const nM = o.motes !== undefined ? o.motes : 5 + tier * 4, M = []; for (let i = 0; i < nM; i++) M.push({ v: rnd(0.15, 1), dr: rnd(0.1, 0.45), up: rnd(0.05, 0.35), sz: rnd(0.04, 0.08), l: rnd(14, 24) });
     add(life + 26, 'o', (ctx, u) => { const cx = o.follow ? H.x : o.x, cy = y - (o.cy === undefined ? 0.55 : o.cy) * k, R = o.r * k, W = (o.w || 0.3) * k;
@@ -119,7 +120,7 @@
     if (o.motes !== 0) c_mLine(o.x, y, o.z || 0.55, o.ang, o.len, o.motes || 8, dur + (life - dur) * 0.5); }
   function c_mLine(x, y, z, ang, len, n, delay) { const k = K(y); for (let i = 0; i < n; i++) { const t = (i + 0.5) / n - 0.5; motes(x + Math.cos(ang) * t * len * k, y, z - Math.sin(ang) * t * len, 1, { sp: 0.6, life: 22, stag: delay }); } }
   /* ---------- 突刺光：尖錐由身前射出 ---------- */
-  function stab(o) { const C = cur, x3 = X3(); if (x3) o = Object.assign({}, o, { w: (o.w || 0.12) * 1.7, life: Math.round((o.life || 12) * 1.3) });   /* r3.172.0：突刺光加粗（踏步引刃、一息截隙原本只剩一條細線） */ const y = o.y, k = K(y), dur = o.dur || 3, life = o.life || 12;
+  function stab(o) { if (G.WFX && G.WFX.norm()) return G.WFX.stab(o); const C = cur, x3 = X3(); if (x3) o = Object.assign({}, o, { w: (o.w || 0.12) * 1.7, life: Math.round((o.life || 12) * 1.3) });   /* r3.172.0：突刺光加粗（踏步引刃、一息截隙原本只剩一條細線） */ const y = o.y, k = K(y), dur = o.dur || 3, life = o.life || 12;
     add(life + 4, 'o', (ctx, u) => { const ext = eo5(cl(u / dur, 0, 1)), fade = u <= dur ? 1 : cl(1 - (u - dur) / (life - dur), 0, 1), L = o.len * k * (0.25 + 0.75 * ext), b = L * 0.85 * ei2(1 - fade), w = (o.w || 0.12) * k * (0.4 + 0.6 * fade);
       if (fade <= 0) return; ctx.translate(o.x + o.f * 0.25 * k, y - (o.cy || 0.45) * k); ctx.scale(o.f, 1); ctx.rotate(o.ang || 0);
       ctx.globalCompositeOperation = 'screen'; for (const t of [0.35, 0.65, 0.92]) spr(ctx, C.T.gd, L * t, 0, w * 5, w * 4, 0.35 * fade);
@@ -232,8 +233,9 @@
     else if (norm) { G.hitstop = Math.max(G.hitstop || 0, HSN[lv] || 1); if (lv === 'heavy') SC.shake = Math.max(SC.shake || 0, 1); }   // 打刀普攻：沿用原本的輕停頓，只換色
     else { const f = HSF[lv] || HSF.mid; G.hitstop = Math.max(G.hitstop || 0, f[0]); if (f[1]) SC.shake = Math.max(SC.shake || 0, f[1]); }
     const pw = (HSF[lv] || HSF.mid)[2] * (norm ? 0.7 : 1) + (nod ? 0.6 : 0);
-    e.flash = (e._vxf && G.playT - e._vxf < 8) ? 1 : 2; e._vxf = G.playT; if (PAL[pn]) { e._hf = { t: G.t, c: (pn === 'lance' || pn === 'holy') ? PAL[pn].deep : PAL[pn].mid, k: (pn === 'moon' || pn === 'ember') ? 1 : (pn === 'holy' && norm) ? 0.22 : 0.55, pw: Math.min(3, pw), d: H.face };   /* 淺色色盤（白金、金白）用深色、減半，不然妖怪整隻變白 */ if (!norm && kind === 'cut') use(pn, () => scar(e.x, e.y, H.face, pw)); }   /* r3.170.0：受擊反應（染色閃光＋壓扁回彈）＋地面刀痕 */
-    if (pn === 'holy' && kind === 'arrow' && G.KF.pierce) { const f = H.face, kk = K(e.y); G.KF.pierce(e.x + f * 0.2 * kk * (e.ratio || 1), e.y - z * kk - (e.lz || 0), f, 0, norm ? 0.6 : Math.min(1.4, 0.7 + 0.25 * pw), ['70,44,10', '255,206,120', '255,252,240']); }   /* r3.190.0：和弓命中改成「射穿」的錐形金光與碎光（原本的羽毛扇拿掉） */
+    e.flash = (e._vxf && G.playT - e._vxf < 8) ? 1 : 2; e._vxf = G.playT; if (PAL[pn]) { e._hf = norm && G.WFX && G.WFX.WP[G.WPN.curId()] ? { t: G.t, c: '255,250,240', k: 0.16, pw: 0.6, d: H.face } : { t: G.t, c: (pn === 'lance' || pn === 'holy') ? PAL[pn].deep : PAL[pn].mid, k: (pn === 'moon' || pn === 'ember') ? 1 : (pn === 'holy' && norm) ? 0.22 : 0.55, pw: Math.min(3, pw), d: H.face };   /* 淺色色盤（白金、金白）用深色、減半，不然妖怪整隻變白 */ if (!norm && kind === 'cut') use(pn, () => scar(e.x, e.y, H.face, pw)); }   /* r3.170.0：受擊反應（染色閃光＋壓扁回彈）＋地面刀痕 */
+    if (norm && G.WFX && G.WFX.WP[G.WPN.curId()] && G.WFX.hit(e, z, pw)) { /* r3.227.0：普攻命中改主題碎光 */ }
+    else if (pn === 'holy' && kind === 'arrow' && G.KF.pierce) { const f = H.face, kk = K(e.y); G.KF.pierce(e.x + f * 0.2 * kk * (e.ratio || 1), e.y - z * kk - (e.lz || 0), f, 0, norm ? 0.6 : Math.min(1.4, 0.7 + 0.25 * pw), ['70,44,10', '255,206,120', '255,252,240']); }   /* r3.190.0：和弓命中改成「射穿」的錐形金光與碎光（原本的羽毛扇拿掉） */
     else if (pn === 'lance' && G.KF.pierce) { const f = H.face, kk = K(e.y); G.KF.pierce(e.x + f * 0.28 * kk * (e.ratio || 1), (e.lz > 4 ? e.y - z * kk - e.lz : H.y - 0.55 * K(H.y) + (e.y - H.y) * 0.5), f, kind === 'pierce' ? 0 : -0.55, Math.min(1.5, 0.75 + 0.25 * pw)); }   /* r3.186.0：長槍刺擊改用「刺穿」表現（背後噴出錐形碎光） */
     else use(pn, () => { burst(e.x, e.y, z, pw, kind === 'pierce' ? (H.face > 0 ? 0 : Math.PI) : (H.face > 0 ? -0.4 : Math.PI + 0.4)); if (pn === 'lance' && kind === 'pierce') { const f = H.face; motes(e.x + f * 0.25 * K(e.y), e.y, z, norm ? 3 : 6, { ang: f > 0 ? 0 : Math.PI, spread: 0.35, sp: 1.8, life: 18 }); }   // 貫穿：碎光從敵人背後噴出
     if (pn === 'holy' && !norm) { glint(e.x, e.y, z, 0.42, 12); leaves(e.x, e.y, z, 3, { sp: 0.6, life: 40 }); }   /* r3.194.0：普攻命中不再加十字星與金羽 */   // 神聖：命中處十字星光＋金羽

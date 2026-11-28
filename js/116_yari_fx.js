@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 116_yari_fx.js
- * Version : r3.190.0  (2026-11-28)　r3.190.0：KF.pierce 可指定顏色（給和弓用）
+ * Version : r3.227.0  (2026-11-28)　r3.227.0：普攻突刺、槍擺改走 168_wfx
+ * 舊版    : r3.190.0  (2026-11-28)　r3.190.0：KF.pierce 可指定顏色（給和弓用）
  * 舊版    : r3.188.0  (2026-11-28)　r3.188.0：針山兩排時後排錯開半格、略小
  * 舊版    : r3.187.0  (2026-11-28)　r3.187.0：槍頭瘦小、黑邊變細、移動痕跡（光的拖痕、速度線、槍擺弧光）加大；飛行槍頭與巨槍換成同一套鋼色；不再參考角色動作圖
  * 舊版    : r3.186.0  (2026-11-28)　r3.186.0：突刺重做成「從手上的槍延伸出去的光槍」（鋼色、深色收邊、氣環、速度線、停頓再收）＋命中刺穿碎光；槍擺弧光同步改鋼色
@@ -76,7 +77,7 @@
         ctx.fillStyle = rgba(WHT, al); ctx.beginPath(); ctx.moveTo(L, 0); ctx.lineTo(0, -w); ctx.lineTo(-L * 0.4, 0); ctx.lineTo(0, w); ctx.closePath(); ctx.fill(); ctx.restore(); }
     });
     KF().use(col ? 'holy' : 'lance', () => KF().motes(x, y + 0.02 * k, 0, 4, { ang: f > 0 ? 0 : Math.PI, spread: 0.5, sp: 2.2, life: 14 })); }
-  function spear(o) { const f = o.face || o.f || 1, y = o.y, k = KF().K(y), big = o.big || 1, dur = Math.max(2, o.ext || o.dur || 2), quick = (o.life || 10) <= 7, hold = o.hold !== undefined ? o.hold + 1 : 3, rel = quick ? 3 : 6, life = dur + hold + rel;
+  function spear(o) { if (G.WFX && G.WFX.norm()) return G.WFX.spear(o);   /* r3.227.0：普攻改走 168_wfx */ const f = o.face || o.f || 1, y = o.y, k = KF().K(y), big = o.big || 1, dur = Math.max(2, o.ext || o.dur || 2), quick = (o.life || 10) <= 7, hold = o.hold !== undefined ? o.hold + 1 : 3, rel = quick ? 3 : 6, life = dur + hold + rel;
     const reach = (o.len || 1.8) * k * 0.95, HL = 0.4 * k * big, HW = 0.036 * k * big * (o.wd || 1), cy = o.cy || 0.55, ang = o.ang || 0, x0 = 0.08 * reach, hx = o.x + f * 0.1 * k, heavy = big >= 1.1 || !!o.shock, hy = y - cy * k, SW0 = 0.05 * k * big;
     KF().add(life + 1, 'o', (ctx, u) => { let tx, al = 1, xs = x0;
       if (u < dur) tx = reach * (0.35 + 0.65 * eo5((u + 1) / dur));
@@ -96,7 +97,7 @@
         for (const [col, aa] of [[C.mid, 0.85], [C.lite, 0.9]]) { ctx.fillStyle = rgba(col, aa * al); ctx.beginPath(); ctx.moveTo(out[0][0], out[0][1]); for (const p of out) ctx.lineTo(p[0], p[1]); for (let i = N; i >= 0; i--) ctx.lineTo(inn[i][0], inn[i][1]); ctx.closePath(); ctx.fill(); } } }); }
   /* ---------- 槍擺（槍花）：槍以手為支點擺動，槍尖在攻擊距離上畫出窄刀光；弧頭是沿槍身方向的槍頭槍氣 ---------- */
   /* o = x,y,f,cy, R（槍尖離手，身高倍）a0→a1（徑度，0＝正前、正值往下）dur w */
-  function swing(o) { const f = o.f, y = o.y, k = KF().K(y), cy = o.cy || 0.55, dur = o.dur || 4, R = o.R || 1.7, a0 = o.a0, a1 = o.a1, sq = o.sq || 1, hx = o.x + f * 0.1 * k, big = o.big || 1, HL = 0.4 * k * big, HW = 0.036 * k * big, life = dur + 9;
+  function swing(o) { if (G.WFX && G.WFX.norm()) return G.WFX.swing(o); const f = o.f, y = o.y, k = KF().K(y), cy = o.cy || 0.55, dur = o.dur || 4, R = o.R || 1.7, a0 = o.a0, a1 = o.a1, sq = o.sq || 1, hx = o.x + f * 0.1 * k, big = o.big || 1, HL = 0.4 * k * big, HW = 0.036 * k * big, life = dur + 9;
     const span = Math.min(Math.abs(a1 - a0), o.trail || 2.4), sg = a1 > a0 ? 1 : -1, W0 = (o.w || 0.2) * k * 0.95 * big;
     /* r3.186.0：槍擺——槍身以手為支點掃過去，槍尖拖出一道外緣銳利、往尾端漸細的鋼色弧光（深色襯底，白天也清楚） */
     KF().add(life, 'o', (ctx, u) => { const a = a0 + (a1 - a0) * eo3(cl(u / dur, 0, 1)), al = u <= dur ? 1 : 1 - ei2((u - dur) / 7); if (al <= 0.01) return; ctx.translate(hx, y - cy * k); ctx.scale(f, 1);
