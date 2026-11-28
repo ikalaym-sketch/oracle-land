@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 54_story_c.js
- * Version : r3.154.0  (2026-11-27)　r3.154.0：小雪「……」改成動作描述
+ * Version : r3.216.0  (2026-11-28)　r3.216.0：第 12 章颯、汐音的話依心事抉擇分版
+ * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：小雪「……」改成動作描述
  * 舊版    : r3.21.0  （r3.21.0：c9_m2 改找渡口時雨，不再另生重複的時雨）
  * 舊版    : r3.11.1  (2026-11-14)
  * 變更    : r3.11.1 神社「名冊」改稱「舊冊」（與第一章尋人告示區分）。
@@ -124,8 +125,8 @@
   Q.add({ id: 'c12_m1', ch: 12, main: true, title: '斷權鳥居', desc: '最後的路上，和每位夥伴說說話。', reward: { exp: 500, gold: 400 }, need: () => F().ch12,
     steps: [{ t: 'gather', map: 'W_R12_01', text: '和夥伴們說話', spots: [
       { at: 'west_arrival', dx: 140, label: '白丸', lines: [...丸('我一開始就說了，風的味道不對。', '……現在也不對。可是我不怕了。')] },
-      { at: 'center', dx: -80, label: '葛葉・颯', lines: () => [say('葛葉', '狐族的燈，借你照路。'), D('c9_s_hayate') ? say('颯', '師父沒救成的人，我替他救。') : say('颯', '……走吧。')] },
-      { at: 'east_arrival', dx: -160, label: '汐音・茨木', lines: () => [D('c10_s_shion') ? say('汐音', '娘在海裡等我。我要回去告訴她，我也做到了。') : say('汐音', '……我會守住小雪。'), G.PARTY && G.PARTY.joined && G.PARTY.joined('ibaraki') ? say('茨木', '道摩的帳，今天算清。') : say('蒼真', '（你想起沒有跟來的茨木。）')] }] }] });
+      { at: 'center', dx: -80, label: '葛葉・颯', lines: () => [say('葛葉', '狐族的燈，借你照路。'), D('c9_s_hayate') ? say('颯', Q.choice('hayate_end') === 'lend' ? '師父借出去的，我今天連本帶利拿回來。' : Q.choice('hayate_end') === 'live' ? '師父沒救成的人，我替他救。而且——兩個都活著回來。' : '師父沒救成的人，我替他救。') : say('颯', '……走吧。')] },
+      { at: 'east_arrival', dx: -160, label: '汐音・茨木', lines: () => [D('c10_s_shion') ? say('汐音', Q.choice('shion_end') === 'angry' ? '娘，我還在氣喔。所以妳要看到最後。' : '娘在海裡等我。我要回去告訴她，我也做到了。') : say('汐音', '……我會守住小雪。'), G.PARTY && G.PARTY.joined && G.PARTY.joined('ibaraki') ? say('茨木', '道摩的帳，今天算清。') : say('蒼真', '（你想起沒有跟來的茨木。）')] }] }] });
   Q.add({ id: 'c12_m2', ch: 12, main: true, after: 'c12_m1', title: '全境動員', desc: '請各地的朋友前來助陣。', reward: { exp: 500, gold: 400 },
     steps: [{ t: 'talk', map: 'W_R02_05', at: 'west_arrival', dx: 120, u: 'n_t_kappa_mentor', name: '河童長者', text: '請河童長者助陣', lines: () => [F().kappaFriend ? say('河童長者', '恩人的事，就是河童的事！') : say('河童長者', '……哼。看在河的份上，幫你一次。')] },
       { t: 'talk', map: 'W_R03_05', at: 'center', u: 'n_t_fox_elder', name: '狐族長者', text: '請狐族長者助陣', lines: [say('狐族長者', '九尾大人說，狐族全員出陣。')] },

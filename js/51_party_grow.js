@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 51_party_grow.js
- * Version : r3.215.0  (2026-11-28)　r3.215.0：夥伴頁加「心事」分頁與名單記號（內容在 163_heart）
+ * Version : r3.216.0  (2026-11-28)　r3.216.0：分頁標籤固定為「心事」
+ * 舊版    : r3.215.0  (2026-11-28)　r3.215.0：夥伴頁加「心事」分頁與名單記號（內容在 163_heart）
  * 舊版    : r3.203.0  (2026-11-28)　r3.203.0：夥伴資料／技能樹／裝備三頁改版
  * 舊版    : r3.97.0  (2026-11-26)　r3.97.0：夥伴頁加「屬性」分頁（124_statui）
  * 舊版    : r3.59.0  （r3.59.0：技能樹說明改由招式資料算出（目前＋滿級兩行））　r3.33.0：（r3.33.0：夥伴頁招式不顯示節點代號，點招式顯示觸發方式與效果　r3.19.2：夥伴資料列避開頭像、大字級不重疊）
@@ -140,7 +141,7 @@
     if (!PY.joined(id)) { G.txt('尚未加入', cx + cw / 2, y + 60, 16, C.dim, 'center', G.FONT_S, 900); const c = G.RPG.COMP.find(q => q.id === id);
       if (c && c.hidden) { ctx.font = `500 ${12 * fs()}px ${G.FONT}`; G.wrap('加入方式：' + c.hidden, cw - 40).forEach((l, i) => G.txt(l, cx + cw / 2, y + 92 + i * 20 * fs(), 12, C.sub, 'center', G.FONT, 500)); }
       else G.txt('劇情中加入', cx + cw / 2, y + 90, 12, C.sub, 'center'); return; }
-    const c = PY.data(id), s = PY.stats(id), HT = G.HEART, tabs = ['資料', '技能樹', '裝備', '屬性', HT && HT.mark(id) ? '心事…' : '心事'], tab = M.sel.ptab || 0, tw = Math.max(40, Math.min(64, (cw - 172) / 5 - 6));   /* r3.215.0：加「心事」分頁 */
+    const c = PY.data(id), s = PY.stats(id), HT = G.HEART, tabs = ['資料', '技能樹', '裝備', '屬性', '心事'], tab = M.sel.ptab || 0, tw = Math.max(40, Math.min(64, (cw - 172) / 5 - 6));   /* r3.215.0：加「心事」分頁 */
     tabs.forEach((t, i) => U.button(cx + 10 + i * (tw + 6), y + 8, tw, 28, t, () => { M.sel.ptab = i; }, i === tab ? 'main' : ''));
     [0, 1].forEach(i => { const on = slots[i] === id; U.button(cx + cw - 10 - (2 - i) * 74, y + 8, 68, 28, on ? '出戰' + (i + 1) + '✓' : '設出戰' + (i + 1), () => { PY.setSlot(i, on ? null : id); }, on ? 'main' : ''); });
     const y0 = y + 46;
