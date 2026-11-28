@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 131_foes.js
- * Version : r3.200.0  (2026-11-28)　r3.200.0：遠程敵人的箭放大並拖手繪光痕
+ * Version : r3.214.0  (2026-11-28)　r3.214.0：遠程單發出手放慢
+ * 舊版    : r3.200.0  (2026-11-28)　r3.200.0：遠程敵人的箭放大並拖手繪光痕
  * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：遠程敵人的箭改手繪箭矢
  * 舊版    : r3.168.0  (2026-11-27)　r3.168.0：畫面下方詞綴列停用（改畫在上方精英血條旁）
  * 舊版    : r3.146.0  (2026-11-27)　r3.146.0：韌性條、等級屬性標籤跟著頭目血條移到上方
@@ -102,7 +103,7 @@
     if (e.st === 'atk') { if (e.t * TK >= e.atkMs) { e.st = 'walk'; e.t = 0; } return true; }
     if (Math.abs(dx) > 4) e.face = Math.sign(dx); const sp = (e._csp || 1) * (e.db && e.db.slow ? 0.5 : 1);
     if (d < 2.4) { const nx = e.x - Math.sign(dx || 1) * 1.0 * sp; if (SC.walkable(nx, e.y)) e.x = nx; } else if (Math.abs(dy) > 10) { const ny = e.y + Math.sign(dy) * 0.5 * sp; if (SC.walkable(e.x, ny)) e.y = ny; }
-    if (G.t >= (e._fireT || 0) && d > 1.2) { e._fireT = G.t + 150 + Math.random() * 90; e.st = 'atk'; e.t = 0; e.atkHit = true; e.atkMs = 900; const tx = H.x, ty = H.y; G.STORY.later(26, () => { if (e.st !== 'dead' && e.hp > 0) shoot(e, tx, ty); }); }
+    if (G.t >= (e._fireT || 0) && d > 1.2) { e._fireT = G.t + 150 + Math.random() * 90; e.st = 'atk'; e.t = 0; e.atkHit = true; e.atkMs = 900; e.atkMs = 1200; const tx = H.x, ty = H.y; G.STORY.later(38, () => {   /* r3.214.0：遠程單發從舉弓到放箭 0.43 → 0.63 秒 */ if (e.st !== 'dead' && e.hp > 0) shoot(e, tx, ty); }); }
     return true; }
   function shoot(e, tx, ty) { const VX = G.VX; if (!VX || !VX.custom) return; const s = S(e.y), k = HH() * s, gun = /gun/.test(e.type), z = 0.55 * k, ang = Math.atan2(ty - e.y, tx - e.x), sp = (gun ? 9 : 6) * Math.max(0.6, s), atk = e.atk * (gun ? 1 : 0.8);
     let x = e.x + e.face * 0.3 * k, y = e.y, dist = 0;

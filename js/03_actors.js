@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.201.0  (2026-11-28)　r3.201.0：里歐外型時殘影改用里歐的圖
+ * Version : r3.214.0  (2026-11-28)　r3.214.0：敵人普攻起手放慢
+ * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：里歐外型時殘影改用里歐的圖
  * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：塵土改手繪塵圈
  * 舊版    : r3.197.0  (2026-11-28)　r3.197.0：敵人普通近戰出手時有爪痕／揮擊弧光
  * 舊版    : r3.196.0  (2026-11-28)　受擊白閃減半、舊版預警改柔光、掉落光柱柔邊、秘傳時隱藏妖怪血條
@@ -344,7 +345,7 @@ G.ONI_RATIO = 1.38;
     if (e.st === 'walk') {
       if (Math.abs(dx) > 4) e.face = Math.sign(dx);
       e.cd--;
-      if (Math.abs(dx) < reach - 14 && Math.abs(dy) < 26 && e.cd <= 0) { e.st = 'atk'; e.t = 0; e.atkHit = false; const r = eRec(e, 'attack', 'atk'); e.atkMs = (r ? Math.max(600, A.dur(r)) : 966) * 1.6; return; }   // r3.20.3：出手放慢 1.6 倍（預警後約 0.5～0.8 秒才判定，可閃避）
+      if (Math.abs(dx) < reach - 14 && Math.abs(dy) < 26 && e.cd <= 0) { e.st = 'atk'; e.t = 0; e.atkHit = false; const r = eRec(e, 'attack', 'atk'); e.atkMs = (r ? Math.max(600, A.dur(r)) : 966) * 2.1; return; }   /* r3.214.0：普攻起手再放慢（1.6 → 2.1 倍，最短約 0.6 秒才判定）；地面預警拿掉後，原本的時間來不及看動作閃 */   // r3.20.3：出手放慢 1.6 倍（預警後約 0.5～0.8 秒才判定，可閃避）
       const sp = (e.sm ? 1.25 : 1.05) * (e.db && e.db.slow ? 0.5 : 1); tryMove(e, Math.abs(dx) > reach * 0.68 ? Math.sign(dx) * sp : 0, Math.abs(dy) > 6 ? Math.sign(dy) * sp * 0.6 : 0);
     } else if (e.st === 'atk') {
       const ms = e.t * TK, hitMs = e.atkMs * 0.48;

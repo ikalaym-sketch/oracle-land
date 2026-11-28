@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 139_foeai.js
- * Version : r3.213.0  (2026-11-28)　r3.213.0：術士法球不再追蹤；招式預警提早出現
+ * Version : r3.214.0  (2026-11-28)　r3.214.0：敵人衝刺起手與速度放慢
+ * 舊版    : r3.213.0  (2026-11-28)　r3.213.0：術士法球不再追蹤；招式預警提早出現
  * 舊版    : r3.200.0  (2026-11-28)　r3.200.0：箭雨的箭放大、拖光痕、落地後插在地上半秒
  * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：箭雨的箭改手繪箭矢
  * 舊版    : r3.198.0  (2026-11-28)　r3.198.0：地面預警減量（普通攻擊改身上起手閃光、招式預警出手前才出現、同色重疊合併、底色變淡）
@@ -114,7 +115,7 @@
     cut: { step(e, m) { if (m.t < m.W) return; const n = m.n || 10, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); walkTo(e, m.sx + (m.x1 - m.sx) * q * 0.85, m.sy + (m.y1 - m.sy) * q * 0.85);
         if (!m.fx && q > 0.5) { m.fx = 1; meleeFx(e); } if (!m.hit && q > 0.5 && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.55)) { m.hit = 1; hurt(e, 1.2); } if (q >= 1 && !m.d) { m.d = 1; dust(e.x + e.face * k * 0.4, e.y); } return m.t > m.W + n + 24; } },
     /* 突擊：衝刺＋迴身斬 */
-    dash: { ok: (e, d) => d > 1.8 && d < 4.8 && G.E.filter(o => o.mv && o.mv.k === 'run').length < 2, start(e, turn) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = Math.min(k * 2.5, dist(e) * k + k), x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, turn ? 30 : 44), n = Math.max(12, Math.round(Math.hypot(x1 - e.x, y1 - e.y) / (2.75 * 1.05 * S(e.y))));   /* 實測約主角跑步 ×1.2（含縱向位移） */
+    dash: { ok: (e, d) => d > 1.8 && d < 4.8 && G.E.filter(o => o.mv && o.mv.k === 'run').length < 2, start(e, turn) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = Math.min(k * 2.5, dist(e) * k + k), x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, turn ? 44 : 60), n = Math.max(14, Math.round(Math.hypot(x1 - e.x, y1 - e.y) / (2.75 * 0.85 * S(e.y))));   /* r3.214.0：衝刺放慢——起手 44 → 60 格（迴身 30 → 44），衝過來的速度約降兩成（跟主角跑步差不多） */   /* 實測約主角跑步 ×1.2（含縱向位移） */
         begin(e, 'run', Wf, { sx: e.x, sy: e.y, x1, y1, turn, n }); lane(e, e.x, e.y, x1, y1, k * 0.6, Wf); if (!turn) e._m1 = G.t + 240; } },
     run: { step(e, m) { if (m.t < m.W) return; const n = m.n || 16, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); if (!walkTo(e, m.sx + (m.x1 - m.sx) * q, m.sy + (m.y1 - m.sy) * q)) m.t = Math.max(m.t, m.W + n);
         if (!m.hit && inLane(m.sx, m.sy, e.x, e.y, k * 0.6) && Math.hypot(H.x - e.x, H.y - e.y) < k * 0.7) { m.hit = 1; meleeFx(e); hurt(e, m.turn ? 1.1 : 1.3); }
