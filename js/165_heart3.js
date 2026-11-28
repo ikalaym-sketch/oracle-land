@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 165_heart3.js
- * Version : r3.217.0  (2026-11-28)　r3.217.0：新增。白丸、葛葉、茨木的心事重寫（操作段、抉擇）與解開後的回響
+ * Version : r3.218.0  (2026-11-28)　r3.218.0：補齊回響（天狗長者／汀江再訪、茨木×葛葉、鬼宴加長、大連攜喊話、結局片段）
+ * 舊版    : r3.217.0  (2026-11-28)　r3.217.0：新增。白丸、葛葉、茨木的心事重寫（操作段、抉擇）與解開後的回響
  * 內容    : 1. 白丸「守門的理由」：澄岳 → 門前守 30 秒（白丸在隊伍時受傷減半）→ 雪的殘影（qc.shiro_end = stay｜touch）。
  *           2. 葛葉「狐火與爐火」：共灶 → 冬乃 → 借三家火（鬼鍛冶／阿澄／炭婆婆的舊灶）→ 共灶（qc.kuzuha_end = guard｜warm）。
  *           3. 茨木「霧裡的野菊」：霧裡的阿菊（賴光在隊伍時把渡邊綱的事說開）→ 火燒村 45 秒內依序找三處 → 井邊（qc.ibaraki_end = thanks｜cry）。
@@ -106,6 +107,24 @@
     { id: 'i1', q: 'c11_s_ibaraki', ok: shrine, L: () => [nar('（茨木的角上，綁著一朵乾掉的野菊。）'), say('小雪', '茨木，那個花……'), say('茨木', '不准碰。'), say('茨木', '……看可以。')] },
     { id: 'i2', q: 'c11_s_ibaraki', ok: () => safe() && inP('ibaraki') && inP('yorimitsu') && !!C('ibaraki_a'), L: () => C('ibaraki_a') === 'sorry' ? [nar('（賴光把一壺酒放在茨木旁邊。兩個人都沒說話，各喝各的。）'), say('茨木', '……難喝。'), say('源賴光', '下次換妳帶。')] : [say('茨木', '喂。別死在道摩手上。'), say('茨木', '妳欠我一場。'), say('源賴光', '彼此彼此。')] },
     { id: 'i3', q: 'c11_s_ibaraki', ok: () => SC.id === 'hub_city', L: () => [nar('（一個人類小孩，盯著茨木的角看。）'), nar('（茨木蹲了下來。）'), say('茨木', '……不怕？'), say('孩子', '不怕。'), say('茨木', '…………'), say('茨木', '以前也有一個人，這樣說。')] });
+
+  /* ---------- r3.218.0：補齊回響（再訪、鬼宴、招式喊話、結局片段） ---------- */
+  if (EC) EC.push(
+    { id: 'h6', q: 'c9_s_hayate', ok: () => SC.id === 'W_R04_04', L: () => [say('天狗長者', '……他叫你掃墳？'), say('颯', '嗯。'), say('天狗長者', '哼。'), say('天狗長者', '那我這把老骨頭，也去一趟。……只是順路。')] },
+    { id: 's6', q: 'c10_s_shion', ok: () => SC.id === 'W_R10_01', L: () => [say('汀江', '哭過了？'), say('汐音', '嗯。'), say('汀江', '那就好。眼睛腫的樣子，也像她。'), say('汐音', '……婆婆！')] },
+    { id: 'i4', q: 'c11_s_ibaraki', ok: () => safe() && inP('kuzuha') && inP('ibaraki') && !D('c5_s_kuzuha'), L: () => [say('葛葉', '茨木，妳角上那朵花……'), say('茨木', '人類給的。'), say('葛葉', '……人類也會給妳東西？'), say('茨木', '很久以前。一束。'), say('茨木', '……我到現在才敢戴。')] });
+  { const q = Q.by.c8_m3, s = q && q.steps.find(x => x.t === 'choice'); if (s) { const L0 = s.lines; s.lines = () => { const L = (typeof L0 === 'function' ? L0() : L0).slice(), i = L.findIndex(x => x && x.who === '葛葉' && /鬼族的宴席上/.test(x.text || ''));   // 鬼宴：葛葉的話依抉擇加長
+      if (i >= 0 && C('kuzuha_end')) L.splice(i + 1, 0, C('kuzuha_end') === 'warm' ? say('葛葉', '……我、我今天可以坐裡面嗎。') : say('葛葉', '我坐你旁邊。有人灌你酒，我就用狐火把杯子冰起來。')); return L; }; } }
+  { const SH = { hayate: ['c9_s_hayate', '颯：「師父，看好了——！」'], shion: ['c10_s_shion', '汐音：「水還在——！」'], shiro: ['c6_s_shiro', '白丸：「這扇門，誰都別想過！」'], kuzuha: ['c5_s_kuzuha', '葛葉：「你的火，我來擋風！」'], ibaraki: ['c11_s_ibaraki', '茨木：「阿菊，看著——！」'] };
+    const c0 = PY.cast; if (c0) PY.cast = function (P, ch) { const r = c0.apply(this, arguments); try { const h = P && SH[P.id]; if (r && h && ch === 'grandCombo' && D(h[0])) G.UI.toast(h[1]); } catch (e) { } return r; }; }   // 大連攜喊話
+  const endWrap = () => { const q = Q.by.c12_end, s = q && q.steps[0]; if (s && !s._h3) { s._h3 = 1; const L0 = s.lines; s.lines = () => { const L = (typeof L0 === 'function' ? L0() : L0).slice(), X = [];   // 結局片段
+      if (D('c9_s_hayate')) X.push(nar('（雷鳴高原的崖邊。七道刻痕旁，多了一束新的花。）'));
+      if (D('c10_s_shion')) X.push(nar('（海邊，一個穿著歪袖巫女服的女孩，對著海，唱完了整首歌。）'));
+      if (D('c6_s_shiro')) X.push(nar('（神社的鳥居下，沒有白狼。牠趴在一扇房門前，睡得很沉。）'));
+      if (D('c5_s_kuzuha')) X.push(nar('（炭里的架上，第三格的碗，還是溫的。）'));
+      if (D('c11_s_ibaraki')) X.push(nar('（黃泉路口的井邊，有人放了一束野菊。）'));
+      L.splice(Math.max(0, L.length - 1), 0, ...X); return L; }; } };
+  { const bt0 = G.ASSET.boot.bind(G.ASSET); G.ASSET.boot = () => bt0().then(r => { try { endWrap(); } catch (e) { } return r; }); }   // 其他模組也在開機後改結局台詞：最後才包，保證在最外層
 
   /* ============================ 接線 ============================ */
   const st0 = G.STORY.step.bind(G.STORY); G.STORY.step = function () { st0(); if (G.mode !== 'play') return; try { if (FR || G.t % 20 === 0) fireStep(); } catch (e) { console.warn('heart3', e); FR = null; } };
