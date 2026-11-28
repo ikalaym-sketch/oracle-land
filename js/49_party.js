@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 49_party.js
- * Version : r3.222.0  (2026-11-28)　r3.222.0：夥伴跟隨主角裝備 60%、升階改 Lv25／50 並加能力
+ * Version : r3.223.0  (2026-11-28)　r3.223.0：汐音移動改用滑行／衝刺動作
+ * 舊版    : r3.222.0  (2026-11-28)　r3.222.0：夥伴跟隨主角裝備 60%、升階改 Lv25／50 並加能力
  * 舊版    : r3.144.0  (2026-11-27)　r3.144.0：夥伴放招的名字改成左邊頭像血條旁的泡泡（統一字色、無符號；大連攜外框閃一下），頭上的字拿掉
  * 舊版    : r3.59.0  （r3.59.0：招式 noFit 不壓縮事件時點）　r3.58.0：出招名字依定位上色、大連攜字級 18
  * 舊版    : r3.21.0  （r3.21.0：夥伴沿牆滑開，卡住 0.75 秒跟到主角旁）
@@ -41,7 +42,8 @@
 
   /* ---------- 實體 ---------- */
   function unitOf(P) { const def = PY.DEF[P.id]; return A.get(def.unit(P)); }
-  function rec(P, n) { const u = unitOf(P), def = PY.DEF[P.id]; if (!u) return null; const X = u.act; return X[def.pre + n] || null; }
+  const ALT = { walk: ['glide'], run: ['dash', 'glide', 'walk'] };   /* r3.223.0：沒有走／跑動作的夥伴（汐音）改用滑行、衝刺，不再用站姿平移 */
+  function rec(P, n) { const u = unitOf(P), def = PY.DEF[P.id]; if (!u) return null; const X = u.act; if (X[def.pre + n]) return X[def.pre + n]; for (const a of ALT[n] || []) if (X[def.pre + a]) return X[def.pre + a]; return null; }
   function play(P, n, loop) { const r = rec(P, n) || rec(P, 'idle'); P.clip = n; P.r = r; P.ms = 0; P.loop = !!loop; }
   function make(id, x, y) { const s = PY.stats(id); return { id, x, y, face: H.face, hp: s.hp, hpMax: s.hp, st: 'follow', cd: {}, ms: 0, t: 0, tg: null, link: 0, down: 0, dmgT: 0, hurtT: 0, wr: 0, stg: PY.stage(id) }; }
   PY.sync = function () {   // 依出戰位建立／移除實體（換場、換位時呼叫）
