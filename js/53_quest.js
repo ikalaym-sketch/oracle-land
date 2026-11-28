@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 53_quest.js
- * Version : r3.131.0  (2026-11-27)　r3.131.0：新增 fn 自訂步驟（進圖執行一次）
+ * Version : r3.215.0  (2026-11-28)　r3.215.0：匯出 Q.avail
+ * 舊版    : r3.131.0  (2026-11-27)　r3.131.0：新增 fn 自訂步驟（進圖執行一次）
  * 舊版    : r3.130.0  (2026-11-27)　r3.130.0：任務步驟支援 skip()（跨章抉擇可省略步驟）
  * 舊版    : r3.91.0  （r3.91.0：「受傷的鼬」委託人「草叢」原本被補成村民，改成站一隻小鼬）
  * 舊版    : r3.56.0  （r3.56.0：夥伴委託人大小校正）　r3.55.0：任務獎勵依主角等級補正）　r3.52.0  (2026-11-23)  r3.52.0：每秒檢查新成立的任務並重建標記（不用換圖才出現）；小鼬用鎌鼬圖（縮小）站在任務點
@@ -40,6 +41,7 @@
   Q.isDone = id => !!(st(id) && st(id).done);
   Q.active = id => { const s = st(id); return !!(s && !s.done); };
   const avail = q => !st(q.id) && (!q.ch || HUB.open(q.ch) || q.ch <= HUB.cur()) && (!q.after || [].concat(q.after).every(Q.isDone)) && (!q.need || q.need());
+  Q.avail = avail;   /* r3.215.0：給任務頁「可接」用 */
   function start(q) { SV().qs[q.id] = { s: 0, k: 0 }; G.SAVE.markDirty(); if (!q.silent) G.UI.banner((q.main ? '主線　' : q.boss ? '委託　' : '支線　') + q.title, q.desc || ''); enterStep(q); }
   Q.start = id => { const q = Q.by[id]; if (q && !st(id)) { st(id) || (SV().qs = SV().qs || {}); start(q); } };
   function reward(q) { const r = q.reward || {}, R = G.RPG, d = R.d(); const out = [];

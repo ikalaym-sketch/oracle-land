@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 107_ux2.js
- * Version : r3.65.0  (2026-11-24)
+ * Version : r3.215.0  (2026-11-28)　r3.215.0：任務頁加「可接」分頁（心事排最前；內容在 163_heart）
+ * 舊版    : r3.65.0  (2026-11-24)
  * 變更    : r3.65.0 新增。試玩回饋第二批：
  *           1. 出怪分散：地圖自動出怪（含探索區波次）改成「分段」放置——地圖橫向切成 n 段，每段 1 隻，
  *              互相至少 140px（找不到就放寬到 100、60），有遮罩的地圖只選寬敞點（不會再被拉到同一塊空地）。
@@ -31,15 +32,17 @@
   /* ---------- 2. 任務頁分頁 ---------- */
   if (!M || !M.PAGE || !M.PAGE['任務'] || !Q) return;
   const started = q => !!((G.SAVE.data.qs || {})[q.id]), done = q => Q.isDone(q.id), cur = () => (G.HUB && G.HUB.cur ? G.HUB.cur() : 1);
-  const TABS = [['ch', '本章', q => !done(q) && q.ch === cur()], ['main', '主線', q => q.main && !done(q)], ['side', '支線・委託', q => !q.main && !done(q)], ['done', '已完成', q => done(q)]];
+  const TABS = [['ch', '本章', q => !done(q) && q.ch === cur()], ['main', '主線', q => q.main && !done(q)], ['side', '支線・委託', q => !q.main && !done(q)], ['done', '已完成', q => done(q)], ['open', '可接', q => false]];   /* r3.215.0：加「可接」 */
+  const ty0 = (y, TH) => y + 8 + TH + 8;
   const pg0 = M.PAGE['任務']; M.PAGE['任務'] = function (x, y, w, h) { const d = G.RPG.d(), tab = TABS.find(t => t[0] === d.qtab) || TABS[0], fs = G.FS(), TH = 30 * fs, c = G.ctx, C = G.C, U = M.ui;
     const all = Q.L.filter(started), L0 = Q.L, fold = d.qfold = d.qfold || {}, f0 = Object.assign({}, fold), tx0 = G.txt;
     Q.L = L0.filter(tab[2]); if (tab[0] === 'ch') for (const k in fold) fold[k] = false;   // 本章：不收合
-    const EMP = { ch: '這一章的任務都完成了，看看「主線」或「支線・委託」。', main: '主線都完成了。', side: '目前沒有進行中的支線或委託。', done: '還沒有完成的任務。' };
-    G.txt = function (t) { if (typeof t === 'string') { if (t.indexOf('點任務右側') === 0) return; if (t.indexOf('目前沒有任務') === 0 && all.length) { arguments[0] = EMP[tab[0]]; } } return tx0.apply(this, arguments); };   // 原本的說明文字讓位給分頁
+    const EMP = { ch: '這一章的任務都完成了，看看「主線」或「支線・委託」。', main: '主線都完成了。', side: '目前沒有進行中的支線或委託。', done: '還沒有完成的任務。', open: '' };
+    G.txt = function (t) { if (typeof t === 'string') { if (t.indexOf('點任務右側') === 0) return; if (t.indexOf('目前沒有任務') === 0 && (all.length || tab[0] === 'open')) { arguments[0] = EMP[tab[0]]; } } return tx0.apply(this, arguments); };   // 原本的說明文字讓位給分頁
     try { pg0.call(this, x, y, w, h); } finally { G.txt = tx0; Q.L = L0; if (tab[0] === 'ch') { for (const k in fold) delete fold[k]; Object.assign(fold, f0); } }
-    const bx0 = x + 216, tw = Math.min(118, (w - 228 - 18) / 4), ty = y + 8;   /* 分頁放在「自動追蹤／關閉指引」右邊同一列 */
-    TABS.forEach(([k, n, f], i) => { const bx = bx0 + i * (tw + 6), on = tab[0] === k, cnt = all.filter(f).length;
+    if (tab[0] === 'open' && G.HEART) { const top = ty0(y, TH); G.HEART.openPage(x, top, w, y + h - top - 6); }
+    const bx0 = x + 216, tw = Math.min(118, (w - 228 - 24) / 5), ty = y + 8;   /* 分頁放在「自動追蹤／關閉指引」右邊同一列 */
+    TABS.forEach(([k, n, f], i) => { const bx = bx0 + i * (tw + 6), on = tab[0] === k, cnt = k === 'open' ? (G.HEART ? G.HEART.openCount() : 0) : all.filter(f).length;
       c.fillStyle = on ? 'rgba(150,92,36,.9)' : 'rgba(30,22,26,.92)'; G.rr(bx, ty, tw, TH, TH / 2); c.fill(); c.strokeStyle = on ? C.gold : 'rgba(227,194,122,.3)'; G.rr(bx + .5, ty + .5, tw - 1, TH - 1, TH / 2); c.stroke();
       G.txt(n + ' ' + cnt, bx + tw / 2, ty + TH / 2 + 1, 12, on ? C.ink : C.sub, 'center', G.FONT_S, 900); U.hit(bx, ty, tw, TH, () => { d.qtab = k; M.scroll.qst = 0; G.SAVE.markDirty(); }); }); };
 })();

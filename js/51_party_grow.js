@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 51_party_grow.js
- * Version : r3.203.0  (2026-11-28)　r3.203.0：夥伴資料／技能樹／裝備三頁改版
+ * Version : r3.215.0  (2026-11-28)　r3.215.0：夥伴頁加「心事」分頁與名單記號（內容在 163_heart）
+ * 舊版    : r3.203.0  (2026-11-28)　r3.203.0：夥伴資料／技能樹／裝備三頁改版
  * 舊版    : r3.97.0  (2026-11-26)　r3.97.0：夥伴頁加「屬性」分頁（124_statui）
  * 舊版    : r3.59.0  （r3.59.0：技能樹說明改由招式資料算出（目前＋滿級兩行））　r3.33.0：（r3.33.0：夥伴頁招式不顯示節點代號，點招式顯示觸發方式與效果　r3.19.2：夥伴資料列避開頭像、大字級不重疊）
  * 舊版    : r3.10.0  (2026-11-13)
@@ -130,6 +131,7 @@
       ctx.fillStyle = on ? 'rgba(120,80,30,.45)' : 'transparent'; ctx.fillRect(x + 6, yy + 2, lw - 12, RH - 4);
       G.txt(j ? def.name : '？？？', x + 14, yy + RH * 0.38, 14, j ? C.ink : C.dim, 'left', G.FONT_S, 900);
       G.txt(j ? 'Lv ' + PY.data(id).lv + (PY.free(id) > 0 ? '　點數 ' + PY.free(id) : '') : '尚未加入', x + 14, yy + RH * 0.74, 10, PY.free(id) > 0 && j ? '#ffd65a' : C.sub, 'left', G.FONT, 500);
+      if (j && G.HEART && G.HEART.mark(id)) { ctx.font = `900 ${14 * fs()}px ${G.FONT_S}`; G.txt('心事…', x + 20 + ctx.measureText(def.name).width, yy + RH * 0.38, 10, '#ffd65a', 'left', G.FONT_S, 900); }
       if (si >= 0) G.txt('出戰' + (si + 1), x + lw - 14, yy + RH * 0.38, 10, '#7fd36b', 'right', G.FONT_S, 900);
       G.txt(def.role, x + lw - 14, yy + RH * 0.74, 10, ROLE[def.role] || C.sub, 'right', G.FONT_S, 900);
       U.hit(x + 6, Math.max(yy, y + 6), lw - 12, RH - 4, () => { M.sel.pt = i; }); });
@@ -138,14 +140,15 @@
     if (!PY.joined(id)) { G.txt('尚未加入', cx + cw / 2, y + 60, 16, C.dim, 'center', G.FONT_S, 900); const c = G.RPG.COMP.find(q => q.id === id);
       if (c && c.hidden) { ctx.font = `500 ${12 * fs()}px ${G.FONT}`; G.wrap('加入方式：' + c.hidden, cw - 40).forEach((l, i) => G.txt(l, cx + cw / 2, y + 92 + i * 20 * fs(), 12, C.sub, 'center', G.FONT, 500)); }
       else G.txt('劇情中加入', cx + cw / 2, y + 90, 12, C.sub, 'center'); return; }
-    const c = PY.data(id), s = PY.stats(id), tabs = ['資料', '技能樹', '裝備', '屬性'], tab = M.sel.ptab || 0, tw = Math.max(44, Math.min(64, (cw - 172) / 4 - 6));
+    const c = PY.data(id), s = PY.stats(id), HT = G.HEART, tabs = ['資料', '技能樹', '裝備', '屬性', HT && HT.mark(id) ? '心事…' : '心事'], tab = M.sel.ptab || 0, tw = Math.max(40, Math.min(64, (cw - 172) / 5 - 6));   /* r3.215.0：加「心事」分頁 */
     tabs.forEach((t, i) => U.button(cx + 10 + i * (tw + 6), y + 8, tw, 28, t, () => { M.sel.ptab = i; }, i === tab ? 'main' : ''));
     [0, 1].forEach(i => { const on = slots[i] === id; U.button(cx + cw - 10 - (2 - i) * 74, y + 8, 68, 28, on ? '出戰' + (i + 1) + '✓' : '設出戰' + (i + 1), () => { PY.setSlot(i, on ? null : id); }, on ? 'main' : ''); });
     const y0 = y + 46;
     /* r3.203.0：夥伴各分頁改版——資料＝名牌＋數值小卡＋招式卡（點招式，下方直接顯示說明，不再跳提示）；技能樹＝被動／招式色標＋等級圓點；裝備＝部位卡＋「全部裝最強」；說明用語改成玩家看得懂的話。 */
     const chip = (t, bx, my, col, fill) => { ctx.font = `800 ${10 * fs()}px ${G.FONT}`; const tw = ctx.measureText(t).width + 12, bh = 16 * fs(); ctx.fillStyle = fill ? col : 'rgba(0,0,0,.35)'; G.rr(bx, my - bh / 2, tw, bh, 4); ctx.fill(); if (!fill) { ctx.strokeStyle = col; ctx.lineWidth = 1; G.rr(bx + .5, my - bh / 2 + .5, tw - 1, bh - 1, 4); ctx.stroke(); } G.txt(t, bx + tw / 2, my + 1, 10, fill ? '#1c1410' : col, 'center', G.FONT, 800); return tw; };
     const CHN = { ordinary: '普攻', autonomous: '自主', command: '指令', smallCombo: '小連攜', grandCombo: '大連攜' }, CHC = { ordinary: '#cfc8bb', autonomous: '#86cf8f', command: '#6fb0f0', smallCombo: '#e0c068', grandCombo: '#f0ad52' };
-    if (tab === 0) {
+    if (tab === 4) { if (HT) HT.page(id, cx, y0, cw, y + h - y0); }
+    else if (tab === 0) {
       const fim = G.IMG[def.face]; if (!fim && !G.IMG['_req_' + def.face]) { G.IMG['_req_' + def.face] = 1; G.ASSET.img(def.face, 'a/' + def.face + '.webp').catch(() => {}); }
       const PW = 64; if (fim) { ctx.save(); G.rr(cx + cw - PW - 14, y0 + 2, PW, PW, 8); ctx.clip(); ctx.drawImage(fim, cx + cw - PW - 14, y0 + 2, PW, PW); ctx.restore(); ctx.strokeStyle = 'rgba(227,194,122,.5)'; ctx.lineWidth = 1; G.rr(cx + cw - PW - 13.5, y0 + 2.5, PW - 1, PW - 1, 8); ctx.stroke(); }
       const lw2 = cw - PW - 40; G.txt(def.name, cx + 14, y0 + 12, 17, '#fff3d6', 'left', G.FONT_S, 900); ctx.font = `900 ${17 * fs()}px ${G.FONT_S}`; let hx = cx + 24 + ctx.measureText(def.name).width;
