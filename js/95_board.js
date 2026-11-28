@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 95_board.js
- * Version : r3.169.0  (2026-11-27)　r3.169.0：告示牌換新圖（去背手繪）；兩岸城的委託合併到城南告示牌
+ * Version : r3.220.0  (2026-11-28)　r3.220.0：送東西的委託改成「到店舖買，帶回告示牌」
+ * 舊版    : r3.169.0  (2026-11-27)　r3.169.0：告示牌換新圖（去背手繪）；兩岸城的委託合併到城南告示牌
  * 舊版    : r3.168.0  (2026-11-27)　r3.168.0：G.BOARD.act 給右上任務面板
  * 舊版    : r3.167.0  (2026-11-27)　r3.167.0：公告板改成全畫面木板＋和紙委託籤（種類朱印、地點、目標、預估報酬、接下）；進行中列在下方（進度條、放棄要按兩次）；指名委託要走進過該章地圖才貼
  * 舊版    : r3.133.0  (2026-11-27)　r3.133.0：各章「探索區討伐」支線改成公告板的指名委託（完成前常駐，最多 2 張）
@@ -38,7 +39,7 @@
     if (t === 'gather') { o.n = ri(3, 5); o.kind = rnd([['草藥', '藥舖要的山草藥'], ['妖氣結晶', '鍛冶要的妖氣結晶'], ['遺失的貨物', '商隊掉落的貨物']]); o.title = '採集：' + o.kind[0]; o.desc = '在「' + nm(map) + '」找到' + o.kind[1] + ' ' + o.n + ' 處'; }
     if (t === 'elite') { o.n = 1; o.title = '精英討伐：' + nm(map); o.desc = '「' + nm(map) + '」出現了凶暴的精英妖怪'; }
     if (t === 'deliver') { const town = HUB.cur() >= 2 ? 'hub_city' : 'W_R01_01', L2 = TOWNSFOLK[town].length ? TOWNSFOLK[town] : null; o.map = town; o.lv = Math.max(1, G.RPG.d().lv);
-      o.to = L2 ? rnd(L2) : null; o.n = 1; o.item = rnd(['藥包', '信', '修好的茶碗', '一束草藥', '護符']); o.title = '送信：' + o.item; o.desc = '把「' + o.item + '」交給' + (o.to ? o.to : nm(town) + '的居民'); }
+      o.to = null; o.buy = 1; o.n = 2; o.cost = 10 + o.lv * 2; o.item = rnd(['藥包', '針線', '茶碗', '一束草藥', '護符', '鹽', '燈油']); o.title = '採買：' + o.item; o.desc = '到' + nm(town) + '的店舖買「' + o.item + '」（' + o.cost + ' 文），帶回告示牌'; }   /* r3.220.0：送東西改成「買了帶回告示牌」（原本交給居民，常和居民自己的對話搶位置而交不了） */
     return o; }
   function refresh(force) { const b = BD(), P = HUB.cur(); if (!force && b.offer.length && Date.now() - b.gen < LIFE && b.P === P) return; b.gen = Date.now(); b.P = P; b.offer = [];
     for (let i = 0; i < 8 && b.offer.length < 3; i++) { const o = make(); if (o && !b.offer.some(x => x.map === o.map && x.t === o.t)) b.offer.push(o); } named(b); G.SAVE.markDirty(); }
@@ -70,9 +71,13 @@
       if (o.t === 'elite' && !o._sp && !G.E.some(e => e.bq === o.id && e.st !== 'dead')) { o._sp = id; const foes = (SC.def.foes || []).filter(Boolean); if (!foes.length) continue; const t = rnd(foes);
         Q.load([t]).then(() => { if (SC.id !== id) return; const c = (SC.def.nodes && SC.def.nodes.center) || [H.x + 300, H.y], p = (SC.snap && SC.snap(c[0] + (H.x < c[0] ? 260 : -260), c[1], 'open', 300)) || c;
           const e = G.spawnOni(p[0], p[1], 30, o.lv + 2, t); if (!e) { o._sp = 0; return; } e.bq = o.id; e.elite = '凶暴的精英'; e.hp = e.hpMax = Math.round(e.hpMax * 5); e.atk = Math.round(e.atk * 1.5); e.ratio *= 1.2; G.UI.banner('精英討伐', '凶暴的精英出現了'); }); }
-      if (o.t === 'deliver') { const key = 'bq:' + o.id; if (HUB.marks.some(m => m.id === key)) continue; const n = o.to && ((G.AMB && G.AMB.list.find(x => x.name === o.to)) || G.NPC.find(x => x.name === o.to));
-        const c = n ? [n.x, n.y] : ((SC.def.nodes && (SC.def.nodes.center || SC.def.nodes.road_center)) || [H.x, H.y]);
-        HUB.marks.push({ id: key, bq: o.id, n, x: c[0], y: c[1], label: (o.to || '居民') + '・送' + o.item, kind: 'talk', main: false, run: () => G.DLG.start([say(o.to || '居民', '這是給我的' + o.item + '？謝謝你特地跑一趟！')], () => prog(o)) }); } } }
+      if (o.t === 'deliver') { const key = 'bq:' + o.id; if (HUB.marks.some(m => m.id === key)) continue; if (!o.buy) { o.buy = 1; o.n = 2; o.k = 0; o.cost = 10 + (o.lv || 1) * 2; o.to = null; o.title = '採買：' + o.item; o.desc = '到' + nm(id) + '的店舖買「' + o.item + '」（' + o.cost + ' 文），帶回告示牌'; }   // 舊的送信委託改成新流程
+        const ctr = (SC.def.nodes && (SC.def.nodes.center || SC.def.nodes.road_center)) || [H.x, H.y], snap = (x, y) => (SC.snap && SC.snap(x, y, 'open', 120)) || [x, y];
+        if (!o.got) { const n = G.AMB && G.AMB.list.find(x => x.shop), c = n ? snap(n.x + 52, n.y + 12) : ctr;
+          HUB.marks.push({ id: key, bq: o.id, x: c[0], y: c[1], label: '買・' + o.item + '（' + o.cost + ' 文）', kind: 'look', main: false, run: () => { const d = G.RPG.d(); if ((d.gold || 0) < o.cost) { G.UI.toast('錢不夠（需要 ' + o.cost + ' 文）'); return; }
+            d.gold -= o.cost; o.got = 1; HUB.marks = HUB.marks.filter(m => m.id !== key); G.UI.toast('買到「' + o.item + '」了，帶回告示牌'); prog(o); setup(); } }); }
+        else { const b = id === 'hub_city' ? snap(862 + 66, 884) : (() => { const q = spot() || ctr; return snap(q[0] + 58, q[1] + 8); })();
+          HUB.marks.push({ id: key, bq: o.id, x: b[0], y: b[1], label: '告示牌・交付' + o.item, kind: 'look', main: false, run: () => { HUB.marks = HUB.marks.filter(m => m.id !== key); G.UI.toast('把「' + o.item + '」交到告示牌了'); prog(o); } }); } } } }
   /* ---------- 公告板 ---------- */
   let BU = null; G.ANIM.load('pr_village').then(u => { BU = u; }, () => 0);
   /* r3.169.0：新告示牌圖（ChatGPT 手繪，去背）；兩岸城跟城南告示牌合併（65_maps 共用 G.SIGN） */
@@ -83,7 +88,7 @@
   function spot() { const o = POS[SC.id]; if (!o) return null; return (SC.snap && SC.snap(o[0], o[1], 'open', 160)) || o; }
   /* r3.167.0：公告板改成全畫面木板＋和紙委託籤（行旅繪圖同款），取代原本一長串對話選項 */
   const M = G.MENU, ctx = G.ctx, C = G.C, PAPER = '#efe4cb', PAPER2 = '#dccdab', INK = '#2a1d16', INK2 = '#5b4636', SHU = '#b8322a', GOLD = C.gold;
-  const SEAL = { kill: '討', gather: '採', elite: '精', deliver: '送' }, GOAL = o => o.t === 'kill' ? '打倒妖怪 ' + o.n + ' 隻' : o.t === 'gather' ? '找到 ' + o.n + ' 處' + o.kind[0] : o.t === 'elite' ? '打倒精英 1 隻' : '交給' + (o.to || '居民');
+  const SEAL = { kill: '討', gather: '採', elite: '精', deliver: '買' }, GOAL = o => o.t === 'kill' ? '打倒妖怪 ' + o.n + ' 隻' : o.t === 'gather' ? '找到 ' + o.n + ' 處' + o.kind[0] : o.t === 'elite' ? '打倒精英 1 隻' : o.buy ? '買來交到告示牌' : '交給' + (o.to || '居民');
   let BV = { pick: null };
   function openBoard() { refresh(); named(BD()); BV.pick = null; M.board = 1; M.show(); }
   const cl0 = M.close.bind(M); M.close = function () { M.board = 0; cl0(); };
