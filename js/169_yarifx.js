@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 169_yarifx.js
- * Version : r3.228.0  (2026-11-28)　r3.228.0：新增。長槍四個技、四個特技重新設計（試作頁第三版定案＋不動構改成引雷）
+ * Version : r3.229.0  (2026-11-28)　r3.229.0：貼地的特效改畫在地面層（'g'）；原本用的 'u' 圖層不存在，預兆圈、雷痕、吸引圈、電痕都沒畫出來
+ * 舊版    : r3.228.0  (2026-11-28)　r3.228.0：新增。長槍四個技、四個特技重新設計（試作頁第三版定案＋不動構改成引雷）
  * 內容    : 長槍的技／特技／招式特效與八招的打法：
  *           ・電光（tb）：根粗尖細，折點間距不等；每道長度、粗細、分岔數都不同，分岔上可再分岔。
  *           ・落雷（strike）：地上先亮預兆圈，再用現成的手繪落雷（b_izanami/izanami_thunder）劈下，
@@ -37,7 +38,7 @@ G.YFX = (function () {
   /* 落雷：地上先亮預兆圈，再用手繪落雷劈下；每道高度、粗細、左右向都不同；落點有電爆和貼地爬行的電光 */
   function strike(x, y, k, o) { o = o || {}; const sc = o.sc || 1, d0 = o.d0 || 0, warn = o.warn === undefined ? 10 : o.warn, U = k / 90, hgt = k * rnd(3.3, 5.4) * sc, wide = rnd(0.8, 1.35), flip = Math.random() < 0.5, sd = Math.random() * 1e3, tH = d0 + warn, G0 = [];
     for (let i = 0, n = 3 + Math.floor(Math.random() * 4); i < n; i++) G0.push({ dir: rnd(0, TAU), len: k * sc * rnd(0.35, 1.25), w: U * rnd(1.4, 5) * sc, br: Math.floor(rnd(0, 3)), sd: Math.random() * 1e3, life: rnd(10, 20) });
-    if (warn > 0) AF().play('b_susanoo', 'fx_lightning_warning', { x, y, size: k * 1.5 * sc, by: 'w', tpf: Math.max(2, Math.round(warn / 4)), delay: d0, tint: TINT, layer: 'u' });
+    if (warn > 0) AF().play('b_susanoo', 'fx_lightning_warning', { x, y, size: k * 1.5 * sc, by: 'w', tpf: Math.max(2, Math.round(warn / 4)), delay: d0, tint: TINT, layer: 'g' });
     const art = AF().ok('b_izanami', 'izanami_thunder'); if (!art) add(tH + 16, 'o', (ctx, u) => { const v = u - tH; if (v < 0) return; tb(ctx, x + (flip ? -0.5 : 0.5) * k, y - hgt, x, y, sd + (v < 5 ? 0 : 9.1), v < 3 ? 1 : v < 5 ? 0.5 : Math.max(0, 1 - (v - 5) / 11), U * 13 * sc * wide, k * 0.34, 4, 2); });
     if (art) add(tH + 4, 'o', (ctx, u) => { const v = u - tH; if (v < 0) return; ctx.save(); ctx.translate(x, y + k * 0.08); ctx.scale(wide, 1); AF().fr('b_izanami', 'izanami_thunder', Math.min(3, Math.floor(v / 4)), 0, 0, { size: hgt, by: 'h', anc: 'b', flip }); ctx.restore(); });
     AF().play('b_izanami', 'izanami_thunder', { x, y: y + k * 0.08, size: hgt, by: 'h', anc: 'b', tpf: 4, delay: tH, flip, fr: [1, 3] });
@@ -51,7 +52,7 @@ G.YFX = (function () {
   function gather(x, y, k, life, sc) { sc = sc || 1; const U = k / 90, B = []; for (let i = 0; i < Math.round(life * 0.7); i++) B.push({ t0: rnd(0, life - 5), dir: rnd(0, TAU), r: k * sc * rnd(0.5, 1.2), w: U * rnd(1.2, 4), sd: Math.random() * 1e3, br: Math.floor(rnd(0, 2.3)) });
     add(life + 4, 'o', (ctx, u) => { const q = Math.min(1, u / life), g = ctx.createRadialGradient(x, y, 0, x, y, k * (0.25 + 0.3 * q) * sc); g.addColorStop(0, 'rgba(240,230,255,' + 0.55 * q * (u > life ? 1 - (u - life) / 4 : 1) + ')'); g.addColorStop(1, 'rgba(130,90,235,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, k * 0.55 * sc, 0, TAU); ctx.fill();
       for (const b of B) { const v = u - b.t0; if (v < 0 || v > 6) continue; tb(ctx, x, y, x + Math.cos(b.dir) * b.r, y + Math.sin(b.dir) * b.r * 0.75, b.sd + Math.floor(v / 3) * 3.1, 1 - v / 6, b.w, b.r * 0.16, b.br, 1); } }); }
-  const scorch = (x0, y, x1, k, life, seed) => add(life, 'u', (ctx, u) => { const a = Math.min(1, (life - u) / 12) * 0.55; ctx.save(); ctx.translate(0, y); ctx.scale(1, 0.4); tb(ctx, x0, 0, x1, 0, seed, a, k / 90 * 7, k * 0.14, 3, 2); ctx.restore(); });
+  const scorch = (x0, y, x1, k, life, seed) => add(life, 'g', (ctx, u) => { const a = Math.min(1, (life - u) / 12) * 0.55; ctx.save(); ctx.translate(0, y); ctx.scale(1, 0.4); tb(ctx, x0, 0, x1, 0, seed, a, k / 90 * 7, k * 0.14, 3, 2); ctx.restore(); });
   const glint = (ctx, x, y, s) => { ctx.fillStyle = 'rgb(' + HI + ')'; ctx.beginPath(); ctx.moveTo(x - s, y); ctx.quadraticCurveTo(x, y, x, y - s * 0.5); ctx.quadraticCurveTo(x, y, x + s, y); ctx.quadraticCurveTo(x, y, x, y + s * 0.5); ctx.quadraticCurveTo(x, y, x - s, y); ctx.fill(); };
   /* 突刺：細光＋寒光；槍尖的電光每道大小不同；重刺沿槍身多一道粗電光，槍尖炸開，地上留電痕 */
   function thrust(o) { const f = o.face || o.f || 1, y = o.y, k = K(y), U = k / 90, big = o.big || 1, reach = (o.len || 1.8) * k * 0.95, hx = o.x + f * 0.1 * k, hy = y - (o.cy || 0.55) * k, ang = o.ang || 0, heavy = big >= 1.1 || !!o.shock, ca = Math.cos(ang), sa = Math.sin(ang), SB = Math.random() * 1e3, life = heavy ? 24 : 14;
@@ -76,7 +77,7 @@ G.YFX = (function () {
   function held(a0, life, o) { const k = K(G.H.y), U = k / 90, path = [], sd = Math.random() * 1e3, y0 = G.H.y; let end = 0;
     add(life + 50, 'o', (ctx, u) => { const on = G.H.act === a0 && u <= life; if (on) path.push([G.H.x, G.H.y - 0.55 * k]); else if (!end) end = u; if (path.length < 2) return; const a = on ? 1 : Math.max(0, 1 - (u - end) / 14);
       if (a > 0) { const p0 = path[Math.max(0, path.length - 16)], p1 = path[path.length - 1]; tb(ctx, p1[0] + G.H.face * 1.2 * k * (on ? 1 : 0), p1[1], p0[0], p0[1], sd + Math.floor(u / 3) * 3.3, a, U * 8, k * 0.12, 4, 2); if (on) glint(ctx, p1[0] + G.H.face * 1.25 * k, p1[1], k * 0.22); } });
-    add(life + 60, 'u', (ctx, u) => { if (path.length < 2) return; const a = Math.min(1, (life + 60 - u) / 14) * 0.5; ctx.save(); ctx.translate(0, y0); ctx.scale(1, 0.4); tb(ctx, path[path.length - 1][0], 0, path[0][0], 0, sd + 7, a, U * 8, k * 0.16, 4, 2); ctx.restore(); }); }
+    add(life + 60, 'g', (ctx, u) => { if (path.length < 2) return; const a = Math.min(1, (life + 60 - u) / 14) * 0.5; ctx.save(); ctx.translate(0, y0); ctx.scale(1, 0.4); tb(ctx, path[path.length - 1][0], 0, path[0][0], 0, sd + 7, a, U * 8, k * 0.16, 4, 2); ctx.restore(); }); }
   function rise(x, y, d, s) { strike(x, y, K(y), { d0: d, sc: 0.6 * (s || 1), warn: 4 }); }
   /* 不動構：身前一道紫電守線，立在線上的電光高矮粗細不同 */
   function guard(a0, life, o) { const k = K(G.H.y), U = k / 90, sd = Math.random() * 1e3;
@@ -119,7 +120,7 @@ G.YFX = (function () {
     skill_sorin(c, t) { const lv = LV(c), kk = K(c.y), U = kk / 90; if (t === 1) { c.a.T = 40; gather(c.x + c.f * 0.7 * kk, c.y - 0.1 * kk, kk, 9, 0.8); } if (t === 10) c.thrust({ len: 1.2, ang: 0.75, m: 0.3, lv: 'mid', big: 1.2, shock: 1, hf: 1, life: 10 }); if (t !== 12) return;
       const x0 = c.x + c.f * 0.6 * kk, y0 = c.y, f = c.f, R = 3.4 * kk, half = lv >= 3 ? 0.8 : 0.6, N = lv >= 10 ? 11 : lv >= 5 ? 8 : lv >= 3 ? 6 : 5, gap = 8, life = 16 + N * gap + (lv >= 7 ? 60 : 24), sd = Math.random() * 1e3, V = [];
       for (let i = 0, nv = lv >= 3 ? 7 : 5; i < nv; i++) V.push({ an: -half * 0.92 + half * 1.84 * i / (nv - 1) + rnd(-0.06, 0.06), len: rnd(0.55, 1.0), w: U * rnd(4, 12), br: 1 + Math.floor(rnd(0, 3.5)), sd: Math.random() * 1e3, ph: Math.floor(rnd(0, 3)) });
-      add(life, 'u', (ctx, u) => { const gr = ease(u / 14), a = Math.min(1, (life - u) / 16), fl = Math.floor(u / 4); ctx.save(); ctx.translate(x0, y0); ctx.scale(1, 0.4);
+      add(life, 'g', (ctx, u) => { const gr = ease(u / 14), a = Math.min(1, (life - u) / 16), fl = Math.floor(u / 4); ctx.save(); ctx.translate(x0, y0); ctx.scale(1, 0.4);
         const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R * gr); g.addColorStop(0, 'rgba(160,120,240,' + 0.3 * a + ')'); g.addColorStop(0.8, 'rgba(120,84,230,' + 0.14 * a + ')'); g.addColorStop(1, 'rgba(120,84,230,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, 0); for (let i = 0; i <= 12; i++) { const an = -half + 2 * half * i / 12; ctx.lineTo(Math.cos(an) * R * gr * f, Math.sin(an) * R * gr); } ctx.closePath(); ctx.fill();
         for (const v of V) tb(ctx, 0, 0, Math.cos(v.an) * R * v.len * gr * f, Math.sin(v.an) * R * v.len * gr, v.sd + ((fl + v.ph) % 3 === 0 ? fl : 0) * 1.7, a * ((fl + v.ph) % 3 === 0 ? 1 : 0.6), v.w, kk * 0.3, v.br, 2); ctx.restore(); });
       if (lv >= 7) G.E.forEach(e => { if (alive(e) && (e.x - x0) * f > 0 && Math.hypot(e.x - x0, (e.y - y0) * 2) < R) { e.db = e.db || {}; e.db.slow = 40; e.slowT = life; } });
@@ -138,12 +139,13 @@ G.YFX = (function () {
     special_deny(c, t) { const lv = LV(c), kk = K(c.y), U = kk / 90; if (t === 1) { c.a.T = 46; gather(c.x + c.f * 0.3 * kk, c.y - 0.55 * kk, kk, 9, 0.8); } if (t !== 10) return;
       const f = c.f, px = c.x + f * 2.2 * kk, py = c.y, R = (lv >= 10 ? 6.5 : lv >= 7 ? 5.4 : lv >= 5 ? 4.6 : lv >= 3 ? 3.8 : 3.0) * kk, N = lv >= 10 ? 11 : lv >= 7 ? 8 : lv >= 5 ? 6 : lv >= 3 ? 4 : 3, HOLD = 120, sd = Math.random() * 1e3;
       const th = strike(px, py, kk, { sc: 1.25, warn: 6 }); c.later(th, () => c.hit({ shape: 'circle', x: px, y: py, r: 1.0, m: 0.5, lv: 'mid', kind: 'pierce', stun: 30 }));
-      add(th + HOLD + 8, 'u', (ctx, u) => { const v = u - th; if (v < 0) return; const a = v > HOLD ? Math.max(0, 1 - (v - HOLD) / 8) : Math.min(1, v / 8); AF().fr('b_susanoo', 'fx_lightning_warning', 1 + Math.floor(v / 6) % 2, px, py, { size: kk * (1.9 + 0.15 * Math.sin(v * 0.3)), by: 'w', tint: TINT, a });
+      add(th + HOLD + 8, 'g', (ctx, u) => { const v = u - th; if (v < 0) return; const a = v > HOLD ? Math.max(0, 1 - (v - HOLD) / 8) : Math.min(1, v / 8); AF().fr('b_susanoo', 'fx_lightning_warning', 1 + Math.floor(v / 6) % 2, px, py, { size: kk * (1.9 + 0.15 * Math.sin(v * 0.3)), by: 'w', tint: TINT, a });
         ctx.save(); ctx.translate(px, py); ctx.scale(1, 0.4); for (let j = 0; j < 3; j++) { const q = ((v + j * 13) % 40) / 40; ctx.strokeStyle = 'rgba(170,130,245,' + 0.4 * a * q + ')'; ctx.lineWidth = 1.5 + 2 * q; ctx.beginPath(); ctx.arc(0, 0, R * (1 - q * 0.85), 0, TAU); ctx.stroke(); }   /* 往中心收的圈＝吸引範圍 */
         const fl = Math.floor(v / 4); for (let j = 0; j < 5; j++) { const s2 = sd + fl * 7.1 + j * 3.3, an = hs(s2, 1) * TAU, r0 = R * (0.35 + 0.6 * hs(s2, 2)); tb(ctx, Math.cos(an) * r0, Math.sin(an) * r0, Math.cos(an) * r0 * 0.12, Math.sin(an) * r0 * 0.12, s2, a * 0.85, U * (2 + 7 * hs(s2, 3)), r0 * 0.14, Math.floor(hs(s2, 4) * 3), 2); } ctx.restore(); });
       add(th + HOLD + 8, 'o', (ctx, u) => { const v = u - th - 10; if (v < 0) return; const a = (v > HOLD - 10 ? Math.max(0, 1 - (v - HOLD + 10) / 8) : 1) * (0.55 + 0.3 * hs(sd, Math.floor(v / 3))), fl = Math.floor(v / 5);   /* 留在原地的雷柱 */
         if (!AF().fr('b_izanami', 'izanami_thunder', 1 + fl % 2, px, py + kk * 0.08, { size: kk * (3.0 + 0.5 * hs(sd, fl)), by: 'h', anc: 'b', flip: fl % 2 === 1, a })) tb(ctx, px + (hs(sd, fl) - 0.5) * kk, py - 3.2 * kk, px, py, sd + fl * 2.3, a, U * 8, kk * 0.25, 3, 2); });
-      for (let i = 0; i < HOLD; i++) c.later(th + i, () => { for (const e of G.E) { if (!alive(e) || e.boss || e.bb) continue; const d = Math.hypot(e.x - px, (e.y - py) * 2); if (d < R && d > 0.3 * kk) { const nx = e.x + (px - e.x) * 0.05, ny = e.y + (py - e.y) * 0.05; if (G.SC.walkable(nx, ny)) { e.x = nx; e.y = ny; } } }
+      let hx = G.H.x, hy = G.H.y;   /* 被吸過來的敵人會把主角擠走：沒按方向、沒出招時把主角釘在原地 */
+      for (let i = 0; i < HOLD; i++) c.later(th + i, () => { if (Math.abs(G.IN.mx || 0) < 0.2 && Math.abs(G.IN.my || 0) < 0.2 && (G.H.st === 'idle' || G.H.act === c.a)) { G.H.x = hx; G.H.y = hy; } else { hx = G.H.x; hy = G.H.y; } for (const e of G.E) { if (!alive(e) || e.boss || e.bb) continue; const d = Math.hypot(e.x - px, (e.y - py) * 2); if (d < R && d > 0.3 * kk) { const nx = e.x + (px - e.x) * 0.05, ny = e.y + (py - e.y) * 0.05; if (G.SC.walkable(nx, ny)) { e.x = nx; e.y = ny; } } }
         if (i % 24 === 12) { c.hit({ shape: 'circle', x: px, y: py, r: 1.3, m: 0.12, lv: 'light', kind: 'pierce' }); spark(px + rnd(-0.5, 0.5) * kk, py - rnd(0.2, 0.9) * kk, kk, 0.4, 0, { noArt: 1, n: 3 }); } });
       c.later(th + HOLD, () => { if (lv >= 10) cloud(px, py, kk, N * 5 + 50); shake(6);
         for (let i = 0; i < N; i++) { const an = rnd(0, TAU), r = (i ? rnd(0.3, 1.6) : 0) * kk, x = px + Math.cos(an) * r, y = py + Math.sin(an) * r * 0.45, t2 = strike(x, y, kk, { d0: i * 5, sc: rnd(0.85, 1.35), warn: 5 }); c.later(t2, () => c.hit({ shape: 'circle', x, y, r: 1.0, m: 0.4, lv: 'heavy', kind: 'pierce', launch: 30 })); }
