@@ -1,6 +1,7 @@
 /* =====================================================================
  * 153_side3.js
- * 版本    : r3.154.0  (2026-11-27)　r3.154.0：建御雷「……」併入動作描述
+ * 版本    : r3.219.0  (2026-11-28)　r3.219.0：匯出 G.SIDE3.fight
+ * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：建御雷「……」併入動作描述
  * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：支援看得到：酒吞出場用自己的連斬／重砸；小雷獸跟在身邊、落雷時播攻擊動作；八雲斬畫 8 道刀光
  * 舊版    : r3.141.0  (2026-11-27)　r3.141.0：最後一隻式神改成紙鶴（文字＋任務點畫紙鶴 shiki_crane）
  * 舊版    : r3.135.0  (2026-11-27)
@@ -29,6 +30,7 @@
     const p = SC.snap(H.x + 240, H.y, 'open', 300) || [H.x + 200, H.y];
     const enc = B.start(id, { x: p[0], y: p[1], lv: (SC.def.lv || 1) + (o.lv || 2), sub: o.sub, onWin: () => later(10, done) });
     if (enc) { if (o.name) enc.name = o.name; for (const u of enc.units) u.hp = Math.round(u.hpMax * (o.hp || 1)); if (o.stop) { enc._thr = enc.units[0].hpMax * o.stop; FT = { enc, msg: o.msg }; } } }); }
+  G.SIDE3 = { fight };   /* r3.219.0：給 166_heart4 用 */
   function ftStep() { const f = FT, enc = f.enc; if (!enc || B.enc !== enc) { FT = null; return; } if (enc.done) return; const u = enc.units[0];
     if (u && u.hp <= enc._thr) { for (const x of enc.units) x.hp = Math.max(x.hp, 1); enc.done = true; enc.winT = 0; B.tg.length = 0; B.zones.length = 0; B.proj.length = 0; G.UI.banner(f.msg[0], f.msg[1]); FT = null; } }
 
