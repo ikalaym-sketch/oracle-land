@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.214.0  (2026-11-28)　r3.214.0：敵人普攻起手放慢
+ * Version : r3.221.0  (2026-11-28)　r3.221.0：敵人普攻命中停格 0.2 秒；打到主角有小擊退
+ * 舊版    : r3.214.0  (2026-11-28)　r3.214.0：敵人普攻起手放慢
  * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：里歐外型時殘影改用里歐的圖
  * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：塵土改手繪塵圈
  * 舊版    : r3.197.0  (2026-11-28)　r3.197.0：敵人普通近戰出手時有爪痕／揮擊弧光
@@ -345,11 +346,11 @@ G.ONI_RATIO = 1.38;
     if (e.st === 'walk') {
       if (Math.abs(dx) > 4) e.face = Math.sign(dx);
       e.cd--;
-      if (Math.abs(dx) < reach - 14 && Math.abs(dy) < 26 && e.cd <= 0) { e.st = 'atk'; e.t = 0; e.atkHit = false; const r = eRec(e, 'attack', 'atk'); e.atkMs = (r ? Math.max(600, A.dur(r)) : 966) * 2.1; return; }   /* r3.214.0：普攻起手再放慢（1.6 → 2.1 倍，最短約 0.6 秒才判定）；地面預警拿掉後，原本的時間來不及看動作閃 */   // r3.20.3：出手放慢 1.6 倍（預警後約 0.5～0.8 秒才判定，可閃避）
+      if (Math.abs(dx) < reach - 14 && Math.abs(dy) < 26 && e.cd <= 0) { e.st = 'atk'; e.t = 0; e.atkHit = false; e.hold = 0; const r = eRec(e, 'attack', 'atk'); e.atkMs = (r ? Math.max(600, A.dur(r)) : 966) * 2.1; return; }   /* r3.214.0：普攻起手再放慢（1.6 → 2.1 倍，最短約 0.6 秒才判定）；地面預警拿掉後，原本的時間來不及看動作閃 */   // r3.20.3：出手放慢 1.6 倍（預警後約 0.5～0.8 秒才判定，可閃避）
       const sp = (e.sm ? 1.25 : 1.05) * (e.db && e.db.slow ? 0.5 : 1); tryMove(e, Math.abs(dx) > reach * 0.68 ? Math.sign(dx) * sp : 0, Math.abs(dy) > 6 ? Math.sign(dy) * sp * 0.6 : 0);
     } else if (e.st === 'atk') {
       const ms = e.t * TK, hitMs = e.atkMs * 0.48;
-      if (!e.atkHit && ms >= hitMs) { e.atkHit = true; SC.shake = 3 + 2 * rr; if (G.FOEAI && G.FOEAI.meleeFx && e._fc !== 'ranged' && e._fc !== 'spirit') G.FOEAI.meleeFx(e);   /* r3.197.0：普通近戰出手時有爪痕／揮擊弧光 */
+      if (!e.atkHit && ms >= hitMs) { e.atkHit = true; e.hm = ms; e.hold = 200; e.atkMs += 200;   /* r3.221.0：命中那一格停 0.2 秒再收招 */ SC.shake = 3 + 2 * rr; if (G.FOEAI && G.FOEAI.meleeFx && e._fc !== 'ranged' && e._fc !== 'spirit') G.FOEAI.meleeFx(e);   /* r3.197.0：普通近戰出手時有爪痕／揮擊弧光 */
         G.FX.push({ k: 'dust', x: e.x + e.face * 60 * rr, y: e.y, t: 0, life: 20 });
         const rx = (H.x - e.x) * e.face;
         if (T !== H) { const px = (T.x - e.x) * e.face; if (px > -10 && px < reach && Math.abs(T.y - e.y) < 30) G.PARTY.hurt(T, e.atk, e.x, e); }
@@ -358,14 +359,14 @@ G.ONI_RATIO = 1.38;
         else if (rx > -10 && rx < reach && Math.abs(H.y - e.y) < 30 && H.inv <= 0 && !cheat('god')) {
           const df = G.RPG.S.def, dr = G.BUFF ? G.BUFF.get('dr') : 0, d0 = Math.max(1, Math.round(e.atk * (1 - df / (df + G.DEFK())) * (1 - dr / 100) * (0.9 + Math.random() * 0.2))), d1 = G.GROW ? G.GROW.taken(d0, e) : d0, d = G.PARTY ? G.PARTY.heroTaken(d1, e) : d1; if (d <= 0) { H.inv = 30; } else { H.hp = Math.max(0, H.hp - d); H.inv = 40; if (G.GROW) G.GROW.onHurt(d, e); G.AU && G.AU.sfx('hurt');
           if (!(G.BUFF && G.BUFF.get('armor')) && !(G.GROW && G.GROW.armor()) && !(G.PARTY && G.PARTY.armorT > 0)) { H.face = -e.face; if (!startAct('hurt', 'hurt')) { H.act = null; H.st = 'idle'; } }   // 霸體：不被打斷
-          G.NUMS.push({ x: H.x, y: H.y - G.HERO_H * SC.depth(H.y) - 6, v: d, hurt: true, t: 0 }); G.hitstop = 4; G.flash = 6; } } }
+          G.NUMS.push({ x: H.x, y: H.y - G.HERO_H * SC.depth(H.y) - 6, v: d, hurt: true, t: 0 }); G.hitstop = 4; G.flash = 6; if (G.knockHero) G.knockHero(e.x, e.y, rr > 1.25 ? 0.55 : 0.28); } } }
       if (ms >= e.atkMs) { e.st = 'walk'; e.t = 0; e.cd = 70 + Math.random() * 70; }
     }
   };
   G.drawOni = function (e) {
     const u = G.enemyUnit(e.type); if (!u) return; const s = SC.depth(e.y), sc0 = G.HERO_H * e.ratio * s / (u.vm || u.refE || 140), walk = eRec(e, 'walk');
     let fr, rec = walk;
-    if (e.st === 'atk') { const r = eRec(e, 'attack', 'atk'); rec = r || walk; fr = r ? A.frameAt(r, e.t * TK, e.atkMs) : walk.f[0]; }
+    if (e.st === 'atk') { const r = eRec(e, 'attack', 'atk'); rec = r || walk; let ms = e.t * TK, tot = e.atkMs; if (e.hold && ms >= e.hm) { if (e.mv) ms = ms < e.hm + e.hold ? e.hm : ms; else { ms = ms < e.hm + e.hold ? e.hm : ms - e.hold; tot -= e.hold; } }   /* r3.221.0：命中停格 */ fr = r ? A.frameAt(r, ms, tot) : walk.f[0]; }
     else if (e.st === 'hurt') { const r = eRec(e, 'hit', 'hurt'); rec = r || walk; fr = r ? A.frameAt(r, e.t * TK) : walk.f[0]; }
     else if (e.st === 'dead') { const r = eRec(e, 'death', 'fall', 'hit', 'hurt'); rec = r || walk; fr = r ? A.frameAt(r, e.t * TK) : walk.f[0]; }
     else fr = A.frameAt(walk, G.t * TK + e.ph);

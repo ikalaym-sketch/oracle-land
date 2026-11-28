@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 139_foeai.js
- * Version : r3.214.0  (2026-11-28)　r3.214.0：敵人衝刺起手與速度放慢
+ * Version : r3.221.0  (2026-11-28)　r3.221.0：招式命中停格 0.2 秒；被打依招式擊退（主角、夥伴）；夥伴出手命中也停格
+ * 舊版    : r3.214.0  (2026-11-28)　r3.214.0：敵人衝刺起手與速度放慢
  * 舊版    : r3.213.0  (2026-11-28)　r3.213.0：術士法球不再追蹤；招式預警提早出現
  * 舊版    : r3.200.0  (2026-11-28)　r3.200.0：箭雨的箭放大、拖光痕、落地後插在地上半秒
  * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：箭雨的箭改手繪箭矢
@@ -95,9 +96,10 @@
   const el = e => !!e.elite, wk = (e, f) => Math.round(f * (el(e) ? 0.8 : 1)), cd2 = (e, f) => Math.round(f * (el(e) ? 0.5 : 1));
   const inLane = (x0, y0, x1, y1, w) => { const dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy || 1, u = Math.max(0, Math.min(1, ((H.x - x0) * dx + (H.y - y0) * dy) / L2)), px = x0 + dx * u, py = y0 + dy * u; return Math.abs(H.x - px) < w * 0.5 && Math.abs(H.y - py) < Math.max(18, w * 0.35); };
   const inCirc = (x, y, r) => Math.hypot(H.x - x, (H.y - y) / 0.42) < r;
-  const hurt = (e, m) => { if (H.hp > 0) G.hurtHero(e.atk * m, e.x); };
+  /* r3.221.0：kb＝擊退（身高倍數）；ox,oy＝從哪裡推開（預設敵人位置）；dir＝固定方向（衝刺） */
+  const hurt = (e, m, kb, ox, oy, dir) => { if (H.hp <= 0) return; const hp0 = H.hp; G.hurtHero(e.atk * m, e.x); if (kb && H.hp < hp0 && G.knockHero) G.knockHero(ox === undefined ? e.x : ox, oy === undefined ? e.y : oy, kb, dir); };
   const dust = (x, y) => G.FX.push({ k: 'dust', x, y, t: 0, life: 20 });
-  function begin(e, k, Wf, o) { e.mv = Object.assign({ k, t: 0, W: Wf }, o || {}); e.st = 'atk'; e.t = 0; e.atkHit = true; e.atkMs = Math.max(500, Wf * TK / 0.48); if (Math.abs(H.x - e.x) > 4) e.face = Math.sign(H.x - e.x); }
+  function begin(e, k, Wf, o) { e.mv = Object.assign({ k, t: 0, W: Wf }, o || {}); e.st = 'atk'; e.t = 0; e.atkHit = true; e.hm = Wf * TK; e.hold = 200; e.atkMs = Math.max(500, Wf * TK / 0.48); if (Math.abs(H.x - e.x) > 4) e.face = Math.sign(H.x - e.x); }
   function finish(e) { const m = e.mv; e.mv = null; for (const t of W) if (t.e === e) t.t = t.life; if (e.st === 'atk') { e.st = 'walk'; e.t = 0; } e.cd = 50 + Math.random() * 40; return m; }
   const walkTo = (e, x, y) => { if (SC.walkable(x, y)) { e.x = x; e.y = y; return true; } return false; };
   /* 招式表：pick(e,d) 回傳是否開始 */
@@ -108,17 +110,17 @@
     pack: { ok: (e, d) => d > 1.2 && d < 3.5, start(e) { const k = HH() * S(e.y), mates = G.E.filter(o => o !== e && o._fc === 'swarm' && !o.mv && o.st === 'walk' && !(o.stun > 0) && o.hp > 0 && Math.hypot(o.x - e.x, o.y - e.y) < k * 3).slice(0, 2);
         for (const o of [e].concat(mates)) { const tx = H.x + rnd(-0.3, 0.3) * k, ty = H.y + rnd(-10, 10), Wf = wk(o, 30); begin(o, 'leap', Wf, { tx, ty, sx: o.x, sy: o.y, n: NF(Math.hypot(tx - o.x, ty - o.y), o.y, 1.1) }); o.mv.w = circ(o, tx, ty, k * 0.45, Wf); o._m2 = G.t + cd2(o, 360); } } },
     leap: { step(e, m) { if (m.t < m.W) return; const n = m.n || 12, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); walkTo(e, m.sx + (m.tx - m.sx) * q, m.sy + (m.ty - m.sy) * q);
-        if (q >= 1 && !m.hit) { m.hit = 1; meleeFx(e, 0, m.tx, m.ty); if (inCirc(m.tx, m.ty, k * 0.45)) hurt(e, 1.0); dust(m.tx, m.ty); } return m.t > m.W + n + 20; } },
+        if (q >= 1 && !m.hit) { m.hit = 1; meleeFx(e, 0, m.tx, m.ty); if (inCirc(m.tx, m.ty, k * 0.45)) hurt(e, 1.0, 0.35); dust(m.tx, m.ty); } return m.t > m.W + n + 20; } },
     /* 雜兵：踏步斬 */
     stepcut: { ok: (e, d) => d > 1.0 && d < 2.3, start(e) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = k * 1.5, x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, 36);
         begin(e, 'cut', Wf, { sx: e.x, sy: e.y, x1, y1, L, n: NF(L * 0.85, e.y, 1.1) }); lane(e, e.x, e.y, x1, y1, k * 0.55, Wf); e._m2 = G.t + cd2(e, 300); } },
     cut: { step(e, m) { if (m.t < m.W) return; const n = m.n || 10, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); walkTo(e, m.sx + (m.x1 - m.sx) * q * 0.85, m.sy + (m.y1 - m.sy) * q * 0.85);
-        if (!m.fx && q > 0.5) { m.fx = 1; meleeFx(e); } if (!m.hit && q > 0.5 && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.55)) { m.hit = 1; hurt(e, 1.2); } if (q >= 1 && !m.d) { m.d = 1; dust(e.x + e.face * k * 0.4, e.y); } return m.t > m.W + n + 24; } },
+        if (!m.fx && q > 0.5) { m.fx = 1; meleeFx(e); } if (!m.hit && q > 0.5 && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.55)) { m.hit = 1; hurt(e, 1.2, 0.4); } if (q >= 1 && !m.d) { m.d = 1; dust(e.x + e.face * k * 0.4, e.y); } return m.t > m.W + n + 24; } },
     /* 突擊：衝刺＋迴身斬 */
     dash: { ok: (e, d) => d > 1.8 && d < 4.8 && G.E.filter(o => o.mv && o.mv.k === 'run').length < 2, start(e, turn) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = Math.min(k * 2.5, dist(e) * k + k), x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, turn ? 44 : 60), n = Math.max(14, Math.round(Math.hypot(x1 - e.x, y1 - e.y) / (2.75 * 0.85 * S(e.y))));   /* r3.214.0：衝刺放慢——起手 44 → 60 格（迴身 30 → 44），衝過來的速度約降兩成（跟主角跑步差不多） */   /* 實測約主角跑步 ×1.2（含縱向位移） */
         begin(e, 'run', Wf, { sx: e.x, sy: e.y, x1, y1, turn, n }); lane(e, e.x, e.y, x1, y1, k * 0.6, Wf); if (!turn) e._m1 = G.t + 240; } },
     run: { step(e, m) { if (m.t < m.W) return; const n = m.n || 16, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); if (!walkTo(e, m.sx + (m.x1 - m.sx) * q, m.sy + (m.y1 - m.sy) * q)) m.t = Math.max(m.t, m.W + n);
-        if (!m.hit && inLane(m.sx, m.sy, e.x, e.y, k * 0.6) && Math.hypot(H.x - e.x, H.y - e.y) < k * 0.7) { m.hit = 1; meleeFx(e); hurt(e, m.turn ? 1.1 : 1.3); }
+        if (!m.hit && inLane(m.sx, m.sy, e.x, e.y, k * 0.6) && Math.hypot(H.x - e.x, H.y - e.y) < k * 0.7) { m.hit = 1; meleeFx(e); hurt(e, m.turn ? 1.1 : 1.3, 0.9, 0, 0, [e.x - m.sx, e.y - m.sy]); }
         if (m.t === m.W + n) dust(e.x, e.y);
         if (m.t > m.W + n + 6) { if (!m.turn && H.hp > 0 && (el(e) || Math.random() < 0.25) && G.t >= (e._m2 || 0)) { e._m2 = G.t + cd2(e, 420); e.mv = null; MV.dash.start(e, 1); return false; } return true; } return false; } },
     /* 遠程：拋射 */
@@ -133,27 +135,27 @@
     cast: { step(e, m) { if (m.t === m.W) { const n = el(e) ? 3 : 1; for (let i = 0; i < n; i++) orb(e, m.a + (i - (n - 1) / 2) * 0.35); } return m.t > m.W + 24; } },
     /* 術士：地爆 */
     burst: { ok: (e, d) => d > 1.5 && d < 7, start(e) { const k = HH() * S(H.y), Wf = wk(e, 54), x = H.x, y = H.y; begin(e, 'boom', Wf, { x, y, r: k * 0.75 }); circ(e, x, y, k * 0.75, Wf, MAG); e._m2 = G.t + cd2(e, 420); } },
-    boom: { step(e, m) { if (m.t === m.W) { boomFx(m.x, m.y, m.r); if (inCirc(m.x, m.y, m.r)) hurt(e, 1.3); } return m.t > m.W + 24; } },
+    boom: { step(e, m) { if (m.t === m.W) { boomFx(m.x, m.y, m.r); if (inCirc(m.x, m.y, m.r)) hurt(e, 1.3, 0.8, m.x, m.y); } return m.t > m.W + 24; } },
     /* r3.112.0 重甲：橫掃 */
     sweep: { ok: (e, d) => d < 1.8, start(e) { const k = HH() * S(e.y), Wf = wk(e, 48); if (Math.abs(H.x - e.x) > 4) e.face = Math.sign(H.x - e.x); const x = e.x + e.face * k * 0.6, y = e.y;
         begin(e, 'swing', Wf, { x, y, r: k * 0.95 }); circ(e, x, y, k * 0.95, Wf); e._m1 = G.t + 240; } },
-    swing: { step(e, m) { if (m.t === m.W) { meleeFx(e, 1, m.x, m.y); dust(m.x, m.y); G.SC.shake = Math.max(G.SC.shake || 0, 4); if (inCirc(m.x, m.y, m.r)) hurt(e, 1.3); } return m.t > m.W + 28; } },
+    swing: { step(e, m) { if (m.t === m.W) { meleeFx(e, 1, m.x, m.y); dust(m.x, m.y); G.SC.shake = Math.max(G.SC.shake || 0, 4); if (inCirc(m.x, m.y, m.r)) hurt(e, 1.3, 0.8, m.x, m.y); } return m.t > m.W + 28; } },
     /* 重甲：盾擊（擊退＋暈 0.5 秒） */
     bash: { ok: (e, d) => d > 0.8 && d < 2.4, start(e) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = k * 1.6, x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, 36);
         begin(e, 'shove', Wf, { sx: e.x, sy: e.y, x1, y1, a, n: NF(L * 0.8, e.y, 1.1) }); lane(e, e.x, e.y, x1, y1, k * 0.6, Wf); e._m2 = G.t + cd2(e, 420); } },
     shove: { step(e, m) { if (m.t < m.W) return; const n = m.n || 10, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y); walkTo(e, m.sx + (m.x1 - m.sx) * q * 0.8, m.sy + (m.y1 - m.sy) * q * 0.8);
-        if (!m.hit && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.6) && Math.hypot(H.x - e.x, H.y - e.y) < k * 0.8) { m.hit = 1; meleeFx(e); const hp0 = H.hp; hurt(e, 1.0);
+        if (!m.hit && inLane(m.sx, m.sy, m.x1, m.y1, k * 0.6) && Math.hypot(H.x - e.x, H.y - e.y) < k * 0.8) { m.hit = 1; meleeFx(e); const hp0 = H.hp; hurt(e, 1.0, 0.5);
           if (H.hp < hp0) { for (let i = 0; i < 6; i++) { const nx = H.x + Math.cos(m.a) * k * 0.12; if (SC.walkable(nx, H.y)) H.x = nx; } H._stn = 30; G.NUMS.push({ x: H.x, y: H.y - HH() * S(H.y) - 20, v: '暈', t: 0, col: '#ffd08a' }); } }
         return m.t > m.W + n + 20; } },
     /* 巨體：重踩（自身大圈＋震波） */
     stomp: { ok: (e, d) => d < 2.2, start(e) { const k = HH() * S(e.y), Wf = wk(e, 60); begin(e, 'quake', Wf, { x: e.x, y: e.y, r: k * 1.5 }); circ(e, e.x, e.y, k * 1.5, Wf, HEV); e._m1 = G.t + 300; } },
-    quake: { step(e, m) { if (m.t === m.W) { shock(m.x, m.y, m.r); if (inCirc(m.x, m.y, m.r)) hurt(e, 1.5); } return m.t > m.W + 30; } },
+    quake: { step(e, m) { if (m.t === m.W) { shock(m.x, m.y, m.r); if (inCirc(m.x, m.y, m.r)) hurt(e, 1.5, 1.0, m.x, m.y); } return m.t > m.W + 30; } },
     /* 巨體：衝撞（撞牆暈 1 秒） */
     ram: { ok: (e, d) => d > 2 && d < 6, start(e) { const k = HH() * S(e.y), a = Math.atan2(H.y - e.y, H.x - e.x), L = Math.min(k * 5, dist(e) * k + k), x1 = e.x + Math.cos(a) * L, y1 = e.y + Math.sin(a) * L * 0.6, Wf = wk(e, 54);
         begin(e, 'charge', Wf, { sx: e.x, sy: e.y, x1, y1, n: NF(Math.hypot(x1 - e.x, y1 - e.y), e.y, 1.3) }); lane(e, e.x, e.y, x1, y1, k * 0.9, Wf, HEV); e._m2 = G.t + cd2(e, 480); } },
     charge: { step(e, m) { if (m.t < m.W) return; const n = m.n || 22, q = Math.min(1, (m.t - m.W) / n), k = HH() * S(e.y);
         if (!m.wall && !walkTo(e, m.sx + (m.x1 - m.sx) * q, m.sy + (m.y1 - m.sy) * q)) { m.wall = 1; shock(e.x, e.y, k * 0.8); e.stun = 60; G.NUMS.push({ x: e.x, y: e.y - HH() * S(e.y) * (e.ratio || 1) - 18, v: '撞牆・暈', t: 0, col: '#ffd08a' }); return true; }
-        if (!m.hit && Math.hypot(H.x - e.x, (H.y - e.y) * 1.6) < k * 0.8) { m.hit = 1; hurt(e, 1.6); }
+        if (!m.hit && Math.hypot(H.x - e.x, (H.y - e.y) * 1.6) < k * 0.8) { m.hit = 1; hurt(e, 1.6, 1.2); }
         if (m.t === m.W + n) dust(e.x, e.y); return m.t > m.W + n + 18; } } };
   /* 每類：[招式 1, 招式 2]；null＝原本近戰 */
   const KIT = { swarm: [null, 'pack'], grunt: [null, 'stepcut'], assault: ['dash', null], ranged: [null, 'lob'], spirit: ['orb', 'burst'], armor: ['sweep', 'bash'], giant: ['stomp', 'ram'] };
@@ -251,4 +253,17 @@
       if (ad < need * 0.35) { const py = (dy ? Math.sign(dy) : sg) * 0.4; if (SC.walkable(a.x, a.y - py)) a.y -= py; if (SC.walkable(b.x, b.y + py)) b.y += py; } } }
     for (const e of L) e._px = e.x; }
   (function hkSep() { if (!G.oniStep) return setTimeout(hkSep, 50); const os = G.oniStep; G.oniStep = function (e) { if (sepT !== G.t) { sepT = G.t; try { separate(); } catch (x) { console.warn('sep', x); } } return os.apply(this, arguments); }; })();
+  /* ---------- r3.221.0：擊退（主角、夥伴被打）與夥伴出手的命中停格 ---------- */
+  { const PY = G.PARTY, HH = G.HERO_H, KB = { x: 0, y: 0 };
+    const armored = () => (G.BUFF && G.BUFF.get('armor')) || (G.GROW && G.GROW.armor && G.GROW.armor()) || (PY && PY.armorT > 0);
+    /* 從 (ox,oy) 往外推 kb 個身高；dir＝[dx,dy] 指定方向。霸體不退、架擋只退三成 */
+    G.knockHero = function (ox, oy, kb, dir) { if (!kb || armored()) return; let dx = dir ? dir[0] : H.x - ox, dy = dir ? dir[1] : (H.y - oy) * 0.6; const L = Math.hypot(dx, dy) || 1, d = kb * HH * SC.depth(H.y) * (H.guard ? 0.3 : 1) / 5;
+      KB.x = dx / L * d; KB.y = dy / L * d * 0.6; };
+    const push = (o, v) => { if (!v.x && !v.y) return; const nx = o.x + v.x, ny = o.y + v.y; if (SC.walkable(nx, ny)) { o.x = nx; o.y = ny; } else if (SC.walkable(nx, o.y)) o.x = nx; else { v.x = v.y = 0; return; } v.x *= 0.8; v.y *= 0.8; if (Math.abs(v.x) < 0.2 && Math.abs(v.y) < 0.2) v.x = v.y = 0; };
+    const st0 = G.STORY.step.bind(G.STORY); G.STORY.step = function () { st0(); if (G.mode !== 'play' || SC.trans) { KB.x = KB.y = 0; return; } push(H, KB);
+      if (PY && PY.list) for (const P of PY.list) { if (P.kbv) { push(P, P.kbv); if (!P.kbv.x && !P.kbv.y) P.kbv = null; }
+        if (P.hold > 0) { P.hold--; if (P.st === 'cast' && P.cur) { P.ms = Math.max(0, P.ms - TK); P.cur.t = Math.max(0, P.cur.t - TK); } } } };   // 夥伴命中停格：動作與時間軸一起停
+    if (PY && PY.hurt) { const ph0 = PY.hurt; PY.hurt = function (P, atk, srcX, src) { const r = ph0.apply(this, arguments); if (r && P && P.st !== 'down' && !(P.armor > 0)) { const k = src && (src.ratio || 1) > 1.25 ? 0.5 : 0.25, d = k * HH * SC.depth(P.y) / 5; P.kbv = { x: (Math.sign(P.x - srcX) || 1) * d, y: 0 }; } return r; }; }
+    const dmK = G.damageOni; G.damageOni = function (e, mult, big, fc, opt) { const P = opt && opt.party, h0 = e && e.hp, r = dmK.apply(this, arguments);
+      if (P && typeof P === 'object' && !opt.rune && e && e.hp < h0 && P.st === 'cast' && !(P.hold > 0) && (P._hT || 0) < G.t) { P.hold = big ? 12 : 7; P._hT = G.t + 40; } return r; }; }
 })();
