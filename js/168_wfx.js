@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 168_wfx.js
- * Version : r3.227.0  (2026-11-28)　r3.227.0：新增。四把近戰武器的普攻新畫法（試作頁第五版定案）
+ * Version : r3.230.0  (2026-11-28)　r3.230.0：弧線可給技／特技用（o.free），匯出 arc
+ * 舊版    : r3.227.0  (2026-11-28)　r3.227.0：新增。四把近戰武器的普攻新畫法（試作頁第五版定案）
  * 內容    : 打刀／野太刀／薙刀／長槍的普攻特效：
  *           ・軌跡＝每段普攻各自設計的弧線，寬度等於刀身（外緣實、往握柄漸淡），不描邊、沒有白芯。
  *           ・距離依武器：打刀 1.3、野太刀 1.85、薙刀 2.05、長槍 2.0 個身高（判定距離同步調整，見 55_wpn_v2）。
@@ -58,8 +59,8 @@ G.WFX = (function () {
   /* 風線：短的、兩頭尖的流線，沿槍桿往前流，各自弧度不同 */
   function streak(ctx, x0, y0, len, bend, w, col, a, f) { const N = 12; for (let i = 0; i < N; i++) { const q0 = i / N, q1 = (i + 1) / N, yb = q => bend * Math.sin(q * Math.PI) + bend * 0.35 * Math.sin(q * TAU), lw = w * Math.sin(Math.PI * (q0 + q1) / 2); if (lw < 0.3) continue;
       ctx.strokeStyle = 'rgba(' + col + ',' + a * (0.35 + 0.65 * q1) + ')'; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x0 + f * len * q0, y0 + yb(q0)); ctx.lineTo(x0 + f * len * q1, y0 + yb(q1)); ctx.stroke(); } }
-  function arc(o, Rk0) { const w = WP[wid()] || WP.katana, st = stepOf(), pre = st >= 0 && w.seq[st] ? w.seq[st] : null, y = o.y, k = K(y), f = o.f || o.face || 1;
-    const a0 = pre ? pre[0] : o.a0, a1 = pre ? pre[1] : o.a1, sq = pre ? pre[2] : (o.sq === undefined ? 0.6 : o.sq), rot = pre ? pre[3] : (o.rot || 0), Rk = pre ? w.R * (st === 3 ? 1.08 : 1) : Math.max(Rk0, w.R * 0.8), dur = w.dur + (st === 3 ? 1 : 0), cs = Math.cos(rot), sn = Math.sin(rot);
+  function arc(o, Rk0) { const w = WP[wid()] || WP.katana, st = o.free ? -1 : stepOf(), pre = st >= 0 && w.seq[st] ? w.seq[st] : null,   /* r3.230.0：o.free＝技／特技用，不套普攻的弧，可自訂 dur */ y = o.y, k = K(y), f = o.f || o.face || 1;
+    const a0 = pre ? pre[0] : o.a0, a1 = pre ? pre[1] : o.a1, sq = pre ? pre[2] : (o.sq === undefined ? 0.6 : o.sq), rot = pre ? pre[3] : (o.rot || 0), Rk = pre ? w.R * (st === 3 ? 1.08 : 1) : Math.max(Rk0, w.R * 0.8), dur = o.free && o.dur ? o.dur : w.dur + (st === 3 ? 1 : 0), cs = Math.cos(rot), sn = Math.sin(rot);
     const span = a1 - a0, tl = Math.min(Math.abs(span), 2.3) * Math.sign(span), L = [], wk = wid();
     if (wk === 'naginata') for (let i = 0; i < 7; i++) L.push({ q: rnd(0.2, 1), vx: rnd(0.4, 1.4), vy: rnd(-0.9, -0.2), sp: rnd(-0.3, 0.3), r0: rnd(0, TAU), s: rnd(0.05, 0.08), c: Math.random() < 0.3 ? '#e3d38c' : '#a9cf9e' });
     if (wk === 'nodachi') { for (let i = 0; i < 8; i++) { const big = Math.random(); L.push({ q: 0.18 + i / 8 * 0.8 + rnd(-0.04, 0.04), rr: rnd(0.5, 1), vx: rnd(0.0, 0.25), vy: rnd(-0.5, -0.15), s: 0.14 + 0.24 * big, wd: rnd(0.5, 1.25), ht: rnd(0.75, 1.7), ph: rnd(0, TAU), sw: rnd(0.25, 0.75), fq: rnd(0.45, 1.2), wl: rnd(1.6, 3.4), lean: rnd(0.5, 1.4), k: 'flame', life: rnd(14, 26) }); }
@@ -110,5 +111,5 @@ G.WFX = (function () {
         else if (l.k === 'bolt') part(ctx, l, x + l.dx, y + l.dy, u, a, k, f);
         else part(ctx, l, x + (l.k === 'flame' ? l.vx * u : l.vx * u * 1.2), y + l.vy * u + (l.k === 'flame' ? 0 : 0.04 * u * u), u, a, k, f); } }); return true; }
   const norm = () => { const A = G.H.act; return !!(A && A.mvx && A.mvx.norm && WP[wid()]); };
-  return { norm, hit, WP, smear: o => arc(o, o.r || 1.2), swing: o => arc(Object.assign({}, o, { sq: o.sq || 1 }), o.R || 1.7), spear: thrust, stab: o => thrust(Object.assign({ len: (o.len || o.r || 1.3) }, o)) };
+  return { norm, hit, WP, arc, smear: o => arc(o, o.r || 1.2), swing: o => arc(Object.assign({}, o, { sq: o.sq || 1 }), o.R || 1.7), spear: thrust, stab: o => thrust(Object.assign({ len: (o.len || o.r || 1.3) }, o)) };
 })();
