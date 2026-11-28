@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 05_dialog.js
- * Version : r3.207.0  (2026-11-28)　r3.207.0：選項改排在對話框內下方（對話框、半身像、上一句台詞都留著；不再另開一個畫面、不畫長外框）
+ * Version : r3.231.0  (2026-11-28)　r3.231.0：新增半身像：嵐丸、澪、阿澄；阿菊換成農家少女的圖
+ * 舊版    : r3.207.0  (2026-11-28)　r3.207.0：選項改排在對話框內下方（對話框、半身像、上一句台詞都留著；不再另開一個畫面、不畫長外框）
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：選項上方已有台詞時不再顯示「你要怎麼做？」
  * 舊版    : r3.160.0  (2026-11-27)　r3.160.0：玄符（黑符的雙胞胎哥哥）共用黑符半身像
  * 舊版    : r3.157.2  (2026-11-27)　r3.157.2：對話開始前先等半身像載好（最多 0.6 秒），連選項分支一起預載——修正第一次出場（如五條大橋弁慶）沒有頭像
@@ -28,7 +29,7 @@
     '牛若丸': 'ushiwaka', '伊邪那美': 'izanami', '綿津見': 'watatsumi', '冬乃': 'fuyuno', '八絃': 'yatsuo', '弁慶': 'benkei', '時雨': 'shigure', '傳送役・時雨': 'shigure', '五平': 'gohei', '鬼鍛冶權六': 'gonroku', '權六': 'gonroku',
     '長壁姬': 'osakabe', '源義經': 'yoshitsune', '鬼灘': 'onada', '道滿': 'doman', '年輕的陰陽師': 'doman', '澄岳': 'chogaku', '宗八': 'sohachi', '鬼王': 'oniou', '雷獸': 'raiju', '花澄': 'hanasumi', '砂狐': 'sagitsune',
     '阿德婆婆': 'otoku', '阿德': 'otoku', '蓬庵': 'hoan', '汀江': 'migiwae', '潮丸的娘': 'migiwae', '巡檢孫六': 'magoroku', '孫六': 'magoroku', '九尾': 'kyubi', '鬼族使者': 'oni_envoy', '阿紺': 'okon', '染布的阿紺': 'okon', '爐火女神': 'hearth_goddess',
-    '海邊的河童': 'kappa_sea', '安倍晴明': 'seimei', '晴明': 'seimei', '阿春': 'oharu', '劍士的亡魂': 'swordsman_ghost', '鎌鼬': 'kamaitachi', '鎌鼬長兄': 'kamaitachi', '阿菊': 'okiku', '河童大將': 'kappa_general',
+    '海邊的河童': 'kappa_sea', '安倍晴明': 'seimei', '晴明': 'seimei', '阿春': 'oharu', '劍士的亡魂': 'swordsman_ghost', '鎌鼬': 'kamaitachi', '鎌鼬長兄': 'kamaitachi', '阿菊': 'kiku', '嵐丸的殘影': 'arashimaru', '嵐丸': 'arashimaru', '澪的回聲': 'mio', '澪': 'mio', '阿澄': 'sumi', '雪的殘影': 'yuki', '河童大將': 'kappa_general',
     '村長': 'village_chief', '鬼族守爐人': 'oni_keeper', '貓又': 'nekomata', '茶屋婆婆': 'teahouse_granny', '梅乃婆婆': 'umeno', '受傷的人魚': 'mermaid', '真穗': 'maho',
     '半兵衛': 'hanbei', '行商・半兵衛': 'hanbei', '潮丸': 'shiomaru', '甚藏': 'jinzo', '太吉': 'takichi', '挑夫太吉': 'takichi', '阿絹': 'okinu', '朔兵衛': 'sakubei', '千景': 'chikage', '鈴緒': 'suzuo', '冬馬': 'toma',
     '柚吉': 'yuzukichi', '小百合': 'sayuri', '蓮太': 'renta', '笹音': 'sasane', '太助': 'tasuke', '拉車的太助': 'tasuke', '槇之介': 'makinosuke', '小太郎': 'kotaro', '阿吉': 'akichi', '渡船夫': 'ferryman', '無名武士': 'nameless_samurai',

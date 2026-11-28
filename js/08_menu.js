@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 08_menu.js
- * Version : r3.228.0  (2026-11-28)　r3.228.0：技能說明多顯示 Lv7、Lv10 的追加效果（有寫的招式才顯示）
+ * Version : r3.231.0  (2026-11-28)　r3.231.0：武器技能顯示 Lv／10，升級不再顯示巔峰點數；說明列出 Lv3、5、7、10 與 Lv6～10
+ * 舊版    : r3.228.0  (2026-11-28)　r3.228.0：技能說明多顯示 Lv7、Lv10 的追加效果（有寫的招式才顯示）
  * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：設定新增「按鍵位置」
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：狀態頁拿掉寶珠碎片（移到結局走向）
  * 舊版    : r3.147.0  (2026-11-27)　r3.147.0：背包改版（預設選第一件、排序、等級／▲／新物品紅點／鎖定標記、鎖定與分解按鈕）
@@ -182,7 +183,7 @@
       const off = scrollArea('sk', x, y + 30, lw, h - 34, items.length * RH); clip(x, y + 30, lw, h - 34);
       items.forEach((it, i) => { const yy = y + 30 + i * RH + off, o = it.o, on = it === cur; if (yy < y - RH || yy > y + h) return;
         let lock, sub, tag = '';
-        if (it.k === 'sk') { const lv = W.lv(o.id); lock = !W.unlocked(o); sub = o.t + '・' + (lock ? '武器熟練 Lv' + o.u + (o.t === '奧義' ? '＋角色 Lv40' : '') + ' 學會' : lv ? 'Lv ' + lv + '／5' : '可學習'); tag = sl.A === o.id ? '技A' : sl.B === o.id ? '技B' : o.t === '奧義' && lv ? '奧' : ''; }
+        if (it.k === 'sk') { const lv = W.lv(o.id); lock = !W.unlocked(o); sub = o.t + '・' + (lock ? '武器熟練 Lv' + o.u + (o.t === '奧義' ? '＋角色 Lv40' : '') + ' 學會' : lv ? 'Lv ' + lv + '／10' : '可學習'); tag = sl.A === o.id ? '技A' : sl.B === o.id ? '技B' : o.t === '奧義' && lv ? '奧' : ''; }
         else if (it.k === 'mv') { lock = !W.mvOk(o); sub = '招式・' + (lock ? '武器熟練 Lv' + o.u + ' 學會' : 'Lv ' + W.mvLv() + '（跟職業等級）'); const j = sl.C.indexOf(o.id); tag = j >= 0 ? '招' + (j + 1) : ''; }
         else { lock = false; sub = '身法'; const j = sl.M.indexOf(o.id); tag = j >= 0 ? '身' + (j + 1) : ''; }
         ctx.fillStyle = on ? 'rgba(120,80,30,.45)' : 'rgba(255,255,255,.03)'; ctx.fillRect(x + 6, yy + 2, lw - 12, RH - 4);
@@ -197,8 +198,8 @@
       const by = y + h - 42;
       if (cur.k === 'sk') { const s = o, lv = W.lv(s.id), bw = (cw - 44) / 3, can = W.canLearn(s);
         G.txt(s.t + '　' + (s.t === '奧義' ? '需滿格「氣」' : '冷卻 ' + Math.round(W.cd(s) * 10) / 10 + ' 秒') + '　倍率 ×' + (Math.round(W.mult(s, Math.max(1, lv)) * 100) / 100), cx + 16, y + 52, 12, C.gold, 'left', G.FONT, 700);
-        para(s.d, C.ink); para('Lv3–4 進化：' + s.d3, lv >= 3 ? '#8fd38f' : C.sub); para('Lv5 極意：' + s.d5, lv >= 5 ? '#f3d98a' : C.sub); if (s.d7) { para('Lv7：' + s.d7, lv >= 7 ? '#f3d98a' : C.sub); para('Lv10：' + s.d10, lv >= 10 ? '#f3d98a' : C.sub); } if (lv >= 5) para('Lv6–10（巔峰點數）：每級傷害 +10%；Lv10 極：範圍 +20%、多 1 段、冷卻 −15%', lv >= 10 ? '#f3d98a' : C.sub);
-        button(cx + 14, by, bw, 30, lv ? (lv >= 10 ? '已滿' : lv >= 5 ? '升級（巔峰 ' + (W.ppCost ? W.ppCost(lv + 1) : '?') + '）' : '升級') : '學習', () => { if (W.learn(s)) G.UI.toast(s.n + '　Lv ' + W.lv(s.id)); }, can ? 'main' : 'off');
+        para(s.d, C.ink); para('Lv3：' + s.d3, lv >= 3 ? '#8fd38f' : C.sub); para('Lv5：' + s.d5, lv >= 5 ? '#f3d98a' : C.sub); if (s.d7) { para('Lv7：' + s.d7, lv >= 7 ? '#f3d98a' : C.sub); para('Lv10：' + s.d10, lv >= 10 ? '#f3d98a' : C.sub); para('Lv6～10：每級傷害 +10%；Lv10 冷卻 −15%', lv >= 6 ? '#e3c27a' : C.sub); } else para('Lv6～10：每級傷害 +10%；Lv10：範圍 +20%、多 1 段、冷卻 −15%', lv >= 6 ? '#e3c27a' : C.sub);
+        button(cx + 14, by, bw, 30, lv ? (lv >= 10 ? '已滿' : '升級') : '學習', () => { if (W.learn(s)) G.UI.toast(s.n + '　Lv ' + W.lv(s.id)); }, can ? 'main' : 'off');
         if (s.t !== '奧義') { button(cx + 22 + bw, by, bw, 30, '設為技A', () => W.setSlot('A', s.id), lv ? '' : 'off'); button(cx + 30 + bw * 2, by, bw, 30, '設為技B', () => W.setSlot('B', s.id), lv ? '' : 'off'); } }
       else if (cur.k === 'mv') { const ok = W.mvOk(o), bw = (cw - 44) / 3;
         G.txt('招式（組合技）　冷卻 ' + Math.round(o.cd / 6) / 10 + ' 秒', cx + 16, y + 52, 12, C.gold, 'left', G.FONT, 700);

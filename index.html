@@ -2,7 +2,7 @@
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d0b10"><link rel="icon" href="icon-192.png">
 <script>
 /* 版本檢查：ver.json 不走快取；與本頁載入的版本不同就換網址重新載入（避免手機用到舊版快取）。每次開啟檢查一次，同一版本最多重載一次。 */
-(function () { var cur = 'r3.230.0';
+(function () { var cur = 'r3.231.0';
   fetch('ver.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
     if (!j || !j.v || j.v === cur) return; var k = 'reload_' + j.v; try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, 1); } catch (e) {}
     location.replace(location.pathname + '?v=' + j.v); }).catch(function () {}); })();
@@ -24,18 +24,18 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 </style>
 <canvas id="cv"></canvas>
 <div id="rot">請將裝置轉為橫向</div>
-<script src="js/00_core.js?v=r3.230.0"></script>
+<script src="js/00_core.js?v=r3.231.0"></script>
 <script src="js/12_anim.js?v=r3.28.0"></script>
 <script src="js/01_assets.js?v=r3.138.0"></script>
 <script src="js/02_scene.js?v=r3.168.0"></script>
 <script src="js/03_actors.js?v=r3.225.0"></script>
 <script src="js/04_ui.js?v=r3.204.0"></script>
-<script src="js/05_dialog.js?v=r3.207.0"></script>
+<script src="js/05_dialog.js?v=r3.231.0"></script>
 <script src="js/06_story_ch1.js?v=r3.214.0"></script>
 <script src="js/07_rpg.js?v=r3.147.0"></script>
 <script src="js/13_weapons.js?v=r3.145.0"></script>
 <script src="js/15_skill.js?v=r3.99.0"></script>
-<script src="js/08_menu.js?v=r3.228.0"></script>
+<script src="js/08_menu.js?v=r3.231.0"></script>
 <script src="js/16_growth.js?v=r3.206.0"></script>
 <script src="js/14_cheat.js?v=r3.28.0"></script>
 <script src="js/17_menu2.js?v=r3.166.0"></script>
@@ -114,14 +114,14 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/85_normal.js?v=r3.37.0"></script>
 <script src="js/86_fx2.js?v=r3.37.0"></script>
 <script src="js/87_story2.js?v=r3.165.0"></script>
-<script src="js/88_rune.js?v=r3.200.0"></script>
+<script src="js/88_rune.js?v=r3.231.0"></script>
 <script src="js/89_obj.js?v=r3.109.0"></script>
 <script src="js/90_fix.js?v=r3.41.0"></script>
 <script src="js/91_pfx.js?v=r3.104.2"></script>
 <script src="js/92_lab.js?v=r3.49.0"></script>
 <script src="js/93_kassen.js?v=r3.98.0"></script>
 <script src="js/94_gojo.js?v=r3.86.0"></script>
-<script src="js/95_board.js?v=r3.220.0"></script>
+<script src="js/95_board.js?v=r3.231.0"></script>
 <script src="js/96_choice.js?v=r3.57.0"></script>
 <script src="js/97_partner5.js?v=r3.58.0"></script>
 <script src="js/98_explore.js?v=r3.169.0"></script>
@@ -152,7 +152,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/123_btempo.js?v=r3.96.0"></script>
 <script src="js/124_statui.js?v=r3.203.0"></script>
 <script src="js/125_scenefix.js?v=r3.129.0"></script>
-<script src="js/126_peak.js?v=r3.148.0"></script>
+<script src="js/126_peak.js?v=r3.231.0"></script>
 <script src="js/127_forge3.js?v=r3.101.0"></script>
 <script src="js/128_bunshin.js?v=r3.101.0"></script>
 <script src="js/129_magatama.js?v=r3.147.0"></script>
@@ -179,7 +179,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/150_main2.js?v=r3.143.0"></script>
 <script src="js/151_side1.js?v=r3.163.0"></script>
 <script src="js/152_side2.js?v=r3.217.0"></script>
-<script src="js/153_side3.js?v=r3.219.0"></script>
+<script src="js/153_side3.js?v=r3.231.0"></script>
 <script src="js/154_doma.js?v=r3.154.0"></script>
 <script src="js/155_heroxue.js?v=r3.163.0"></script>
 <script src="js/157_hubwar.js?v=r3.161.0"></script>
@@ -188,14 +188,15 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; t
 <script src="js/160_hwside.js?v=r3.165.0"></script>
 <script src="js/161_hud2.js?v=r3.172.0"></script>
 <script src="js/162_fx3.js?v=r3.196.0"></script>
-<script src="js/163_heart.js?v=r3.216.0"></script>
+<script src="js/163_heart.js?v=r3.231.0"></script>
 <script src="js/164_heart2.js?v=r3.216.0"></script>
 <script src="js/165_heart3.js?v=r3.218.0"></script>
-<script src="js/166_heart4.js?v=r3.219.0"></script>
-<script src="js/167_pskill.js?v=r3.226.0"></script>
+<script src="js/166_heart4.js?v=r3.231.0"></script>
+<script src="js/167_pskill.js?v=r3.231.0"></script>
 <script src="js/168_wfx.js?v=r3.230.0"></script>
 <script src="js/169_yarifx.js?v=r3.229.0"></script>
-<script src="js/170_wskill.js?v=r3.230.0"></script>
+<script src="js/170_wskill.js?v=r3.231.0"></script>
+<script src="js/171_art2.js?v=r3.231.0"></script>
 <script src="js/09_main.js?v=r3.138.0"></script>
 
 </body></html>

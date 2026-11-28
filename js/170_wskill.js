@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 170_wskill.js
- * Version : r3.230.0  (2026-11-28)　r3.230.0：新增。打刀（水）、野太刀（火）、薙刀（風／葉）的技與特技重新設計；野太刀「月輪」改名「地走」
+ * Version : r3.231.0  (2026-11-28)　r3.231.0：說明與冷卻不論在哪個畫面都寫回
+ * 舊版    : r3.230.0  (2026-11-28)　r3.230.0：新增。打刀（水）、野太刀（火）、薙刀（風／葉）的技與特技重新設計；野太刀「月輪」改名「地走」
  * 內容    : 三把武器共 23 招（千本櫻、櫻花亂舞與各奧義不動）：
  *           ・每招分「起手 → 主攻 → 停頓 → 收招」，時間單位 1/60 秒；Lv1／3／5／7／10 各有畫面看得到的加強。
  *           ・揮砍的弧線沿用普攻定案的畫法（168_wfx 的 arc，o.free）。
@@ -320,7 +321,8 @@ G.WSK = (function () {
   function texts(w) { const L = G.WPN.LIST && G.WPN.LIST.find(x => x.id === w), T = TXT[w]; if (!L || !T) return; for (const s of L.sk) { const v = T[s.id]; if (!v) continue; const nm = NAMES[w] && NAMES[w][s.id]; if (nm && s.n !== nm) s.n = nm; if (s.d !== v[0] || s.d7 !== v[3]) { s.d = v[0]; s.d3 = v[1]; s.d5 = v[2]; s.d7 = v[3]; s.d10 = v[4]; } const cd = s.t === '特技' ? 9 : 5; if (s.cd !== cd) s.cd = cd; } }
   function patch() { const M = G.MV2; if (!M || !M.U) return; for (const w in RUNS) { const U = M.U[w]; if (!U) continue; for (const k in RUNS[w]) { const d = U[k]; if (!d) continue; if (d.run !== RUNS[w][k]) d.run = RUNS[w][k]; const nm = NAMES[w] && NAMES[w][k]; if (nm && d.n !== nm) d.n = nm; const ct = CTS[w][k]; if (ct && d.counter !== ct) d.counter = ct; if (NOGUARD[w] && NOGUARD[w][k]) { if (d.counter) d.counter = null; if (d.kind !== 'skill') d.kind = 'skill'; if (d.cat === '架') d.cat = ''; } } } }
   const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0.apply(this, arguments); try { patch(); } catch (x) { console.warn('wskill', x); } };
-  setInterval(() => { try { if (G.mode !== 'play' || !G.WPN || !G.WPN.curId || !G.ANIM) return; const w = G.WPN.curId(), L = ART[w]; for (const q in TXT) texts(q); if (!L) return; for (const k of L) { const u = G.ANIM.get(k); if (u) u.lu = performance.now(); }
+  setInterval(() => { try { if (!G.WPN || !G.WPN.LIST) return; for (const q in TXT) texts(q); } catch (e) { } }, 500);   /* r3.231.0：說明與冷卻不論在哪個畫面都寫回（原本只在遊戲中寫，選單裡可能還是舊說明） */
+  setInterval(() => { try { if (G.mode !== 'play' || !G.WPN || !G.WPN.curId || !G.ANIM) return; const w = G.WPN.curId(), L = ART[w]; if (!L) return; for (const k of L) { const u = G.ANIM.get(k); if (u) u.lu = performance.now(); }
       if (loading || L.every(k => G.ANIM.get(k))) return; loading = 1; (async () => { for (const k of L) if (!G.ANIM.get(k)) { try { await G.ANIM.load(k); } catch (e) { } } loading = 0; })(); } catch (e) { } }, 2000);
   return { RUNS, W, F, N, pts, ready: w => (ART[w] || []).every(k => G.ANIM && G.ANIM.get(k)) };
 })();

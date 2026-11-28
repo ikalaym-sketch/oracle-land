@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 163_heart.js
- * Version : r3.216.0  (2026-11-28)　r3.216.0：配合 51 分頁標籤固定為「心事」
+ * Version : r3.231.0  (2026-11-28)　r3.231.0：夥伴頭上的「…」改用手繪的和紙泡泡圖
+ * 舊版    : r3.216.0  (2026-11-28)　r3.216.0：配合 51 分頁標籤固定為「心事」
  * 舊版    : r3.215.0  (2026-11-28)　r3.215.0：新增。夥伴心事的提示與入口
  * 內容    : 1. 八位夥伴的心事改由「夥伴本人開口」起頭：條件到了，回到神社／城鎮時夥伴會主動說話（每件心事只主動問一次）。
  *              選「晚點再說」之後，夥伴頭上留著「…」，可到 選單›夥伴›心事 再聽。
@@ -58,7 +59,9 @@
     if (G.t % 30 || G.t - enT < 100 || G.mode !== 'play' || !safe() || G.DLG.active() || SC.trans || (G.MENU && G.MENU.open)) return;
     for (const h of L) { if (F()['ha_' + h.qid] || HT.state(h.pid) !== 1) continue; HT.talk(h.pid); break; } };
   /* 頭上的「…」：有心事還沒聽的夥伴（跟任務記號同一種字樣） */
+  const BUB = new Image(); BUB.src = 'a/p/objs/ui_heart_bubble.webp?v=' + G.VER;
   const dr0 = PY.draw; PY.draw = function (P) { dr0.call(this, P); if (!P || !P.r || HT.state(P.id) !== 1) return; const def = PY.DEF[P.id], s = SC.depth(P.y), top = P.y - G.HERO_H * def.ratio * s * 1.12 + Math.sin(G.t / 18) * 2;
+    if (BUB.complete && BUB.naturalWidth) { const w = 30 * s, h = w * BUB.naturalHeight / BUB.naturalWidth; ctx.drawImage(BUB, P.x - w / 2, top - h, w, h); return; }   /* r3.231.0：和紙泡泡圖 */
     ctx.save(); ctx.translate(P.x, top); const fs = 8.5 * s; ctx.fillStyle = 'rgba(250,240,220,.95)'; ctx.strokeStyle = '#5a3a1c'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(-fs * 1.1, -fs * 1.5); ctx.quadraticCurveTo(0, -fs * 1.9, fs * 1.1, -fs * 1.5); ctx.quadraticCurveTo(fs * 1.5, -fs * 0.9, fs * 1.0, -fs * 0.4); ctx.lineTo(fs * 0.25, -fs * 0.35); ctx.lineTo(0, 0); ctx.lineTo(-fs * 0.2, -fs * 0.35); ctx.lineTo(-fs * 1.0, -fs * 0.4); ctx.quadraticCurveTo(-fs * 1.5, -fs * 0.9, -fs * 1.1, -fs * 1.5); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#b0452c'; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.arc(i * fs * 0.5, -fs * 0.95 + Math.sin(G.t / 9 + i) * fs * 0.08, fs * 0.14, 0, 6.283); ctx.fill(); } ctx.restore(); };

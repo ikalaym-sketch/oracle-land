@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 126_peak.js
- * Version : r3.148.0  (2026-11-27)　r3.148.0：天命「統御」極效果改成大連攜集氣 +15% 並實裝
+ * Version : r3.231.0  (2026-11-28)　r3.231.0：武器技能 Lv6～10 改用一般技能點（不再用巔峰點數），洗點不再動武器技能
+ * 舊版    : r3.148.0  (2026-11-27)　r3.148.0：天命「統御」極效果改成大連攜集氣 +15% 並實裝
  * 舊版    : r3.104.0  (2026-11-26)　r3.104.0：抗魔／破陣／斬妖 10 級極效果生效（131_foes）
  * 舊版    : r3.103.0  (2026-11-26)　r3.103.0：天命頁加圖示（巔峰、8 種天命）
  * 舊版    : r3.102.0  (2026-11-26)　r3.102.0：天命「共鳴專精」改為生效（129_magatama）
@@ -27,9 +28,9 @@
 
   /* ---------- 武器技能 6～10 ---------- */
   const can0 = W.canLearn.bind(W), learn0 = W.learn.bind(W), mult0 = W.mult.bind(W), cd0 = W.cd.bind(W);
-  W.canLearn = function (s) { const lv = W.lv(s.id); if (lv < 5) return can0(s); return W.unlocked(s) && lv < 10 && (pp() >= W.ppCost(lv + 1) || free()); };
-  W.learn = function (s) { const lv = W.lv(s.id); if (lv < 5) return learn0(s); if (!W.canLearn(s)) { if (lv < 10) G.UI.toast('巔峰點數不足（需要 ' + W.ppCost(lv + 1) + '）'); return false; }
-    const r = d(); if (!free()) r.pp -= W.ppCost(lv + 1); r.wsk[W.key(s.id)] = lv + 1; dirty(); return true; };
+  /* r3.231.0：武器技能直接用一般技能點升到 Lv10（不再用巔峰點數） */
+  W.canLearn = function (s) { const lv = W.lv(s.id); return W.unlocked(s) && lv < 10 && (d().sp > 0 || free()); };
+  W.learn = function (s) { if (!W.canLearn(s)) { if (W.lv(s.id) < 10 && W.unlocked(s)) G.UI.toast('技能點不足'); return false; } return learn0(s); };
   W.mult = function (s, lv) { lv = lv || 1; return lv <= 5 ? mult0(s, lv) : mult0(s, 5) * (1 + 0.1 * (Math.min(10, lv) - 5)); };
   W.cd = function (s) { const v = cd0(s); return s && W.lv(s.id) >= 10 ? v * 0.85 : v; };
 
@@ -98,10 +99,10 @@
   /* ---------- 洗點（神社小雪） ---------- */
   const week = () => Math.floor((Date.now() / 864e5 + 3) / 7);
   function spentPP() { const r = d(); let n = 0; for (const k in r.fate || {}) n += 3 * r.fate[k]; for (const k in r.train || {}) if (r.train[k] > 5) n += 2 * (r.train[k] - 5);
-    for (const k in r.wsk || {}) for (let lv = 6; lv <= r.wsk[k]; lv++) n += W.ppCost(lv); return n; }
+    return n; }
   const ppResetCost = () => d().ppWeek === week() ? 300 * (d().pk || 0) : 0;
   function ppReset() { const r = d(), n = spentPP(); if (!n) { G.UI.toast('目前沒有使用中的巔峰點數'); return; } const c = ppResetCost(); if (r.gold < c) { G.UI.toast('錢不足（需要 ' + c + '）'); return; }
-    r.gold -= c; if (!c) r.ppWeek = week(); r.fate = {}; for (const k in r.train || {}) if (r.train[k] > 5) r.train[k] = 5; for (const k in r.wsk || {}) if (r.wsk[k] > 5) r.wsk[k] = 5;
+    r.gold -= c; if (!c) r.ppWeek = week(); r.fate = {}; for (const k in r.train || {}) if (r.train[k] > 5) r.train[k] = 5;
     r.pp = pp() + n; R.recalc(); dirty(); G.UI.toast('巔峰點數已重置，退回 ' + n + ' 點' + (c ? '（花費 ' + c + '）' : '（本週免費）')); }
   (function sh() { const F = G.FORGE; if (!F || !F.shrineCh) return setTimeout(sh, 50); const s0 = F.shrineCh.bind(F);
     F.shrineCh = function () { const L = s0.apply(this, arguments) || []; if ((d().pk || 0) > 0) { const c = ppResetCost(); L.push({ label: '巔峰點數重置（' + (c ? c + ' 錢' : '本週免費') + '）', then: [{ do: ppReset }] }); } return L; }; })();

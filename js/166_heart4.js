@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 166_heart4.js
- * Version : r3.219.0  (2026-11-28)　r3.219.0：新增。源賴光、建御雷、役小角的心事重寫（操作段、抉擇）與解開後的回響
+ * Version : r3.231.0  (2026-11-28)　r3.231.0：「靠近」關卡的小雷獸改用新圖
+ * 舊版    : r3.219.0  (2026-11-28)　r3.219.0：新增。源賴光、建御雷、役小角的心事重寫（操作段、抉擇）與解開後的回響
  * 內容    : 1. 源賴光「童子切的重量」：山路宿場的石塔與酒甕 → 鬼宴會場對飲（三句限時問答，不答＝沉默）→ 原本的抉擇 pt_yori（獎勵不變）。
  *           2. 建御雷「雷神的誓」：雷原 → 慢慢靠近小雷獸（衝刺、出招或沒停就往前會嚇到牠，重來）→ 取名（qc.rai_name）→ 守 30 秒 → 結尾抉擇。
  *           3. 役小角「前鬼與後鬼」：橋頭的便當 → 打醒兩人（依血量喊話）→ 撕符，兩人選擇留下（qc.enno_end = choose｜meal）。
@@ -40,12 +41,12 @@
   const RAI = 'W_R04_05', NAMES = ['小鳴', '豆雷', '閃閃'], RN = () => C('rai_name') || '小雷獸'; let AP = null;
   function apRun(q, done) { G.DLG.start([nar('（建御雷往前走了一步。小雷獸「嗶」地一聲，縮得更裡面了。）'), say('建御雷', '…………'), say('建御雷', '蒼真。我不能過去。你去。'),
       { choice: [pick('你想讓我跟牠說什麼？', 'takemi_a', 'say', [say('建御雷', '說……那個很大的、很吵的，不會打牠。')]), pick('你自己說啊。', 'takemi_a', 'self', [say('建御雷', '我一開口就打雷。'), say('小雪', '……建御雷大人，你剛剛已經很小聲了。'), say('建御雷', '……是嗎。')])] },
-      nar('（慢慢走過去。每靠近一段，就停下來等牠。衝刺、出招，或是沒停就往前，都會嚇到牠。）')], () => { if (SC.id !== RAI) return; if (G.AFX) G.AFX.pre(['b_raiju']); G.E.length = 0;
+      nar('（慢慢走過去。每靠近一段，就停下來等牠。衝刺、出招，或是沒停就往前，都會嚇到牠。）')], () => { if (SC.id !== RAI) return; if (G.AFX) G.AFX.pre(['x2_pt']); G.E.length = 0;
     const c = (SC.def.nodes && SC.def.nodes.center) || [836, H.y], tx = Math.max(H.x + 520, c[0] + 200), ty = c[1];
     AP = { done, x: tx, y: ty, st: [H.x, H.y], k: 0, still: 0, lx: H.x, ly: H.y, jit: 0, fx: 0 }; G.UI.banner('靠近小雷獸', '用走的，每一段都停下來等牠'); }); }
   const RING = [380, 250, 120];
-  function apFx() { if (!G.AFX || !G.AFX.ok('b_raiju', 'raijuo_idle_right3q')) return; const a = AP; a.fx = 1;
-    G.AFX.play('b_raiju', 'raijuo_idle_right3q', { at: () => AP === a ? [a.x + (a.jit > 0 ? Math.sin(G.t * 1.7) * 3 : 0), a.y, 0] : null, size: () => G.HERO_H * 0.5 * SC.depth(a.y), by: 'h', anc: 'b', flip: true, loop: 600, tpf: 7, fb: () => { } }); }
+  function apFx() { if (!G.AFX || !G.AFX.ok('x2_pt', 'rai_pup_idle')) return; const a = AP; a.fx = 1;   /* r3.231.0：小雷獸自己的圖 */
+    G.AFX.play('x2_pt', 'rai_pup_idle', { at: () => AP === a ? [a.x + (a.jit > 0 ? Math.sin(G.t * 1.7) * 3 : 0), a.y, 0] : null, size: () => G.HERO_H * 0.42 * SC.depth(a.y), by: 'h', anc: 'b', flip: true, loop: 900, tpf: 9, fb: () => { } }); }
   function apStep() { const a = AP; if (SC.id !== RAI) { AP = null; return; } if (G.DLG.active() || SC.trans) return; if (G.E.length) G.E.length = 0; if (!a.fx) apFx(); if (a.jit > 0) a.jit--;
     const d = Math.hypot(H.x - a.x, H.y - a.y), sp = Math.hypot(H.x - a.lx, H.y - a.ly); a.lx = H.x; a.ly = H.y; a.still = sp < 0.3 ? a.still + 1 : 0;
     const busy = H.st !== 'idle' && H.st !== 'walk', scare = busy || sp > 7 || d < RING[a.k] - 70;

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 88_rune.js
- * Version : r3.200.0  (2026-11-28)　r3.200.0：素材播放器支援染色；風球、冰緩冰晶放大
+ * Version : r3.231.0  (2026-11-28)　r3.231.0：素材圖集被回收後會重新載入（風切套裝的風球原本會變成白色光球）；拿掉白色光球的備用畫法
+ * 舊版    : r3.200.0  (2026-11-28)　r3.200.0：素材播放器支援染色；風球、冰緩冰晶放大
  * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：破甲標記、風球（軌道有變化）、怒氣結束震波、冰緩冰晶改播手繪素材
  * 舊版    : r3.197.0  (2026-11-28)　r3.197.0：靈紋／套裝／神器改播手繪素材（風刃、叢雲、斬月、震地、落雷、感電、潮浪、狐火、鬼火、穿雲、鏡返、日鏡、勾玉光線、凍結）；新增手繪素材播放器 G.AFX
  * 舊版    : r3.196.0  (2026-11-28)　r3.196.0：靈紋／套裝／神器的幾何圖形全部換成有主題的分層畫法（風刃、斬月、震地、落雷、狐火、光箭、感電、破甲、鏡返、潮浪、鬼火、天光、日鏡、勾玉光線）
@@ -177,7 +178,7 @@
    * o：size＝畫面大小（像素，對齊 by：'w' 寬／'h' 高／預設長邊）、anc＝對位點（'c' 中心／'b' 底部中央／[fx,fy] 比例）、ang 旋轉、flip 翻面、a 透明度、add 加亮、sy 垂直壓扁、
    *    tpf 每格幾幀、fr＝[起,迄] 只播其中幾格、loop 重複幾次、hold 最後一格多停幾幀、at(u)→[x,y,ang] 跟隨、layer、delay、fb。 */
   const AFX = (function () { const asked = {}, isLv = k => k.slice(0, 3) === 'lv_';
-    function unit(k) { const u = A.get(k); if (u) return u; if (!asked[k]) { asked[k] = 1; try { const q = isLv(k) ? G.LEON.boot().then(() => G.LEON.LD(k)) : A.load(k); if (q && q.catch) q.catch(() => { asked[k] = 0; }); } catch (x) { asked[k] = 0; } } return null; }
+    function unit(k) { const u = A.get(k); if (u) { u.lu = performance.now(); return u; } if (!asked[k]) { asked[k] = 1; try { const q = isLv(k) ? G.LEON.boot().then(() => G.LEON.LD(k)) : A.load(k); if (q && q.then) q.then(() => { asked[k] = 0; }, () => { asked[k] = 0; }); else asked[k] = 0; } catch (x) { asked[k] = 0; } } return null; }   /* r3.231.0：圖集被記憶體回收後會重新載入（原本只載一次，回收後一直用備用圖）；用到就標記使用中 */
     function rec(k, c) { const u = unit(k); if (!u) return null; const r = isLv(k) ? (u._xr || (u._xr = { f: u.x })) : ((u.fx && u.fx[c]) || (u.act && u.act[c])); if (!r || !r.f || !r.f.length) return null; const im = u.imgs && u.imgs[r.f[0][7] || 0]; if (!im || !(im.naturalWidth || im.width)) return null;
       if (!r._bb) { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const f of r.f) { const s8 = f[8] || 1; x0 = Math.min(x0, -f[4] * s8); y0 = Math.min(y0, -f[5] * s8); x1 = Math.max(x1, (f[2] - f[4]) * s8); y1 = Math.max(y1, (f[3] - f[5]) * s8); } r._bb = { x0, y0, w: x1 - x0, h: y1 - y0 }; } return [u, r]; }
     function fr(k, c, fi, x, y, o) { const R2 = rec(k, c); if (!R2) return false; const u = R2[0], r = R2[1], f = r.f[Math.max(0, Math.min(r.f.length - 1, fi | 0))], im = u.imgs[f[7] || 0]; if (!im) return false; o = o || {};
@@ -356,6 +357,7 @@
     if (PET.fox) sp('shiki_fox', PET.fox.st ? 4 + Math.floor(G.t / 5) % 4 : Math.floor(G.t / 8) % 4, PET.fox.x, PET.fox.y, 0.55, { flip: PET.fox.f < 0 });
     for (const m of PET.mag) sp('fx_magatama', 0, H.x + Math.cos(m.a) * hz * 0.75, H.y - hz * 1.0 + Math.sin(m.a) * hz * 0.2, 0.9, { add: 1 });
     for (const b of PET.ball) { if (AFX.fr('b_susanoo', 'fx_wind_gather', 1 + Math.floor((G.t + (b.i || 0) * 3) / 5) % 2, b.x, b.y, { size: hz * 1.05, flip: Math.sin(b.a) < 0 })) continue;   /* r3.199.0：風球＝須佐之男的手繪旋風 */
+      if (true) continue;   /* r3.231.0：圖還沒載好時不畫（原本的白色光球拿掉） */
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, hz * 0.22); g.addColorStop(0, 'rgba(240,255,250,.9)'); g.addColorStop(0.5, 'rgba(150,240,210,.55)'); g.addColorStop(1, 'rgba(150,240,210,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, hz * 0.22, 0, TAU); ctx.fill();
       ctx.strokeStyle = 'rgba(220,255,245,.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(b.x, b.y, hz * 0.15, b.a * 3, b.a * 3 + 3.6); ctx.stroke(); ctx.restore(); } }
 

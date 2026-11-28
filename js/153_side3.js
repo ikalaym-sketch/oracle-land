@@ -1,6 +1,7 @@
 /* =====================================================================
  * 153_side3.js
- * 版本    : r3.219.0  (2026-11-28)　r3.219.0：匯出 G.SIDE3.fight
+ * 版本    : r3.231.0  (2026-11-28)　r3.231.0：跟隨的小雷獸改用新圖
+ * 舊版    : r3.219.0  (2026-11-28)　r3.219.0：匯出 G.SIDE3.fight
  * 舊版    : r3.154.0  (2026-11-27)　r3.154.0：建御雷「……」併入動作描述
  * 舊版    : r3.143.0  (2026-11-27)　r3.143.0：支援看得到：酒吞出場用自己的連斬／重砸；小雷獸跟在身邊、落雷時播攻擊動作；八雲斬畫 8 道刀光
  * 舊版    : r3.141.0  (2026-11-27)　r3.141.0：最後一隻式神改成紙鶴（文字＋任務點畫紙鶴 shiki_crane）
@@ -143,7 +144,7 @@
   function hitAll(k, col) { for (const e of G.E) { if (e.st === 'dead' || e.ally) continue; if (e.boss || e.bb) { const d = Math.round(e.hpMax * k); e.hp = Math.max(1, e.hp - d); e.flash = 8; G.NUMS.push({ x: e.x, y: e.y - HH() * 1.2, v: d, t: 0 }); } else G.damageOni(e, 2, true, false, { rune: 1 }); ring(e.x, e.y, col); } }
   let pet = 0, gd = 0, rp = null;
   const SHUTEN = { name: '酒吞童子', anim: 'b_shuten', idle: 'shuten_idle_right3q', walk: 'shuten_walk_right3q', atk: ['shuten_combo_right3q', 'shuten_slam_right3q'], hk: 1.2, nat: 1, say: '喝了我的酒，就得讓我砍一刀！' };
-  const RAIJU = { name: '小雷獸', anim: 'b_raiju', idle: 'raijuo_idle_right3q', walk: 'raijuo_run_right3q', atk: ['raijuo_roar_right3q', 'raijuo_claw_right3q'], hk: 0.45, nat: 1 };
+  const RAIJU = { name: '小雷獸', anim: 'x2_pt', idle: 'rai_pup_idle', walk: 'rai_pup_run', atk: ['rai_pup_peek'], hk: 0.4, nat: 1 };   /* r3.231.0：改用小雷獸自己的圖（原本是雷獸王縮小） */
   const slashes = u => { if (!G.VX || !G.VX.custom) return; for (let i = 0; i < 8; i++) G.VX.custom((o, c) => { const q = (o.t - o.d) / 10; if (q < 0 || q > 1) return; const k = HH() * SC.depth(u.y), a = -1.2 + i * 0.37, L = k * 1.6, cx = u.x, cy = u.y - k * 0.6;
       c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(210,235,255,' + (1 - q) + ')'; c.lineWidth = Math.max(2, k * 0.06 * (1 - q)); c.beginPath(); c.moveTo(cx - Math.cos(a) * L, cy - Math.sin(a) * L); c.lineTo(cx + Math.cos(a) * L * (0.3 + q * 0.7), cy + Math.sin(a) * L * (0.3 + q * 0.7)); c.stroke(); c.restore(); }, 12 + i * 8, 'o', { d: i * 8 }); };   /* r3.143.0：八雲斬刀光 */
   function fxStep() { const enc = B.enc;
