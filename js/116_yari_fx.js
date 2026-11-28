@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 116_yari_fx.js
- * Version : r3.227.0  (2026-11-28)　r3.227.0：普攻突刺、槍擺改走 168_wfx
+ * Version : r3.228.0  (2026-11-28)　r3.228.0：技、特技與招式的畫法和八招的打法改走 169_yarifx；說明文字與冷卻更新（技 6→5 秒、特技 12→9 秒）
+ * 舊版    : r3.227.0  (2026-11-28)　r3.227.0：普攻突刺、槍擺改走 168_wfx
  * 舊版    : r3.190.0  (2026-11-28)　r3.190.0：KF.pierce 可指定顏色（給和弓用）
  * 舊版    : r3.188.0  (2026-11-28)　r3.188.0：針山兩排時後排錯開半格、略小
  * 舊版    : r3.187.0  (2026-11-28)　r3.187.0：槍頭瘦小、黑邊變細、移動痕跡（光的拖痕、速度線、槍擺弧光）加大；飛行槍頭與巨槍換成同一套鋼色；不再參考角色動作圖
@@ -69,7 +70,7 @@
     wedge(w * 1.35); ctx.fillStyle = gr(DKI, 0.4); ctx.fill(); wedge(w); ctx.fillStyle = gr(STL, 0.9); ctx.fill(); wedge(w * 0.36); ctx.fillStyle = gr(WHT, 1); ctx.fill(); }
   function lance(ctx, tx, al, HL, HW, x0, tw) { if (al <= 0.01 || tx - x0 < 2) return; spTrail(ctx, x0, tx - HL * 0.9, HW * (tw || 1.5), al, tx + HL * 0.22); spHead(ctx, tx, al, HL, HW); }
   /* 刺穿：背後噴出的錐形碎光＋碎片，正面一圈被擠開的氣 */
-  function pierce(x, y, f, ang, big, col) { const DKI = col ? col[0] : '22,26,58', STL = col ? col[1] : '168,196,236', WHT = col ? col[2] : '255,255,255', k = KF().K(y), N = 8, S2 = []; for (let i = 0; i < N; i++) S2.push([rnd(-0.38, 0.38), rnd(0.5, 1.25), rnd(0.6, 1.1)]);
+  function pierce(x, y, f, ang, big, col) { if (G.YFX && !col) return G.YFX.pierce(x, y, f, ang, big);   /* r3.228.0 */ const DKI = col ? col[0] : '22,26,58', STL = col ? col[1] : '168,196,236', WHT = col ? col[2] : '255,255,255', k = KF().K(y), N = 8, S2 = []; for (let i = 0; i < N; i++) S2.push([rnd(-0.38, 0.38), rnd(0.5, 1.25), rnd(0.6, 1.1)]);
     KF().add(10, 'o', (ctx, u) => { const q = cl(u / 10, 0, 1), e = eo5(q), al = 1 - ei2(q); ctx.translate(x, y); ctx.scale(f, 1); ctx.rotate(ang);
       if (u < 5) { const L = (0.45 + 0.75 * e) * k * big, w = 0.22 * k * big, a = 1 - u / 5; const gr = ctx.createLinearGradient(0, 0, L, 0); gr.addColorStop(0, rgba(WHT, 0.95 * a)); gr.addColorStop(0.45, rgba(STL, 0.65 * a)); gr.addColorStop(1, rgba(STL, 0)); ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(-0.06 * k, 0); ctx.lineTo(L, -w); ctx.lineTo(L, w); ctx.closePath(); ctx.fill(); }
       for (const p of S2) { const d = p[1] * k * big * e, L = 0.2 * k * big * p[2] * (1 - q * 0.6), w = Math.max(0.8, L * 0.1); ctx.save(); ctx.rotate(p[0]); ctx.translate(d, 0);   /* 細長碎光：沿噴出方向 */
@@ -77,7 +78,7 @@
         ctx.fillStyle = rgba(WHT, al); ctx.beginPath(); ctx.moveTo(L, 0); ctx.lineTo(0, -w); ctx.lineTo(-L * 0.4, 0); ctx.lineTo(0, w); ctx.closePath(); ctx.fill(); ctx.restore(); }
     });
     KF().use(col ? 'holy' : 'lance', () => KF().motes(x, y + 0.02 * k, 0, 4, { ang: f > 0 ? 0 : Math.PI, spread: 0.5, sp: 2.2, life: 14 })); }
-  function spear(o) { if (G.WFX && G.WFX.norm()) return G.WFX.spear(o);   /* r3.227.0：普攻改走 168_wfx */ const f = o.face || o.f || 1, y = o.y, k = KF().K(y), big = o.big || 1, dur = Math.max(2, o.ext || o.dur || 2), quick = (o.life || 10) <= 7, hold = o.hold !== undefined ? o.hold + 1 : 3, rel = quick ? 3 : 6, life = dur + hold + rel;
+  function spear(o) { if (G.WFX && G.WFX.norm()) return G.WFX.spear(o); if (G.YFX) return G.YFX.thrust(o);   /* r3.228.0：技／特技／招式走 169_yarifx */   /* r3.227.0：普攻改走 168_wfx */ const f = o.face || o.f || 1, y = o.y, k = KF().K(y), big = o.big || 1, dur = Math.max(2, o.ext || o.dur || 2), quick = (o.life || 10) <= 7, hold = o.hold !== undefined ? o.hold + 1 : 3, rel = quick ? 3 : 6, life = dur + hold + rel;
     const reach = (o.len || 1.8) * k * 0.95, HL = 0.4 * k * big, HW = 0.036 * k * big * (o.wd || 1), cy = o.cy || 0.55, ang = o.ang || 0, x0 = 0.08 * reach, hx = o.x + f * 0.1 * k, heavy = big >= 1.1 || !!o.shock, hy = y - cy * k, SW0 = 0.05 * k * big;
     KF().add(life + 1, 'o', (ctx, u) => { let tx, al = 1, xs = x0;
       if (u < dur) tx = reach * (0.35 + 0.65 * eo5((u + 1) / dur));
@@ -97,7 +98,7 @@
         for (const [col, aa] of [[C.mid, 0.85], [C.lite, 0.9]]) { ctx.fillStyle = rgba(col, aa * al); ctx.beginPath(); ctx.moveTo(out[0][0], out[0][1]); for (const p of out) ctx.lineTo(p[0], p[1]); for (let i = N; i >= 0; i--) ctx.lineTo(inn[i][0], inn[i][1]); ctx.closePath(); ctx.fill(); } } }); }
   /* ---------- 槍擺（槍花）：槍以手為支點擺動，槍尖在攻擊距離上畫出窄刀光；弧頭是沿槍身方向的槍頭槍氣 ---------- */
   /* o = x,y,f,cy, R（槍尖離手，身高倍）a0→a1（徑度，0＝正前、正值往下）dur w */
-  function swing(o) { if (G.WFX && G.WFX.norm()) return G.WFX.swing(o); const f = o.f, y = o.y, k = KF().K(y), cy = o.cy || 0.55, dur = o.dur || 4, R = o.R || 1.7, a0 = o.a0, a1 = o.a1, sq = o.sq || 1, hx = o.x + f * 0.1 * k, big = o.big || 1, HL = 0.4 * k * big, HW = 0.036 * k * big, life = dur + 9;
+  function swing(o) { if (G.WFX && G.WFX.norm()) return G.WFX.swing(o); if (G.YFX) return G.YFX.swing(o); const f = o.f, y = o.y, k = KF().K(y), cy = o.cy || 0.55, dur = o.dur || 4, R = o.R || 1.7, a0 = o.a0, a1 = o.a1, sq = o.sq || 1, hx = o.x + f * 0.1 * k, big = o.big || 1, HL = 0.4 * k * big, HW = 0.036 * k * big, life = dur + 9;
     const span = Math.min(Math.abs(a1 - a0), o.trail || 2.4), sg = a1 > a0 ? 1 : -1, W0 = (o.w || 0.2) * k * 0.95 * big;
     /* r3.186.0：槍擺——槍身以手為支點掃過去，槍尖拖出一道外緣銳利、往尾端漸細的鋼色弧光（深色襯底，白天也清楚） */
     KF().add(life, 'o', (ctx, u) => { const a = a0 + (a1 - a0) * eo3(cl(u / dur, 0, 1)), al = u <= dur ? 1 : 1 - ei2((u - dur) / 7); if (al <= 0.01) return; ctx.translate(hx, y - cy * k); ctx.scale(f, 1);
@@ -114,11 +115,11 @@
     if (o.end !== false) c_end(x0 + f * ca * D, o.y + sa * D, o.z || 0.55, f, o.ang || 0, HL, HW, dur, o.shock); }
   function c_end(x, y, z, f, ang, HL, HW, d, sh) { const k = KF().K(y); shatter(x, y - z * k, 0, f, ang, HL, HW, sh ? 7 : 4, d); if (sh) shock(x, y, z, f, ang, HL / (0.62 * k), d); }
   /* 跟手槍氣：衝刺時槍頭一直在主角前方，氣尾＝衝過的距離 */
-  function heldQi(a0, life, o) { const k0 = KF().K(H.y), x0 = H.x, big = o.big || 1;
+  function heldQi(a0, life, o) { if (G.YFX) return G.YFX.held(a0, life, o); const k0 = KF().K(H.y), x0 = H.x, big = o.big || 1;
     KF().add(life, 'o', (ctx, u) => { if (H.act !== a0 && u > 2) return; const k = KF().K(H.y), f = H.face, HL = 0.62 * k * big, HW = 0.068 * k * big, al = Math.min(1, u / 2), trav = Math.abs(H.x - x0);
       ctx.translate(H.x + f * 0.1 * k, H.y - (o.cy || 0.55) * k); ctx.scale(f, 1); tipQi(ctx, (o.len || 1.3) * k, al, HL, HW, Math.min(trav, 3.5 * k) + HL * 0.4); }); }
   /* 地面竄出的槍頭（針山） */
-  function riseTip(x, y, d, s) { const k = KF().K(y), HL = 0.75 * k * (s || 1), HW = 0.075 * k * (s || 1);
+  function riseTip(x, y, d, s) { if (G.YFX) return G.YFX.rise(x, y, d, s); const k = KF().K(y), HL = 0.75 * k * (s || 1), HW = 0.075 * k * (s || 1);
     KF().add(26 + d, 'o', (ctx, u) => { const t = u - d; if (t < 0) return; const g = eo5(cl(t / 3, 0, 1)), al = t < 14 ? 1 : 1 - (t - 14) / 12; if (al <= 0) return;
       ctx.save(); ctx.beginPath(); ctx.rect(x - HL, y - HL * 2, HL * 2, HL * 2 + 0.02 * k); ctx.clip(); ctx.translate(x, y + 0.02 * k); ctx.rotate(-Math.PI / 2); tipQi(ctx, HL * 1.05 * g, al, HL, HW, t < 5 ? HL * 0.6 * (1 - t / 5) : 0); ctx.restore(); });
     KF().use('lance', () => { KF().motes(x, y, 0.1, 3, { up: 0.9, sp: 0.6, life: 20, stag: d }); KF().light(x, y, 0.5, 14 + d, 0.35); }); }
@@ -132,7 +133,7 @@
       for (const a of [0, Math.PI, -Math.PI / 2, Math.PI / 2]) { ctx.save(); ctx.translate(x, y - z * k); ctx.rotate(a); tipQi(ctx, HL * 0.55 * g, al, HL * 0.55, HW, 0); ctx.restore(); } });
     KF().use('lance', () => KF().light(x, y, 1.0, 18 + (d || 0), 0.45, z)); }
   /* 槍陣（架）：手前方 n 把槍頭呈扇形朝前，隨主角、隨招式結束消失 */
-  function guardFan(a0, life, o) { const n = o.n || 3, spread = o.spread || 0.32;
+  function guardFan(a0, life, o) { if (G.YFX) return G.YFX.guard(a0, life, o); const n = o.n || 3, spread = o.spread || 0.32;
     KF().add(life, 'o', (ctx, u) => { if (H.act !== a0) return; const k = KF().K(H.y), f = H.face, al = Math.min(1, u / 5), HL = 0.55 * k * (o.big || 1), HW = 0.06 * k * (o.big || 1), br = 1 + 0.04 * Math.sin(u * 0.3);
       for (let i = 0; i < n; i++) { const a = (i - (n - 1) / 2) * spread, R = (o.R || 1.35) * k * br * (i === (n - 1) / 2 ? 1.08 : 1); ctx.save(); ctx.translate(H.x + f * 0.1 * k, H.y - (o.cy || 0.55) * k); ctx.scale(f, 1); ctx.rotate(a); tipQi(ctx, R, al * (0.85 + 0.15 * Math.sin(u * 0.25 + i)), HL, HW, HL * 0.35); ctx.restore(); } }); }
   /* 拉回槍氣：刺出後連同敵人一起往回拖 */
@@ -325,19 +326,24 @@
       es.forEach((e, i) => { const z = 0.55 * (e.ratio || 1); for (let j = 0; j < 8; j++) c.later(5 + i * 2 + (j % 3), () => flyQi({ x: e.x, y: e.y, z, f: 1, ang: j * TAU / 8 + 0.2, dist: 1.5 + (j % 2) * 0.5, dur: 5, hold: 3, big: 0.85, end: false })); });
       c.later(13, () => { for (const e of es) if (e.st !== 'dead') { G.damageOni(e, 0.9 * c.mul, true); KF().use('lance', () => KF().burst(e.x, e.y, 0.55 * (e.ratio || 1), 2.2)); } shk(12); hstop(8); }); } };
   /* ---- 名稱與說明 ---- */
-  const SKN = { skill_ryusei: ['一番槍', '突進 4H，槍頭在前一路貫穿，終點重刺', '突進距離 +50%', '終點槍氣再往前飛 4H'], skill_senso: ['槍花繚亂', '槍擺三下接扇形快速連刺', '連刺 +4', '最後一刺穿透 3.6H'],
-    skill_shoryu: ['挑月', '由下往上大擺，挑飛前方敵人', '追加斜刺', '再追加前刺擊退'], skill_sorin: ['針山', '前方地面依序竄出槍頭', '變兩排', '槍頭殘留 2 秒持續傷害'],
-    special_backpierce: ['回身刺', '後撤後回身一刺', '傷害 +30%', '回身刺必暴擊'], special_deny: ['不動構', '三槍交錯架在身前，擋住衝來的敵人', '架勢時間延長', '擋下時反刺 150%'],
-    special_lane: ['一文字', '直線衝刺貫穿', '衝刺距離 +50%', '路徑上敵人緩速'], special_return: ['車返', '收槍迴旋一圈', '迴旋範圍 +25%', '迴旋回 10 氣力'], ultimate_ryuga: ['天沼矛', '身後展開槍陣依序射穿全場，最後巨矛橫貫', '槍陣 +2 把', '巨矛傷害 +25%'] };
+  const SKN = { skill_ryusei: ['一番槍', '電光突進，把撞到的敵人頂著推並電住；接三連刺，最後身邊落下三道雷', '突進更遠；四連刺、四道雷', '五連刺、六道雷', '外圈再落三道大雷', '雷雲籠罩，最後正前方劈下巨雷', 5],
+    skill_senso: ['槍花繚亂', '槍擺三下，接六連刺，收尾電光炸開', '連刺變十下', '最後一刺長距離穿透', '連刺途中前方落下小雷', '收尾改成一道巨雷', 5],
+    skill_shoryu: ['挑月', '由下往上把敵人挑起，再引一道落雷劈在敵人身上', '追加下斜一刺', '再追加前刺擊退', '落雷變大，兩側各多一道', '最後再劈下一道巨雷', 5],
+    skill_sorin: ['針山', '槍插地，前方出現扇形雷痕，五道落雷接連劈下（放完可以走動）', '扇形變寬；六道雷', '八道雷', '雷痕留更久，上面的敵人變慢', '十一道雷，最後扇形中央劈下巨雷', 5],
+    special_backpierce: ['回身刺', '迴旋一斬後轉向身後，刺出帶電的長刺把敵人擊飛', '傷害 +30%，沿路電光炸開', '刺得更遠，必定暴擊', '迴旋時四周放電，敵人短暫麻痺', '沿路再劈下三道雷', 9],
+    special_deny: ['不動構', '在前方引下一道落雷，雷柱把四周敵人吸過去，兩秒後落下三道雷', '吸得更遠；四道雷', '吸得更遠；六道雷', '吸得更遠；八道雷', '吸得最遠；十一道雷加中央巨雷', 9],
+    special_lane: ['一文字', '沿直線一路貫穿，走過的路上電光依序炸開', '距離 +50%', '被貫穿的敵人變慢', '路上的炸開也造成傷害', '炸開改成一整排落雷', 9],
+    special_return: ['車返', '槍迴旋一圈，再往八方放電；回 10 氣力', '迴旋範圍 +25%', '回氣提高到 20', '放電更長，敵人短暫麻痺', '外圍再落下四道雷', 9], ultimate_ryuga: ['天沼矛', '身後展開槍陣依序射穿全場，最後巨矛橫貫', '槍陣 +2 把', '巨矛傷害 +25%'] };
   let named = 0;
-  function rename() { const L = G.WPN.LIST && G.WPN.LIST.find(w => w.id === 'yari'); if (!L) return; for (const s of L.sk) { const v = SKN[s.id]; if (v) { s.n = v[0]; s.d = v[1]; s.d3 = v[2]; s.d5 = v[3]; } }
+  function rename() { const L = G.WPN.LIST && G.WPN.LIST.find(w => w.id === 'yari'); if (!L) return; for (const s of L.sk) { const v = SKN[s.id]; if (v) { s.n = v[0]; s.d = v[1]; s.d3 = v[2]; s.d5 = v[3]; if (v[4]) { s.d7 = v[4]; s.d10 = v[5]; } if (v[6]) s.cd = v[6]; } }
     const D = MV2.D.yari, U = MV2.U.yari, HD = MV2.HD && MV2.HD.yari; if (D) for (const k in DM2) if (D[k]) D[k].n = DM2[k].n; if (U) for (const k in DU2) if (U[k]) U[k].n = DU2[k].n; if (HD) for (const h of HD) if (HY3[h.id]) h.n = HY3[h.id].n;
     if (L.MV) for (const k in L.MV) if (DM2[k]) L.MV[k].n = DM2[k].n; named = 1; }
   /* ---- 掛上：92／114 會改寫定義，每格對照，必要時補回 ---- */
   G.YARI2 = 1; const WRH = {};
   function patch() { const D = MV2.D.yari, U = MV2.U.yari, HD = MV2.HD && MV2.HD.yari; if (!D || !U) return;
     for (const k in DM2) { const d = D[k], s = DM2[k]; if (!d) continue; if (d.run !== s.run) d.run = s.run; if (s.counter && d.counter !== s.counter) d.counter = s.counter; if (d.n !== s.n) d.n = s.n; }
-    for (const k in DU2) { const d = U[k], s = DU2[k]; if (!d) continue; if (d.run !== s.run) d.run = s.run; if (s.counter && d.counter !== s.counter) d.counter = s.counter; if (d.n !== s.n) d.n = s.n; }
+    for (const k in DU2) { const d = U[k], s = DU2[k]; if (!d) continue; const YR = G.YFX && G.YFX.RUN && G.YFX.RUN[k];   /* r3.228.0：八招的打法由 169_yarifx 接手；不動構不再是架勢（沒有格擋反擊） */
+      if (YR) { if (d.run !== YR) d.run = YR; if (d.counter) d.counter = null; if (d.kind !== 'skill') d.kind = 'skill'; if (d.cat === '架') d.cat = ''; } else { if (d.run !== s.run) d.run = s.run; if (s.counter && d.counter !== s.counter) d.counter = s.counter; } if (d.n !== s.n) d.n = s.n; }
     if (HD) for (const h of HD) { const s = HY3[h.id]; if (!s) continue; if (h.n !== s.n) h.n = s.n; if (h.run === WRH[h.id]) continue; const base = h.run;
       WRH[h.id] = h.run = function (c, t) { if (t === 1) { base.call(this, c, 1); return; } const C = c.a._comp; if (C && C.rel) s.f(c, t, C); else base.call(this, c, t); }; }
     if (!named) rename(); }

@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 08_menu.js
- * Version : r3.201.0  (2026-11-28)　r3.201.0：設定新增「按鍵位置」
+ * Version : r3.228.0  (2026-11-28)　r3.228.0：技能說明多顯示 Lv7、Lv10 的追加效果（有寫的招式才顯示）
+ * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：設定新增「按鍵位置」
  * 舊版    : r3.166.0  (2026-11-27)　r3.166.0：狀態頁拿掉寶珠碎片（移到結局走向）
  * 舊版    : r3.147.0  (2026-11-27)　r3.147.0：背包改版（預設選第一件、排序、等級／▲／新物品紅點／鎖定標記、鎖定與分解按鈕）
  * 舊版    : r3.99.0  (2026-11-26)　r3.99.0：技能 6～10 級按鈕顯示巔峰點數費用
@@ -196,7 +197,7 @@
       const by = y + h - 42;
       if (cur.k === 'sk') { const s = o, lv = W.lv(s.id), bw = (cw - 44) / 3, can = W.canLearn(s);
         G.txt(s.t + '　' + (s.t === '奧義' ? '需滿格「氣」' : '冷卻 ' + Math.round(W.cd(s) * 10) / 10 + ' 秒') + '　倍率 ×' + (Math.round(W.mult(s, Math.max(1, lv)) * 100) / 100), cx + 16, y + 52, 12, C.gold, 'left', G.FONT, 700);
-        para(s.d, C.ink); para('Lv3–4 進化：' + s.d3, lv >= 3 ? '#8fd38f' : C.sub); para('Lv5 極意：' + s.d5, lv >= 5 ? '#f3d98a' : C.sub); if (lv >= 5) para('Lv6–10（巔峰點數）：每級傷害 +10%；Lv10 極：範圍 +20%、多 1 段、冷卻 −15%', lv >= 10 ? '#f3d98a' : C.sub);
+        para(s.d, C.ink); para('Lv3–4 進化：' + s.d3, lv >= 3 ? '#8fd38f' : C.sub); para('Lv5 極意：' + s.d5, lv >= 5 ? '#f3d98a' : C.sub); if (s.d7) { para('Lv7：' + s.d7, lv >= 7 ? '#f3d98a' : C.sub); para('Lv10：' + s.d10, lv >= 10 ? '#f3d98a' : C.sub); } if (lv >= 5) para('Lv6–10（巔峰點數）：每級傷害 +10%；Lv10 極：範圍 +20%、多 1 段、冷卻 −15%', lv >= 10 ? '#f3d98a' : C.sub);
         button(cx + 14, by, bw, 30, lv ? (lv >= 10 ? '已滿' : lv >= 5 ? '升級（巔峰 ' + (W.ppCost ? W.ppCost(lv + 1) : '?') + '）' : '升級') : '學習', () => { if (W.learn(s)) G.UI.toast(s.n + '　Lv ' + W.lv(s.id)); }, can ? 'main' : 'off');
         if (s.t !== '奧義') { button(cx + 22 + bw, by, bw, 30, '設為技A', () => W.setSlot('A', s.id), lv ? '' : 'off'); button(cx + 30 + bw * 2, by, bw, 30, '設為技B', () => W.setSlot('B', s.id), lv ? '' : 'off'); } }
       else if (cur.k === 'mv') { const ok = W.mvOk(o), bw = (cw - 44) / 3;
