@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 72_testui.js
- * Version : r3.208.0  (2026-11-28)　r3.208.0：劇情頁步驟名稱改成中文類型＋內容（不再出現 cut 等代號）
+ * Version : r3.209.0  (2026-11-28)　r3.209.0：測試頁改成選單同一套樣式；劇情頁重做（快速推進、路線、補強度、目前步驟標記）；抉擇併成「抉擇與結局」一頁
+ * 舊版    : r3.208.0  (2026-11-28)　r3.208.0：劇情頁步驟名稱改成中文類型＋內容（不再出現 cut 等代號）
  * 舊版    : r3.129.0  (2026-11-27)　r3.129.0：地圖分頁加「兩岸城外觀」切換
  * 舊版    : r3.124.0  (2026-11-26)　r3.124.0：里歐：提示改到 職業 › 最下面；招式全 Lv5 時外觀 Lv 至少 95；加「TP／氣 全滿」
  * 舊版    : r3.122.0  (2026-11-26)　r3.122.0：道具頁：錢改 +100 萬，新增妖玉、難度素材、藥品、巔峰、夥伴技能點、鎌鼬之羽、勾玉／玉屑／精煉材料、名物、妖怪村禮物；新「系統」頁：難度、轉生輪次、里歐、妖怪村（入住、好感、觸發四種事件）、世界事件類型、世界頭目；開關「奧義免 Lv40」改名「全部解鎖」
@@ -26,19 +27,43 @@
   const ctx = G.ctx, C = G.C, M = G.MENU, CH = G.CHEAT; if (!M || !CH) return;
   const R = () => G.RPG, W = () => G.WPN, Q = () => G.QST, F = () => G.SAVE.data.flags, HUB = () => G.HUB;
   const T = G.TESTUI = { tab: 0, ch: 1, q: null, mg: 0, conf: null, confT: 0, wk: null, ts: 1, step1: 0, anchor: false };
-  const TABS = ['開關', '劇情', '數值', '武器', '夥伴', '地圖', '生成', '道具', '系統'];
+  const TABS = ['開關', '劇情', '抉擇與結局', '武器', '夥伴', '地圖', '生成', '道具', '系統'];
   const done = t => { G.SAVE.markDirty(); G.UI.toast(t); };
   /* ---------- 按鈕：藍＝測試、橘＝改存檔（要確認）、金＝選中 ---------- */
   let VIS = null;
-  function btn(x, y, w, h, label, f, kind, key) { const fs = G.FS(), conf = kind === 'save' && T.conf === key && G.t - T.confT < 120;
-    const P = { test: ['rgba(30,62,96,.95)', '#6fb0f0'], save: [conf ? 'rgba(160,80,24,.98)' : 'rgba(110,58,24,.95)', '#f0a052'], on: ['rgba(150,92,36,.95)', '#f3d98a'], off: ['rgba(40,32,36,.7)', 'rgba(227,194,122,.2)'] }[kind || 'test'];
-    ctx.fillStyle = P[0]; G.rr(x, y, w, h, 8); ctx.fill(); ctx.strokeStyle = P[1]; ctx.lineWidth = 1.2; G.rr(x + .5, y + .5, w - 1, h - 1, 8); ctx.stroke();
-    G.txt(conf ? '再按一次確認' : label, x + w / 2, y + h / 2 + 1, 14, kind === 'off' ? C.dim : '#f3ecd8', 'center', G.FONT, 700);
-    if (kind === 'off' || !f) return; if (VIS && (y + h < VIS[0] || y > VIS[1])) return;
+  /* r3.209.0：測試頁改成跟選單其他頁同一套樣式——深色底＋細金框的按鈕（選中＝金褐底）、金色小標＋分隔線、左側直排清單。
+   * 會改存檔的按鈕右上有橘點，按一次變「再按一次確認」（2 秒內再按才執行）；不再用整片藍色／橘色大按鈕。 */
+  function btn(x, y, w, h, label, f, kind, key) { if (VIS && (y + h < VIS[0] || y > VIS[1])) return; kind = kind || 'test'; const conf = kind === 'save' && T.conf === key && G.t - T.confT < 120, on = kind === 'on' || conf, off = kind === 'off' || !f;
+    ctx.fillStyle = on ? 'rgba(150,92,36,.92)' : off ? 'rgba(255,255,255,.02)' : 'rgba(255,255,255,.06)'; G.rr(x, y, w, h, 7); ctx.fill(); ctx.strokeStyle = on ? 'rgba(255,238,200,.75)' : off ? 'rgba(227,194,122,.12)' : 'rgba(227,194,122,.38)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, w - 1, h - 1, 7); ctx.stroke();
+    const fs = G.FS(); let t = conf ? '再按一次確認' : String(label), sz = 13; ctx.font = `700 ${sz * fs}px ${G.FONT}`; while (sz > 10 && ctx.measureText(t).width > w - 14) { sz--; ctx.font = `700 ${sz * fs}px ${G.FONT}`; } if (ctx.measureText(t).width > w - 14) { while (t.length > 2 && ctx.measureText(t + '…').width > w - 14) t = t.slice(0, -1); t += '…'; }
+    G.txt(t, x + w / 2, y + h / 2 + 1, sz, off ? C.dim : on ? '#fff3d6' : C.ink, 'center', G.FONT, 700);
+    if (kind === 'save' && !conf) { ctx.fillStyle = '#f0a052'; ctx.beginPath(); ctx.arc(x + w - 8, y + 8, 2.5, 0, 6.283); ctx.fill(); }
+    if (off) return;
     M.ui.hit(x, y, w, h, kind === 'save' ? () => { if (T.conf === key && G.t - T.confT < 120) { T.conf = null; f(); } else { T.conf = key; T.confT = G.t; } } : f); }
+  const chip = (t, bx, my, col, fill) => { const fs = G.FS(); ctx.font = `800 ${10 * fs}px ${G.FONT}`; const tw = ctx.measureText(t).width + 12, bh = 16 * fs; ctx.fillStyle = fill ? col : 'rgba(0,0,0,.35)'; G.rr(bx, my - bh / 2, tw, bh, 4); ctx.fill(); if (!fill) { ctx.strokeStyle = col; ctx.lineWidth = 1; G.rr(bx + .5, my - bh / 2 + .5, tw - 1, bh - 1, 4); ctx.stroke(); } G.txt(t, bx + tw / 2, my + 1, 10, fill ? '#1c1410' : col, 'center', G.FONT, 800); return tw; };
+  /* 一列：左邊色標＋文字（靠左）、右邊狀態；kind 同 btn */
+  function row(x, y, w, h, o) { if (VIS && (y + h < VIS[0] || y > VIS[1])) return; const conf = o.kind === 'save' && T.conf === o.key && G.t - T.confT < 120, on = o.kind === 'on' || conf;
+    ctx.fillStyle = on ? 'rgba(150,92,36,.5)' : 'rgba(255,255,255,.05)'; G.rr(x, y, w, h, 6); ctx.fill(); if (on) { ctx.strokeStyle = 'rgba(255,238,200,.6)'; ctx.lineWidth = 1; G.rr(x + .5, y + .5, w - 1, h - 1, 6); ctx.stroke(); }
+    let tx = x + 10; if (o.tag) tx += chip(o.tag, tx, y + h / 2, o.tagCol || '#e3c27a', o.tagFill) + 6; const fs = G.FS(); ctx.font = `700 ${12 * fs}px ${G.FONT}`; const rt = conf ? '再按一次確認' : (o.right || ''), rw = rt ? ctx.measureText(rt).width + 16 : 8; let t = String(o.label); while (t.length > 2 && ctx.measureText(t).width > x + w - rw - tx) t = t.slice(0, -2) + '…';
+    G.txt(t, tx, y + h / 2 + 1, 12, o.dim ? C.sub : C.ink, 'left', G.FONT, 700); if (rt) G.txt(rt, x + w - 10, y + h / 2 + 1, 11, conf ? '#ffd65a' : o.rightCol || C.sub, 'right', G.FONT, 700);
+    if (o.f) M.ui.hit(x, y, w, h, o.kind === 'save' ? () => { if (T.conf === o.key && G.t - T.confT < 120) { T.conf = null; o.f(); } else { T.conf = o.key; T.confT = G.t; } } : o.f); }
   /* ---------- 劇情：跳到某任務某步 ---------- */
   const JOIN = [['shiroJoin', 2, null], ['join_shion', 3, 'shion'], ['join_kuzuha', 4, 'kuzuha'], ['join_hayate', 5, 'hayate'], ['join_ibaraki', 9, 'ibaraki']];   // 到這章（含）以後已加入
-  function jump(q, si) { const Qs = Q(), f = F(), qs = G.SAVE.data.qs = {}; let before = true;
+  /* r3.209.0：跳章可選「路線」（把目標之前各章的抉擇自動填好）與「補上該章強度」（等級、一套裝備、熟練度、夥伴等級） */
+  const BV = { c2_stone: ['kappa', 'east'], c5_truth: ['truth', 'silence'], c8_feast: ['peace', 'raid'], c9_spider: ['spare', 'purge'], c10_tide: ['refuse', 'offer'] }, ROUTE = ['不改', '偏妖怪', '偏人類', '真結局'];
+  function applyRoute(ch) { const r = T.route || 0; if (!r) return; const S0 = G.SAVE.data, qc = S0.qc = S0.qc || {};
+    for (const c of CHOICES()) { if (c.ch >= ch) continue; if (BV[c.key]) qc[c.key] = BV[c.key][r === 2 ? 1 : 0]; else if (r === 3 && c.key === 'c6_confess') qc[c.key] = 'confess'; else if (r === 3 && c.key === 'c10_xue') qc[c.key] = 'refuse'; else if (qc[c.key] === undefined) qc[c.key] = c.opts[0][0]; }
+    if (r === 3) S0.xueLove = Math.max(S0.xueLove || 0, 2); }
+  function powerUp(ch) { if (!T.pow) return; const Rr = R(), d = Rr.d(), sc = G.D.scenes[HUB().firstOf(ch)], L = Math.max(d.lv, Math.min(100, ((sc && sc.lv) || ch * 5) + 2));
+    if (L > d.lv) { d.sp += (L - d.lv) * 2; d.lv = L; d.exp = 0; }
+    for (const sl of Rr.SLOT) { const cur = d.eq[sl]; if (cur && cur.lv >= L - 3) continue; let it = null; for (let k = 0; k < 400; k++) { const c2 = Rr.roll(L, null); if (Rr.TPL[c2.t].slot === sl && Rr.TPL[c2.t].req <= L) { it = c2; break; } } if (!it) continue; it.q = Math.max(it.q || 0, 2); it.lv = L; if (sl === 'weapon') it.wk = W().curId(); d.bag.push(it); Rr.equip(d.bag.length - 1); }
+    try { const p = W().prof(); p.lv = Math.max(p.lv || 0, Math.min(W().PROF_MAX, Math.ceil(W().PROF_MAX * ch / 12))); } catch (e) {}
+    const PY = G.PARTY; if (PY && PY.DEF) for (const id in PY.DEF) { if (PY.joined && !PY.joined(id)) continue; try { const c = PY.data(id); c.lv = Math.max(c.lv || 1, L); } catch (e) {} }
+    Rr.recalc(); G.H.hp = G.H.hpMax; }
+  /* 目前進行中的主線（沒有就找任一進行中的任務） */
+  const curQ = () => { const L = Q().L; return L.find(q => q.main && Q().active(q.id)) || L.find(q => Q().active(q.id)) || null; };
+  function stepDone(all) { const q = curQ(); if (!q) return G.UI.toast('目前沒有進行中的任務'); const s = (G.SAVE.data.qs || {})[q.id]; M.close(); G.DLG.list = null; if (all && s) s.s = q.steps.length - 1; Q().next(q.id); G.UI.toast(all ? '已完成：' + q.title : '已完成一步：' + q.title); }
+  function jump(q, si) { const Qs = Q(), f = F(), qs = G.SAVE.data.qs = {}; let before = true; applyRoute(q.ch);
     for (const o of Qs.L) { if (o === q) before = false; if (o.ch < q.ch || (o.ch === q.ch && before && o.main)) qs[o.id] = { s: 0, done: 1 }; }
     if (si >= 0) qs[q.id] = { s: si, k: 0 };
     f.prologue = f.matsu = 1; for (let c = 1; c <= 12; c++) { if (c <= q.ch) { f['ch' + c] = 1; f['op' + c] = 1; } else { delete f['ch' + c]; delete f['clear' + c]; } }
@@ -47,7 +72,7 @@
     const st = si >= 0 ? q.steps[si] : q.giver, map = (st && st.map) || HUB().firstOf(q.ch);
     G.SAVE.markDirty(); M.close(); G.DLG.list = null; G.SC.trans = { t: 0, to: map === G.SC.id ? (map === 'hub_city' ? 'hub_shrine' : 'hub_city') : map, at: null };
     if (map === G.SC.id) G.STORY.later(90, () => { G.SC.trans = { t: 0, to: map, at: null }; });
-    G.UI.toast('跳到：' + q.title + (si >= 0 ? '・步驟 ' + (si + 1) : '・委託')); }
+    powerUp(q.ch); G.UI.toast('跳到：' + q.title + (si >= 0 ? '・步驟 ' + (si + 1) : '・委託') + (T.route ? '　路線：' + ROUTE[T.route] : '') + (T.pow ? '　已補強度' : '')); }
   T.jump = jump;
   /* r3.208.0：步驟名稱不再顯示程式用的類型代號（cut、goto…）：改成「類型中文＋內容」；沒寫說明的過場＝取第一句台詞或地點 */
   const STN = { talk: '對話', kill: '討伐', gather: '收集', cut: '過場', look: '調查', choice: '抉擇', goto: '前往', gate: '關卡', hold: '守住', idle: '等待', charm: '符咒', weapon: '武器' };
@@ -63,34 +88,47 @@
       const hs = G.SC.toScreen(G.H.x, G.H.y); ctx.strokeStyle = '#7fd6e6'; ctx.beginPath(); ctx.arc(hs.x, hs.y, 5, 0, 6.283); ctx.stroke(); }; }
   (function wait() { if (G.step && G.UI && G.UI.draw) install(); else setTimeout(wait, 20); })();
   /* ---------- 頁面 ---------- */
-  M.PAGE['測試'] = function (x, y, w, h) { const fs = G.FS(), RH = Math.max(44, 44 * fs), gap = 8, lw = Math.min(124, w * 0.22), cx = x + lw + 10, cw = w - lw - 10, cols = cw > 520 ? 3 : 2;
-    const two = TABS.length * (RH + 6) > h, tcol = two ? 2 : 1, tw = (lw - (tcol - 1) * 6) / tcol;   // 手機高度不夠：子分頁排成 2 欄
-    TABS.forEach((t, i) => btn(x + (i % tcol) * (tw + 6), y + Math.floor(i / tcol) * (RH + 6), tw, RH, t, () => { T.tab = i; M.scroll.tui = 0; }, T.tab === i ? 'on' : 'test'));
-    T.hh = T.hh || {}; const body = PAGES[T.tab], H0 = T.hh[T.tab] || 900, off = M.ui.scrollArea('tui', cx, y, cw, h, H0); M.ui.clip(cx, y, cw, h); VIS = [y, y + h];
-    let yy = y + off; const head = t => { G.txt(t, cx + 2, yy + 13, 14, C.gold, 'left', G.FONT_S, 900); yy += 30; };
-    const grid = (list, n, f) => { const bw = (cw - (n - 1) * gap) / n; list.forEach((it, i) => f(it, cx + (i % n) * (bw + gap), yy + Math.floor(i / n) * (RH + gap), bw)); yy += Math.ceil(list.length / n) * (RH + gap) + 6; };
-    const text = (t, col) => { G.txt(t, cx + 4, yy + 12, 13, col || C.ink, 'left', G.FONT, 600); yy += 24; };
-    body.draw({ cx, cw, cols, RH, gap, head, grid, text, get y() { return yy; }, set y(v) { yy = v; } }); T.hh[T.tab] = yy - (y + off) + 24; ctx.restore(); VIS = null; };   // 內容高度留到下一格用
+  M.PAGE['測試'] = function (x, y, w, h) { const fs = G.FS(), RH = Math.round(Math.max(32, 32 * fs)), gap = 6, lw = Math.min(132, w * 0.22), px = x + lw + 10, pw = w - lw - 10, cx = px + 12, cw = pw - 24, cols = cw > 480 ? 3 : 2;
+    M.ui.box(x, y, lw, h); const th = Math.min(34 * fs, (h - 12) / TABS.length);   /* 左側：直排清單（同職業頁） */
+    TABS.forEach((t, i) => { const ty = y + 6 + i * th, on = T.tab === i; if (on) { ctx.fillStyle = 'rgba(150,92,36,.55)'; G.rr(x + 5, ty, lw - 10, th - 3, 6); ctx.fill(); ctx.fillStyle = '#e3c27a'; ctx.fillRect(x + 5, ty + 4, 3, th - 11); }
+      G.txt(t, x + 18, ty + (th - 3) / 2 + 1, 13, on ? '#fff3d6' : C.sub, 'left', G.FONT_S, 900); M.ui.hit(x, ty, lw, th, () => { T.tab = i; M.scroll.tui = 0; }); });
+    M.ui.box(px, y, pw, h); T.hh = T.hh || {}; const body = PAGES[T.tab], H0 = T.hh[T.tab] || 900, off = M.ui.scrollArea('tui', px, y + 4, pw, h - 8, H0); M.ui.clip(px, y + 4, pw, h - 8); VIS = [y + 4, y + h - 4];
+    let yy = y + 12 + off; const head = t => { if (yy > y + 16 + off) yy += 6; G.txt(t, cx, yy + 9, 12, C.gold, 'left', G.FONT_S, 900); ctx.font = `900 ${12 * fs}px ${G.FONT_S}`; const tw = ctx.measureText(t).width; ctx.fillStyle = 'rgba(227,194,122,.25)'; ctx.fillRect(cx + tw + 10, yy + 9, Math.max(0, cw - tw - 10), 1); yy += 24; };
+    const grid = (list, n, f) => { const bw = (cw - (n - 1) * gap) / n; list.forEach((it, i) => f(it, cx + (i % n) * (bw + gap), yy + Math.floor(i / n) * (RH + gap), bw)); yy += Math.ceil(list.length / n) * (RH + gap) + 4; };
+    const text = (t, col) => { ctx.font = `500 ${11 * fs}px ${G.FONT}`; for (const l of G.wrap(String(t), cw - 4)) { G.txt(l, cx + 2, yy + 9, 11, col || C.sub, 'left', G.FONT, 500); yy += 17 * fs; } yy += 3; };
+    body.draw({ cx, cw, cols, RH, gap, head, grid, text, get y() { return yy; }, set y(v) { yy = v; } }); T.hh[T.tab] = yy - (y + off) + 20; ctx.restore(); VIS = null; };   // 內容高度留到下一格用
   const PAGES = [
     { draw(u) { u.head('開關（只在這次遊玩有效）'); const TOG = [['god', '無敵'], ['kill', '秒殺'], ['nocd', '技能無冷卻'], ['qi', '氣永遠滿'], ['free', '免費學技能'], ['unlock', '全部解鎖'], ['fps', '顯示 FPS'], ['walk', '顯示可走範圍']];
         u.grid(TOG, u.cols, ([k, n], bx, by, bw) => btn(bx, by, bw, u.RH, n + '：' + (CH.on[k] ? '開' : '關'), () => { CH.on[k] = !CH.on[k]; }, CH.on[k] ? 'on' : 'test'));
         u.grid([['回復全滿', () => { G.H.hp = G.H.hpMax; R().d().qi = 100; G.UI.toast('生命・氣 全滿'); }]], u.cols, ([n, f], bx, by, bw) => btn(bx, by, bw, u.RH, n, f)); } },
-    { draw(u) { u.head('章節'); u.grid(Array.from({ length: 12 }, (_, i) => i + 1), 6, (c, bx, by, bw) => btn(bx, by, bw, u.RH, '' + c, () => { T.ch = c; T.q = null; M.scroll.tui = 0; }, T.ch === c ? 'on' : 'test'));
-        const L = Q().L.filter(q => q.ch === T.ch).sort((a, b) => (b.main ? 1 : 0) - (a.main ? 1 : 0)), qs = G.SAVE.data.qs || {};
-        u.head('任務（點任務展開步驟；橘色＝跳過去，會改存檔）');
-        for (const q of L) { const s = qs[q.id], st = s ? (s.done ? '完成' : '步驟 ' + (s.s + 1)) : '未接';
-          u.grid([q], 1, (q2, bx, by, bw) => btn(bx, by, bw, u.RH, (q.main ? '【主線】' : q.boss ? '【頭目委託】' : '【支線】') + q.title + '　（' + st + '）', () => { T.q = T.q === q.id ? null : q.id; }, T.q === q.id ? 'on' : 'test'));
-          if (T.q === q.id) { const S = (q.giver ? [[-1, '委託：' + (q.giver.name || '')]] : []).concat(q.steps.map((p, i) => [i, (i + 1) + '．' + stepName(p)]));
-            u.grid(S, 1, ([i, n], bx, by, bw) => btn(bx + 16, by, bw - 16, u.RH, n, () => T.jump(q, i), 'save', 'j' + q.id + i)); } }
-        u.head('抉擇（直接設定結果）'); for (const c of CHOICES().filter(c => c.ch === T.ch)) { u.text(c.text + '　目前：' + (Q().choice(c.key) || '未選'));
-          u.grid(c.opts, Math.min(u.cols, c.opts.length), ([v, l], bx, by, bw) => btn(bx, by, bw, u.RH, l, () => { (G.SAVE.data.qc = G.SAVE.data.qc || {})[c.key] = v; done('抉擇：' + l); }, Q().choice(c.key) === v ? 'on' : 'save', 'c' + c.key + v)); } } },
-    { draw(u) { const e = endingNow(), NM = { true: '真結局（晴）', storm: '暴雨結局（雨）', nameless: '無名結局（霧）' };
-        u.head('目前結局走向：' + NM[e.end]); u.text('小雪好感 ' + e.xue + '／6　人妖羈絆 ' + e.bond + '（真 ≥2、暴雨 ≤−2）　心結 ' + e.heart + '／2');
-        u.grid([['小雪好感 +1', 1], ['小雪好感 −1', -1]], 2, ([n, v], bx, by, bw) => btn(bx, by, bw, u.RH, n, () => { const g = G.SAVE.data; g.xueLove = (g.xueLove || 0) + v; done('小雪好感 ' + Q().xue()); }, 'save', 'x' + v));
-        u.head('人妖羈絆的五個抉擇（偏妖怪 +1、偏人類 −1）'); const BK = ['c2_stone', 'c5_truth', 'c8_feast', 'c9_spider', 'c10_tide'];
-        for (const c of CHOICES().filter(c => BK.includes(c.key))) { u.text('第 ' + c.ch + ' 章：' + c.text + '　目前：' + (Q().choice(c.key) || '未選'));
-          u.grid(c.opts, Math.min(u.cols, c.opts.length), ([v, l], bx, by, bw) => btn(bx, by, bw, u.RH, l, () => { (G.SAVE.data.qc = G.SAVE.data.qc || {})[c.key] = v; done(l); }, Q().choice(c.key) === v ? 'on' : 'save', 'b' + c.key + v)); }
-        u.head('心結'); u.grid([['颯的支線完成', 'c9_s_hayate'], ['汐音的支線完成', 'c10_s_shion']], 2, ([n, id], bx, by, bw) => btn(bx, by, bw, u.RH, n + (Q().isDone(id) ? ' ✓' : ''), () => { const qs = G.SAVE.data.qs = G.SAVE.data.qs || {}; if (qs[id] && qs[id].done) delete qs[id]; else qs[id] = { s: 0, done: 1 }; done(n); }, Q().isDone(id) ? 'on' : 'save', 'h' + id)); } },
+    /* 劇情：快速推進（完成這一步／這個任務）＋跳到指定進度（路線、補強度、章 → 任務 → 步驟） */
+    { draw(u) { const Qs = Q(), qs = G.SAVE.data.qs || {}, cq = curQ(), cs = cq && qs[cq.id];
+        u.head('快速推進'); if (cq) u.text('目前：' + (cq.main ? '主線' : '支線') + '「' + cq.title + '」第 ' + ((cs && cs.s || 0) + 1) + '／' + cq.steps.length + ' 步　' + stepName(cq.steps[Math.min(cq.steps.length - 1, (cs && cs.s) || 0)]), C.ink); else u.text('目前沒有進行中的任務。');
+        u.grid([['完成目前這一步', () => stepDone(0)], ['完成目前這個任務', () => stepDone(1)]], 2, ([n, f], bx, by, bw) => btn(bx, by, bw, u.RH, n, cq ? f : null, cq ? 'save' : 'off', 'sd' + n));
+        u.head('跳到指定進度'); u.text('會把目標之前的任務全部標成完成、頭目標成已打、夥伴加入，並傳送過去。');
+        const lab = (t, opts, cur, set) => { const y0 = u.y, lwid = 112 * G.FS(), n = opts.length, bw = Math.min(86 * G.FS(), (u.cw - lwid - (n - 1) * 4) / n); G.txt(t, u.cx + 2, y0 + u.RH / 2 + 1, 12, C.ink, 'left', G.FONT, 700); opts.forEach((o, k) => btn(u.cx + lwid + k * (bw + 4), y0 + 2, bw, u.RH - 4, o, () => set(k), cur === k ? 'on' : 'test')); u.y = y0 + u.RH + 4; };
+        lab('之前的抉擇', ROUTE, T.route || 0, k => { T.route = k; }); lab('補上該章強度', ['不補', '補上'], T.pow ? 1 : 0, k => { T.pow = k; });
+        u.text(['抉擇維持現在的樣子。', '影響人妖羈絆的抉擇都選偏妖怪那邊，其餘沒選過的填第一個選項。', '影響人妖羈絆的抉擇都選偏人類那邊，其餘沒選過的填第一個選項。', '偏妖怪＋向小雪坦白＋拒絕獻祭＋好感補到 2（心結的兩條支線在第 9、10 章，跳過那兩章就會算完成）。'][T.route || 0] + (T.pow ? '　補強度＝等級拉到該章水準、換一套該等級的裝備、熟練度與夥伴等級跟上。' : ''));
+        const y1 = u.y; G.txt('章節', u.cx + 2, y1 + u.RH / 2 + 1, 12, C.ink, 'left', G.FONT, 700); { const lwid = 46 * G.FS(), bw = (u.cw - lwid - 11 * 3) / 12; for (let c = 1; c <= 12; c++) btn(u.cx + lwid + (c - 1) * (bw + 3), y1 + 2, bw, u.RH - 4, '' + c, () => { T.ch = c; T.q = null; }, T.ch === c ? 'on' : 'test'); } u.y = y1 + u.RH + 6;
+        const L = Qs.L.filter(q => q.ch === T.ch).sort((a, b) => (b.main ? 1 : 0) - (a.main ? 1 : 0));
+        for (const q of L) { const s = qs[q.id], st = s ? (s.done ? '已完成' : '進行中・第 ' + (s.s + 1) + ' 步') : '未接', open = T.q === q.id;
+          row(u.cx, u.y, u.cw, u.RH, { tag: q.main ? '主線' : q.boss ? '頭目' : '支線', tagCol: q.main ? '#f3d98a' : q.boss ? '#f0a052' : '#86cf8f', tagFill: q.main, label: q.title, right: st + (open ? '　▲' : '　▼'), rightCol: s && !s.done ? '#ffd65a' : C.sub, kind: open ? 'on' : '', f: () => { T.q = open ? null : q.id; } }); u.y += u.RH + 4;
+          if (open) { const S = (q.giver ? [[-1, '【接任務】' + (q.giver.name || '')]] : []).concat(q.steps.map((p, i) => [i, (i + 1) + '．' + stepName(p)]));
+            for (const [i, n] of S) { const here = s && !s.done && s.s === i; row(u.cx + 18, u.y, u.cw - 18, u.RH - 4, { tag: here ? '目前' : null, tagCol: '#ffd65a', tagFill: 1, label: n, right: '跳到這裡', rightCol: '#f0a052', kind: 'save', key: 'j' + q.id + i, f: () => T.jump(q, i) }); u.y += u.RH; } u.y += 4; } } } },
+    /* 抉擇與結局：結局走向、小雪好感、心結，加上全部章節的抉擇（原本分散在兩頁） */
+    { draw(u) { const e = endingNow(), NM = { true: '真結局（晴）', storm: '暴雨結局（雨）', nameless: '無名結局（霧）' }, fs = G.FS(), S0 = G.SAVE.data;
+        u.head('目前結局走向'); { const y0 = u.y, hh = 62 * fs; ctx.fillStyle = 'rgba(150,92,36,.2)'; G.rr(u.cx, y0, u.cw, hh, 7); ctx.fill(); ctx.fillStyle = '#e3c27a'; ctx.fillRect(u.cx, y0 + 5, 3, hh - 10);
+          G.txt(NM[e.end], u.cx + 14, y0 + 17 * fs, 16, '#fff3d6', 'left', G.FONT_S, 900);
+          const mw = (u.cw - 28 - 48) / 3, meter = (k, t, v, mx, okv, neg) => { const mx0 = u.cx + 14 + k * (mw + 24), my = y0 + 40 * fs, good = neg ? v <= okv : v >= okv; G.txt(t, mx0, my, 11, C.sub, 'left', G.FONT, 600); G.txt(String(v) + (mx ? '／' + mx : ''), mx0 + mw, my, 13, good ? '#86cf8f' : C.ink, 'right', G.FONT_S, 900);
+            ctx.fillStyle = 'rgba(255,255,255,.12)'; G.rr(mx0, my + 9 * fs, mw, 4, 2); ctx.fill(); ctx.fillStyle = good ? '#86cf8f' : '#e3c27a'; if (mx) { G.rr(mx0, my + 9 * fs, Math.max(3, mw * Math.max(0, Math.min(1, v / mx))), 4, 2); ctx.fill(); } else { const cxm = mx0 + mw / 2, ww = mw / 2 * Math.max(-1, Math.min(1, v / 5)); ctx.fillRect(Math.min(cxm, cxm + ww), my + 9 * fs, Math.max(2, Math.abs(ww)), 4); ctx.fillStyle = '#fff3d6'; ctx.fillRect(cxm - 0.5, my + 7 * fs, 1, 8); } };
+          meter(0, '小雪好感', e.xue, 6, 6); meter(1, '人妖羈絆', e.bond, 0, 2); meter(2, '心結', e.heart, 2, 2); u.y = y0 + hh + 6; }
+        u.text('真結局＝好感 6 以上、羈絆 +2 以上、心結 2；暴雨結局＝羈絆 −2 以下；其餘＝無名結局。');
+        u.grid([['小雪好感 +1', () => { S0.xueLove = (S0.xueLove || 0) + 1; done('小雪好感 ' + Q().xue()); }, 'x1'], ['小雪好感 −1', () => { S0.xueLove = (S0.xueLove || 0) - 1; done('小雪好感 ' + Q().xue()); }, 'x0'],
+          ...[['颯的心結', 'c9_s_hayate'], ['汐音的心結', 'c10_s_shion']].map(([n, id]) => [n + (Q().isDone(id) ? '：已解' : '：未解'), () => { const qs = S0.qs = S0.qs || {}; if (qs[id] && qs[id].done) delete qs[id]; else qs[id] = { s: 0, done: 1 }; done(n); }, 'h' + id, Q().isDone(id)])], u.cols === 3 ? 4 : 2, ([n, f, k, on], bx, by, bw) => btn(bx, by, bw, u.RH, n, f, on ? 'on' : 'save', k));
+        u.head('各章抉擇（點了直接設定結果）'); const XK = { c6_confess: '好感・心結', c10_xue: '好感' };
+        for (const c of CHOICES().sort((a, b) => a.ch - b.ch)) { const y0 = u.y, my = y0 + 10 * fs; let tx = u.cx + 2; tx += chip('第 ' + c.ch + ' 章', tx, my, '#e3c27a') + 5; if (BV[c.key]) tx += chip('羈絆', tx, my, '#6fb0f0', 1) + 5; if (XK[c.key]) tx += chip(XK[c.key], tx, my, '#f0a0b8', 1) + 5;
+          ctx.font = `700 ${12 * fs}px ${G.FONT}`; let t = String(c.text); while (t.length > 2 && ctx.measureText(t).width > u.cx + u.cw - tx - 4) t = t.slice(0, -2) + '…'; G.txt(t, tx, my + 1, 12, C.ink, 'left', G.FONT, 700); u.y = y0 + 22 * fs;
+          u.grid(c.opts, Math.min(u.cols, c.opts.length), ([v, l], bx, by, bw) => btn(bx, by, bw, u.RH, l + (BV[c.key] ? (BV[c.key][0] === v ? '（羈絆 +1）' : BV[c.key][1] === v ? '（羈絆 −1）' : '') : ''), () => { (S0.qc = S0.qc || {})[c.key] = v; done('抉擇：' + l); }, Q().choice(c.key) === v ? 'on' : 'save', 'c' + c.key + v)); u.y += 4; } } },
     { draw(u) { const Wp = W(), cur = Wp.cur(); u.head('武器（目前：' + cur.n + '）');
         u.grid(Wp.LIST, u.cols, (wp, bx, by, bw) => btn(bx, by, bw, u.RH, wp.n, () => { const d = R().d(); if (!d.bag.some(it => R().TPL[it.t].slot === 'weapon' && (it.wk || 'katana') === wp.id) && (d.eq.weapon.wk || 'katana') !== wp.id) { const it = R().make(0, 0, 1, [], null); it.wk = wp.id; d.bag.push(it); } Wp.equip(wp.id); }, wp.id === cur.id ? 'on' : Wp.loading ? 'off' : 'test'));
         u.head('速度'); u.grid([[1, '×1'], [0.5, '×0.5'], [0.25, '×0.25'], [0, '暫停']], 4, ([v, n], bx, by, bw) => btn(bx, by, bw, u.RH, n, () => { T.ts = v; }, T.ts === v ? 'on' : 'test'));
