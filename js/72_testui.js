@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 72_testui.js
- * Version : r3.129.0  (2026-11-27)　r3.129.0：地圖分頁加「兩岸城外觀」切換
+ * Version : r3.208.0  (2026-11-28)　r3.208.0：劇情頁步驟名稱改成中文類型＋內容（不再出現 cut 等代號）
+ * 舊版    : r3.129.0  (2026-11-27)　r3.129.0：地圖分頁加「兩岸城外觀」切換
  * 舊版    : r3.124.0  (2026-11-26)　r3.124.0：里歐：提示改到 職業 › 最下面；招式全 Lv5 時外觀 Lv 至少 95；加「TP／氣 全滿」
  * 舊版    : r3.122.0  (2026-11-26)　r3.122.0：道具頁：錢改 +100 萬，新增妖玉、難度素材、藥品、巔峰、夥伴技能點、鎌鼬之羽、勾玉／玉屑／精煉材料、名物、妖怪村禮物；新「系統」頁：難度、轉生輪次、里歐、妖怪村（入住、好感、觸發四種事件）、世界事件類型、世界頭目；開關「奧義免 Lv40」改名「全部解鎖」
  * 舊版    : r3.83.0  (2026-11-25)　r3.83.0：跳章按鈕改走 T.jump（118 補跑任務完成處理）　r3.49.0  (2026-11-18)　r3.49.0：移除「招式試做」開關（新版招式正式開放）
@@ -48,6 +49,9 @@
     if (map === G.SC.id) G.STORY.later(90, () => { G.SC.trans = { t: 0, to: map, at: null }; });
     G.UI.toast('跳到：' + q.title + (si >= 0 ? '・步驟 ' + (si + 1) : '・委託')); }
   T.jump = jump;
+  /* r3.208.0：步驟名稱不再顯示程式用的類型代號（cut、goto…）：改成「類型中文＋內容」；沒寫說明的過場＝取第一句台詞或地點 */
+  const STN = { talk: '對話', kill: '討伐', gather: '收集', cut: '過場', look: '調查', choice: '抉擇', goto: '前往', gate: '關卡', hold: '守住', idle: '等待', charm: '符咒', weapon: '武器' };
+  function stepName(p) { const ty = STN[p.t] || '步驟', mp = p.map && G.D.scenes[p.map] && G.D.scenes[p.map].name, l0 = Array.isArray(p.lines) ? p.lines.find(l => l && l.text) : null, d = p.text || p.label || (l0 ? (l0.who ? l0.who + '：' : '') + String(l0.text).slice(0, 16) + (l0.text.length > 16 ? '…' : '') : mp ? mp : ''); return '【' + ty + '】' + d + (mp && d !== mp && !p.text ? '（' + mp + '）' : ''); }
   const CHOICES = () => { const o = []; for (const q of Q().L) for (const s of q.steps || []) if (s.t === 'choice' && s.key && !o.some(c => c.key === s.key)) o.push({ key: s.key, ch: q.ch, text: s.text || s.key, opts: s.opts.map(x => [x.v, x.label]) }); return o; };
   function endingNow() { const Qs = Q(), D = id => Qs.isDone(id), bond = Qs.bond(), xue = Qs.xue(), heart = ['c9_s_hayate', 'c10_s_shion'].filter(D).length + (Qs.choice('c6_confess') === 'confess' ? 1 : 0);
     return { bond, xue, heart, end: xue >= 6 && bond >= 2 && heart >= 2 ? 'true' : bond <= -2 ? 'storm' : 'nameless' }; }
@@ -76,7 +80,7 @@
         u.head('任務（點任務展開步驟；橘色＝跳過去，會改存檔）');
         for (const q of L) { const s = qs[q.id], st = s ? (s.done ? '完成' : '步驟 ' + (s.s + 1)) : '未接';
           u.grid([q], 1, (q2, bx, by, bw) => btn(bx, by, bw, u.RH, (q.main ? '【主線】' : q.boss ? '【頭目委託】' : '【支線】') + q.title + '　（' + st + '）', () => { T.q = T.q === q.id ? null : q.id; }, T.q === q.id ? 'on' : 'test'));
-          if (T.q === q.id) { const S = (q.giver ? [[-1, '委託：' + (q.giver.name || '')]] : []).concat(q.steps.map((p, i) => [i, (i + 1) + '．' + (p.text || p.label || p.t)]));
+          if (T.q === q.id) { const S = (q.giver ? [[-1, '委託：' + (q.giver.name || '')]] : []).concat(q.steps.map((p, i) => [i, (i + 1) + '．' + stepName(p)]));
             u.grid(S, 1, ([i, n], bx, by, bw) => btn(bx + 16, by, bw - 16, u.RH, n, () => T.jump(q, i), 'save', 'j' + q.id + i)); } }
         u.head('抉擇（直接設定結果）'); for (const c of CHOICES().filter(c => c.ch === T.ch)) { u.text(c.text + '　目前：' + (Q().choice(c.key) || '未選'));
           u.grid(c.opts, Math.min(u.cols, c.opts.length), ([v, l], bx, by, bw) => btn(bx, by, bw, u.RH, l, () => { (G.SAVE.data.qc = G.SAVE.data.qc || {})[c.key] = v; done('抉擇：' + l); }, Q().choice(c.key) === v ? 'on' : 'save', 'c' + c.key + v)); } } },
