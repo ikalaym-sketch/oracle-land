@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 99_partner6.js
- * Version : r3.59.0  (2026-11-24)
+ * Version : r3.213.0  (2026-11-28)　r3.213.0：役小角的前鬼後鬼換地圖時直接出現在身邊
+ * 舊版    : r3.59.0  (2026-11-24)
  * 變更    : r3.59.0 新增。夥伴第二批強化：
  *           1. 裝備詞條：冷卻縮減（招式冷卻，上限 40%）、吸血（傷害量回自己）、移動速度 對夥伴生效（原本只有攻防血暴擊）。
  *           2. 夥伴版靈紋：夥伴裝備上的靈紋，命中類效果減半——落雷、燃燒、冰凍、感電、破甲；風刃／斬月／震地改成重擊時在目標處追加一擊。
@@ -59,7 +60,9 @@
   function shiki(P) { let o = SK[P.id]; if (!o) o = SK[P.id] = { aka: { x: P.x, y: P.y, st: 'manifest', t: 0 }, ao: { x: P.x, y: P.y, st: 'manifest', t: 0 } }; return o; }
   function shikiStep(P) { const o = shiki(P), f = P.face || 1, hh = HH() * S(P.y);
     const goal = { aka: [P.x - f * hh * 0.55, P.y + 8], ao: [P.x - f * hh * 0.2, P.y - 4] };
-    for (const k of ['aka', 'ao']) { const s = o[k]; s.t += TK;
+    /* r3.213.0：換地圖（或被傳送拉開很遠）時，前鬼後鬼直接出現在役小角身邊，跟夥伴一樣；原本留在舊座標再慢慢滑過來，看起來像從遠處跑來 */
+    const far = o.sid !== G.SC.id; o.sid = G.SC.id;
+    for (const k of ['aka', 'ao']) { const s = o[k]; s.t += TK; if (far || Math.hypot(goal[k][0] - s.x, goal[k][1] - s.y) > hh * 3.5) { s.x = goal[k][0]; s.y = goal[k][1]; if (s.st !== 'idle') { s.st = 'idle'; s.t = 0; } }
       if (s.st === 'strike' || s.st === 'away') { if (s.t > 720) { s.st = 'manifest'; s.t = 0; s.x = goal[k][0]; s.y = goal[k][1]; } continue; }
       if (s.st === 'manifest' && s.t > 720) { s.st = 'idle'; s.t = 0; }
       s.x += (goal[k][0] - s.x) * 0.12; s.y += (goal[k][1] - s.y) * 0.12; s.face = f; } }

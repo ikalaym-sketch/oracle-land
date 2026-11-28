@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 139_foeai.js
- * Version : r3.200.0  (2026-11-28)　r3.200.0：箭雨的箭放大、拖光痕、落地後插在地上半秒
+ * Version : r3.213.0  (2026-11-28)　r3.213.0：術士法球不再追蹤；招式預警提早出現
+ * 舊版    : r3.200.0  (2026-11-28)　r3.200.0：箭雨的箭放大、拖光痕、落地後插在地上半秒
  * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：箭雨的箭改手繪箭矢
  * 舊版    : r3.198.0  (2026-11-28)　r3.198.0：地面預警減量（普通攻擊改身上起手閃光、招式預警出手前才出現、同色重疊合併、底色變淡）
  * 舊版    : r3.197.0  (2026-11-28)　r3.197.0：敵人招式改播手繪素材（近戰爪痕／揮擊弧光、法球、地爆、重踩震波）
@@ -76,12 +77,12 @@
    * B 招式預警在出手前 45% 才出現（原本一起手就畫）；
    * C 同色預警疊在一起時合成一塊，不再越疊越深；
    * D 底色改成很淡，只有出手前一瞬間才填亮，平常以邊框圖為主。 */
-  const SHOW = 0.55;
+  const SHOW = 0.2;
   function halo(t) { const e = t.e; if (!e || e.hp <= 0 || e.st !== 'atk') return; const ctx = G.ctx, q = Math.min(1, t.t / t.life), k = HH() * S(e.y) * Math.min(1.8, e.ratio || 1), x = e.x + e.face * k * 0.12, y = e.y - k * 0.55, R = k * 0.58, a = 0.05 + 0.24 * q * q;   /* 氣焰縮小、調淡：一群怪同時起手時不會連成一片紅霧 */
     const g = ctx.createRadialGradient(x, y, R * 0.15, x, y, R); g.addColorStop(0, `rgba(255,96,56,${a})`); g.addColorStop(0.6, `rgba(230,50,36,${a * 0.55})`); g.addColorStop(1, 'rgba(230,50,36,0)'); ctx.save(); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, R * 0.8, R, 0, 0, 6.283); ctx.fill(); ctx.restore();
     const late = t.life > 18 && t.t >= t.life - 10; if ((!t._g1 || (late && !t._g2)) && G.KF && G.KF.use) { if (late) t._g2 = 1; t._g1 = 1; try { G.KF.use('ember', () => G.KF.glint(e.x + e.face * k * 0.3, e.y, 0.8 * Math.min(1.8, e.ratio || 1), late ? 0.5 : 0.34, late ? 10 : 12)); } catch (x2) {} } }
   function drawAll(u) { const ctx = G.ctx, GP = {};
-    for (const t of W) { if (t.basic) { halo(t); continue; } const q = Math.min(1, t.t / t.life); t._vis = 0; if (q < SHOW) continue; const vis = Math.min(1, (t.t - t.life * SHOW + 1) / 4), fin = t.life - t.t <= 5; t._vis = vis;
+    for (const t of W) { if (t.basic) { halo(t); continue; } const q = Math.min(1, t.t / t.life); t._vis = 0; const t0 = Math.min(t.life * SHOW, Math.max(0, t.life - 34)); if (t.t < t0) continue; const vis = Math.min(1, (t.t - t0 + 1) / 4),   /* r3.213.0：預警提早出現（起手 20% 後就畫，且至少留約 0.55 秒可見）——上一版出手前 45% 才出現，短招只剩 0.25 秒，來不及反應 */ fin = t.life - t.t <= 5; t._vis = vis;
       const g = GP[t.col] || (GP[t.col] = { p: new Path2D(), a: 0 }); g.a = Math.max(g.a, vis * (fin ? 0.26 : u ? 0.06 : 0.12));
       if (t.k === 'lane') { const dx = t.x1 - t.x0, dy = t.y1 - t.y0, L = Math.hypot(dx, dy) || 1, h = t.w * 0.3, ux = dx / L, uy = dy / L, nx = -uy * h, ny = ux * h; g.p.moveTo(t.x0 - nx, t.y0 - ny); g.p.lineTo(t.x1 - nx, t.y1 - ny); g.p.lineTo(t.x1 + nx, t.y1 + ny); g.p.lineTo(t.x0 + nx, t.y0 + ny); g.p.closePath(); }
       else { g.p.moveTo(t.x + t.r, t.y); g.p.ellipse(t.x, t.y, t.r, t.r * 0.42, 0, 0, 6.283); g.p.closePath(); } }
@@ -126,7 +127,7 @@
     rain: { step(e, m) { const k = HH() * S(H.y); if (m.t === Math.max(1, m.W - 14)) for (const p of m.P) fall(p[0], p[1], 14, k);
         if (m.t === m.W) { let hit = 0; for (const p of m.P) { dust(p[0], p[1]); if (G.AFX) for (let i = 0; i < 3; i++) G.AFX.play('x2_core', 'fx_arrow_s', { x: p[0] + rnd(-0.22, 0.22) * k, y: p[1] - k * 0.4 + rnd(-0.06, 0.06) * k, size: k * 0.95, by: 'w', ang: 1.5708 + rnd(-0.22, 0.22), tpf: 34, fade: 12, layer: 'o' });   /* r3.200.0：落地後箭插在地上半秒 */ if (!hit && inCirc(p[0], p[1], k * 0.4)) { hit = 1; hurt(e, 0.7); } } } return m.t > m.W + 20; } },
     /* 術士：法球 */
-    orb: { ok: (e, d) => d > 1.6 && d < 7, start(e) { const k = HH() * S(e.y), Wf = wk(e, 48), a = Math.atan2(H.y - e.y, H.x - e.x), L = Math.min(dist(e), 6) * k;
+    orb: { ok: (e, d) => d > 1.6 && d < 7, start(e) { const k = HH() * S(e.y), Wf = wk(e, 48), a = Math.atan2((H.y - e.y) / 0.6, H.x - e.x), L = Math.max(Math.min(dist(e), 6) * k, Math.hypot(H.x - e.x, (H.y - e.y) / 0.6));   /* r3.213.0：法球直飛後，瞄準線要真的通過主角起手時的位置（上下方向原本只走六成，靠追蹤補回來） */
         begin(e, 'cast', Wf, { a }); lane(e, e.x, e.y, e.x + Math.cos(a) * L, e.y + Math.sin(a) * L * 0.6, k * 0.3, Wf, MAG); e._m1 = G.t + 200; } },
     cast: { step(e, m) { if (m.t === m.W) { const n = el(e) ? 3 : 1; for (let i = 0; i < n; i++) orb(e, m.a + (i - (n - 1) / 2) * 0.35); } return m.t > m.W + 24; } },
     /* 術士：地爆 */
@@ -184,7 +185,7 @@
     if (VX && VX.custom) VX.custom((q, c) => { const u = q.t / q.life, R = r * (0.5 + u * 0.8), a = (1 - u) * 0.85; c.save(); c.translate(x, y); c.scale(1, 0.42); c.globalCompositeOperation = 'lighter';
       const g = c.createRadialGradient(0, 0, 0, 0, 0, R); g.addColorStop(0, `rgba(235,210,255,${a})`); g.addColorStop(0.45, `rgba(170,90,255,${a * 0.7})`); g.addColorStop(1, 'rgba(90,30,160,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, R, 0, 6.283); c.fill(); c.restore();
       c.save(); c.globalCompositeOperation = 'lighter'; for (let i = 0; i < 5; i++) { const an = i * 1.2566 + q.t * 0.05, hx = x + Math.cos(an) * r * 0.5 * u, hy = y - u * r * 1.2 - i * 3; const g2 = c.createRadialGradient(hx, hy, 0, hx, hy, r * 0.25); g2.addColorStop(0, `rgba(210,160,255,${a * 0.8})`); g2.addColorStop(1, 'rgba(120,50,200,0)'); c.fillStyle = g2; c.beginPath(); c.arc(hx, hy, r * 0.25, 0, 6.283); c.fill(); } c.restore(); }, 26, 'o'); }
-  function orbStep() { for (let i = ORB.length - 1; i >= 0; i--) { const o = ORB[i]; o.t++; const want = Math.atan2(H.y - o.y, H.x - o.x); let da = want - o.a; while (da > Math.PI) da -= 6.283; while (da < -Math.PI) da += 6.283; o.a += Math.max(-0.035, Math.min(0.035, da));
+  function orbStep() { for (let i = ORB.length - 1; i >= 0; i--) { const o = ORB[i]; o.t++; /* r3.213.0：術士的法球不再追蹤，照發射時瞄準的方向直飛（原本會一路轉彎追主角） */
       o.x += Math.cos(o.a) * o.sp; o.y += Math.sin(o.a) * o.sp * 0.6; o.tr.push([o.x, o.y]); if (o.tr.length > 8) o.tr.shift(); const k = HH() * S(o.y);
       if (Math.abs(H.x - o.x) < k * 0.28 && Math.abs(H.y - o.y) < 20 && H.hp > 0) { G.hurtHero(o.atk, o.x); boomFx(o.x, o.y, k * 0.3); ORB.splice(i, 1); continue; }
       if (o.t > o.life || !SC.walkable(o.x, o.y)) { if (o.t <= o.life) boomFx(o.x, o.y, k * 0.25); ORB.splice(i, 1); } } }
