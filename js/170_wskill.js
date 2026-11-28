@@ -1,6 +1,6 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 170_wskill.js
- * Version : r3.230.0  (2026-11-28)　r3.230.0：新增。打刀（水）、野太刀（火）、薙刀（風／葉）的技與特技重新設計
+ * Version : r3.230.0  (2026-11-28)　r3.230.0：新增。打刀（水）、野太刀（火）、薙刀（風／葉）的技與特技重新設計；野太刀「月輪」改名「地走」
  * 內容    : 三把武器共 23 招（千本櫻、櫻花亂舞與各奧義不動）：
  *           ・每招分「起手 → 主攻 → 停頓 → 收招」，時間單位 1/60 秒；Lv1／3／5／7／10 各有畫面看得到的加強。
  *           ・揮砍的弧線沿用普攻定案的畫法（168_wfx 的 arc，o.free）。
@@ -95,8 +95,8 @@ G.WSK = (function () {
     boom(x, y, k, sc, d0) { sc = sc || 1; d0 = d0 || 0; sp('x2_core', 'fx_blast', x, y + 0.08 * k, k * 2.4 * sc * rnd(0.9, 1.15), { by: 'h', anc: 'b', tpf: 3, delay: d0, flip: Math.random() < 0.5 }); sp('x2_core', 'fx_dust', x, y, k * 2.8 * sc, { by: 'w', tpf: 4, delay: d0, layer: 'g' }); G.STORY.later(d0, () => { pts('ember', x, y - 0.3 * k, k, Math.round(6 * sc + 3), { sp: 4 * sc, up: 1.2, life: 32 }); shake(4 * sc); }); },
     dust(x, y, k, sc, d0) { sc = sc || 1; sp('b_ezo', 'fx_slam_dust', x, y + 0.05 * k, k * 3.0 * sc, { by: 'w', anc: [0.5, 0.72], tpf: 5, delay: d0 || 0 }); sp('x2_core', 'fx_dust', x, y, k * 2.6 * sc, { by: 'w', tpf: 4, delay: d0 || 0, layer: 'g' }); },
     /* 燃燒帶：地面火帶＋幾堆大小不一的火；每半秒判定一次 */
-    burn(c, x, y, k, R, life, m, d0) { d0 = d0 || 0; sp('b_osakabe', 'osakabe_fire_field', x, y + 0.05 * k, k * R * 2.3, { by: 'w', anc: [0.5, 0.66], a: 0.8, tpf: 5, loop: Math.max(1, Math.round(life / 20)), fin: 8, fade: 14, delay: d0 });
-      for (let i = 0, n = Math.round(R * 2.2) + 1; i < n; i++) { const a = rnd(0, TAU), r = Math.sqrt(Math.random()) * R * 0.8 * k, dl = d0 + Math.floor(rnd(0, 10)); sp('b_oni', 'oniking_fire', x + Math.cos(a) * r, y + Math.sin(a) * r * 0.4 + 0.1 * k, k * (Math.random() < 0.3 ? rnd(0.95, 1.3) : rnd(0.5, 0.85)), { by: 'h', anc: 'b', tpf: 4, loop: Math.max(1, Math.round((life - 10) / 24)), fin: 6, fade: 12, delay: dl, flip: Math.random() < 0.5 }); }
+    burn(c, x, y, k, R, life, m, d0, lite) { d0 = d0 || 0; sp('b_osakabe', 'osakabe_fire_field', x, y + 0.05 * k, k * R * 2.3, { by: 'w', anc: [0.5, 0.66], a: 0.8, tpf: 5, loop: Math.max(1, Math.round(life / 20)), fin: 8, fade: 14, delay: d0 });
+      for (let i = 0, n = Math.round(R * (lite ? 1.1 : 2.2)) + 1; i < n; i++) { const a = rnd(0, TAU), r = Math.sqrt(Math.random()) * R * 0.8 * k, dl = d0 + Math.floor(rnd(0, 10)); sp('b_oni', 'oniking_fire', x + Math.cos(a) * r, y + Math.sin(a) * r * 0.4 + 0.1 * k, k * (Math.random() < 0.3 ? rnd(0.95, 1.3) : rnd(0.5, 0.85)), { by: 'h', anc: 'b', tpf: 4, loop: Math.max(1, Math.round((life - 10) / 24)), fin: 6, fade: 12, delay: dl, flip: Math.random() < 0.5 }); }
       for (let q = 1; q * 30 <= life; q++) c.later(d0 + q * 30, () => { if (m) c.hit({ shape: 'circle', x, y, r: R, m, lv: 'light', kind: 'cut' }); pts('ember', x, y - 0.1 * k, k, 3, { sp: 0.8, up: 1.6, life: 30, rx: R * 0.6 }); }); } };
   /* =====================================================================
    * 打刀（水）：主體是斬擊；水只留在刀光本身，手繪的浪每招最多一道
@@ -157,25 +157,22 @@ G.WSK = (function () {
   /* =====================================================================
    * 野太刀（火）：主體是多段重斬；火只留在刀光本身，地面用地裂、地面爆炸、燃燒帶
    * ===================================================================== */
-  /* 火月牙：程式畫的月牙刀氣往前飛 */
-  function moon(c, o) { const k = K(o.y), dur = o.dur || 20, tot = o.back ? dur * 2 : dur, sc = o.sc || 1, f = o.f; add((o.d0 || 0) + tot + 2, 'o', (ctx, u) => { const v = u - (o.d0 || 0); if (v < 0 || v > tot) return; const p = flyPos(o, v), R = 0.95 * k * sc, a = v > tot - 4 ? (tot - v) / 4 : 1, dir = o.back && v > dur ? -f : f; ctx.translate(p[0], p[1] - 0.55 * k); ctx.scale(dir, 1); ctx.globalAlpha = a;
-      const g = ctx.createLinearGradient(-R * 0.3, 0, R, 0); g.addColorStop(0, 'rgba(196,70,30,0.15)'); g.addColorStop(0.55, 'rgba(250,150,60,0.9)'); g.addColorStop(1, 'rgba(255,240,190,1)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R, -1.15, 1.15); ctx.arc(-R * 0.55, 0, R * 1.02, 0.95, -0.95, true); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(255,250,226,0.9)'; ctx.lineWidth = Math.max(1, k * 0.02); ctx.beginPath(); ctx.arc(0, 0, R, -1.05, 1.05); ctx.stroke(); });
-    return fly(c, Object.assign({ r: 0.85 * sc, vis: (px, py, i) => { if (i % 2 === 0) pts('ember', px - f * 0.3 * k, py - 0.55 * k, k, 2, { sp: 1, up: 0.6, life: 20, stag: 1, ry: 0.4 }); } }, o)); }
   const NOD = {
-    /* 大車輪：一圈一圈旋轉斬，轉過的地面燒起來 */
-    skill_daisharin(c, t) { const lv = LV(c), kk = K(c.y), n = 4 + (lv >= 3 ? 2 : 0), gap = 10, te = 8 + n * gap + 6;
-      if (t === 1) { c.a.T = te + (lv >= 10 ? 26 : lv >= 5 ? 14 : 8); pts('ember', c.x, c.y - 0.2 * kk, kk, 6, { orb: 0.8, inward: 1, up: 1.2, life: 12, stag: 6 }); }
-      if (t === 8) GR.burn(c, c.x + c.f * 0.3 * kk, c.y, kk, lv >= 7 ? 2.4 : 1.9, n * gap + (lv >= 7 ? 90 : 40), 0.15);
-      for (let i = 0; i < n; i++) if (t === 8 + i * gap) { c.move(0.05, 0); cut(c, { a0: Math.PI, a1: -Math.PI * 1.03, r: 1.95, sq: 0.38, dur: 8, follow: 1 }, { shape: 'circle', r: 2.05, m: 0.9, lv: i === n - 1 ? 'heavy' : 'mid' }); }
-      if (lv >= 5 && t === te) { GR.dust(c.x, c.y, kk, 1.6); shake(5); c.hit({ shape: 'circle', r: 2.4, m: 0.8, lv: 'heavy', kind: 'blunt', kb: 2 }); }
-      if (lv >= 10 && t === te + 12) { cut(c, { a0: -2.3, a1: 1.0, r: 2.1, sq: 1, dur: 5 }); GR.crack(c.x + c.f * 0.8 * kk, c.y, kk, 1.5); GR.boom(c.x + c.f * 0.8 * kk, c.y, kk, 1.5, 2); stop(6); c.hit({ shape: 'circle', r: 2.6, m: 1.0, lv: 'heavy', kind: 'cut', launch: 50 }); } },
-    /* 月輪：兩刀起手 → 第三刀放出火月牙往前飛 */
+    /* 大車輪：一圈一圈旋轉斬，腳下的地面燒起來；升級後圈數變多，最後一圈把敵人擊飛 */
+    skill_daisharin(c, t) { const lv = LV(c), kk = K(c.y), n = 4 + (lv >= 3 ? 2 : 0) + (lv >= 10 ? 2 : 0), gap = 10;
+      if (t === 1) c.a.T = 8 + n * gap + 10;
+      if (t === 8) GR.burn(c, c.x + c.f * 0.3 * kk, c.y, kk, lv >= 7 ? 2.3 : 1.8, n * gap + (lv >= 7 ? 90 : 30), 0.15, 0, 1);
+      for (let i = 0; i < n; i++) if (t === 8 + i * gap) { const last = i === n - 1; c.move(0.05, 0); cut(c, { a0: Math.PI, a1: -Math.PI * 1.03, r: last ? 2.15 : 1.95, sq: 0.38, dur: 8, follow: 1 }, { shape: 'circle', r: last ? 2.3 : 2.05, m: last && lv >= 5 ? 1.4 : 0.9, lv: last ? 'heavy' : 'mid', kb: last && lv >= 5 ? 2 : 0, launch: last && lv >= 10 ? 60 : 0 }); if (last) { shake(lv >= 10 ? 7 : 4); if (lv >= 5) stop(5); } } },
+    /* 地走：兩刀起手 → 第三刀劈地，裂痕貼著地面一路往前竄 */
     skill_getsurin(c, t) { const lv = LV(c), kk = K(c.y);
-      if (t === 1) c.a.T = 50;
+      if (t === 1) c.a.T = 54;
       if (t === 6) cut(c, { a0: -2.25, a1: 0.95, r: 1.85, sq: 0.95, dur: 5 }, { r: 1.95, m: 0.6 });
       if (t === 16) cut(c, { a0: 1.05, a1: -2.0, r: 1.85, sq: 0.9, dur: 5 }, { r: 1.95, m: 0.6 });
-      if (t === 28) { arc(c, { a0: -2.0, a1: 0.9, r: 1.9, sq: 0.8, rot: -0.3, dur: 5 }); shake(3); const f = c.f, mk = (dy, d0) => moon(c, { x: c.x + f * 0.8 * kk, y: c.y, f, dist: 5, dy, dur: 22, sc: 1.2, d0, m: 1.4, lv: 'heavy', back: lv >= 5 && !dy, end: lv >= 7 ? (px, py) => { if (lv >= 10) { GR.boom(px, py, kk, 1.4); c.hit({ shape: 'circle', x: px, y: py, r: 1.5, m: 1.0, lv: 'heavy', kind: 'cut', launch: 40 }); } GR.burn(c, px, py, kk, 1.5, 90, 0.15); } : null });
-        mk(0, 0); if (lv >= 3) mk(1.3, 6); } },
+      if (t === 28) arc(c, { a0: -2.5, a1: 1.15, r: 2.1, sq: 1, dur: 5 });
+      if (t === 32) { shake(5); stop(5); const f = c.f, x0 = c.x + f * 1.0 * kk, y0 = c.y, D = 5, n = 5, lanes = lv >= 3 ? [-0.9, 0.9] : [0]; GR.dust(x0, y0, kk, 1.0);
+        for (const dy of lanes) { const sk = []; for (let i = 0; i < n; i++) { const x = x0 + f * (0.4 + i * D / n) * kk, y = y0 + dy * kk * (i + 1) / n, last = i === n - 1; c.later(i * 4, () => { GR.crack(x, y, kk, last ? 1.3 : 0.85 + 0.1 * i, 110); pts('ember', x, y - 0.1 * kk, kk, 3, { dir: -Math.PI / 2, spread: 0.7, sp: 2.4, life: 22 }); c.hit({ shape: 'circle', x, y, r: 0.85, m: 1.4, lv: 'heavy', kind: 'cut', launch: 30, skip: sk }).forEach(e => sk.push(e));
+              if (last) { if (lv >= 10) { GR.boom(x, y, kk, 1.5); c.hit({ shape: 'circle', x, y, r: 1.6, m: 1.0, lv: 'heavy', kind: 'cut', launch: 50 }); } if (lv >= 7) GR.burn(c, x - f * D * 0.4 * kk, y, kk, 1.6, 90, 0.15, 6, 1); } });
+              if (lv >= 5) c.later(30 + (n - 1 - i) * 4, () => { pts('ember', x, y - 0.1 * kk, kk, 4, { dir: -Math.PI / 2, spread: 0.8, sp: 3, life: 24 }); c.hit({ shape: 'circle', x, y, r: 0.85, m: 0.25, lv: 'mid', kind: 'cut' }); }); } } } },
     /* 霸王斬：蓄力 → 兩記重斬逼近 → 劈地，地面裂開爆炸 */
     skill_haousan(c, t) { const lv = LV(c), kk = K(c.y);
       if (t === 1) { c.a.T = 86 + (lv >= 7 ? 24 : 0); if (lv >= 3) c.inv(40); }
@@ -301,8 +298,8 @@ G.WSK = (function () {
       special_return: ['一斬後往後撤，再放出水月牙飛行 4H', '後撤距離 +40%', '水月牙飛 6H', '後撤前多斬一刀', '水月牙變成兩道'],
       special_tide: ['三連進斬', '擊退距離 +50%', '最後一斬把敵人拉回身前', '變成五連斬', '最後補一記大橫劈並推出巨浪'] },
     nodachi: {
-      skill_daisharin: ['連續四圈旋轉斬，轉過的地面燒起來', '多轉兩圈', '結束時震起一圈塵浪擊退', '燃燒範圍更大、燒更久', '收尾劈地，地面裂開爆炸'],
-      skill_getsurin: ['兩刀起手，第三刀放出火月牙往前飛 5H', '火月牙變兩道', '火月牙飛到底會折返', '火月牙的終點留下燃燒帶', '火月牙在終點爆炸'],
+      skill_daisharin: ['連續四圈旋轉斬，腳下的地面燒起來', '多轉兩圈', '最後一圈傷害提高並擊退', '燃燒範圍更大、燒更久', '再多轉兩圈，最後一圈把敵人擊飛'],
+      skill_getsurin: ['兩刀起手，第三刀劈地，裂痕貼地往前竄 5H 並把敵人震起', '裂痕變兩道', '裂痕盡頭往回再震一次', '裂痕上留下燃燒帶', '裂痕盡頭地面爆炸'],
       skill_haousan: ['蓄力後兩記重斬逼近，再劈地，地面裂開爆炸', '蓄力時霸體', '裂開的地面燃燒 2 秒', '裂痕往前延伸，接連炸三次', '接連炸五次，最後一次特別大'],
       skill_zantetsu: ['無視 50% 防禦的一刀', '無視防禦 80%', '對頭目傷害 +50%', '敵人身上的斬痕稍後裂開三次', '再補一刀把敵人斬飛'],
       special_backline: ['轉身後反斬兩刀', '之後 2 秒受傷 −20%', '第一刀命中暈眩 1 秒', '追加第三刀劈地', '劈地變成地面爆炸'],
@@ -319,9 +316,9 @@ G.WSK = (function () {
       special_openpath: ['一掃把前方敵人吹開', '吹開距離 +50%', '之後 3 秒移速 +30%', '踏前再掃一次', '踏前第三掃，把敵人吹得更遠'],
       special_upright: ['放出龍捲繞著敵人轉並持續攻擊，最後把敵人捲起摔落、昏迷 1 秒', '龍捲多繞半秒', '昏迷 2 秒', '龍捲變兩道', '龍捲變三道，昏迷 3 秒'] } };
   const RUNS = { katana: KAT, nodachi: NOD, naginata: NAG }, CTS = { katana: KAT_CT, nodachi: {}, naginata: NAG_CT };
-  const ART = { katana: ['p_shion_fx', 'b_kappa'], nodachi: ['b_osakabe', 'b_oni', 'b_ezo'], naginata: ['b_susanoo', 'b_ezo'] }, NOGUARD = { naginata: { special_upright: 1 } }; let loading = 0;
-  function texts(w) { const L = G.WPN.LIST && G.WPN.LIST.find(x => x.id === w), T = TXT[w]; if (!L || !T) return; for (const s of L.sk) { const v = T[s.id]; if (!v) continue; if (s.d !== v[0] || s.d7 !== v[3]) { s.d = v[0]; s.d3 = v[1]; s.d5 = v[2]; s.d7 = v[3]; s.d10 = v[4]; } const cd = s.t === '特技' ? 9 : 5; if (s.cd !== cd) s.cd = cd; } }
-  function patch() { const M = G.MV2; if (!M || !M.U) return; for (const w in RUNS) { const U = M.U[w]; if (!U) continue; for (const k in RUNS[w]) { const d = U[k]; if (!d) continue; if (d.run !== RUNS[w][k]) d.run = RUNS[w][k]; const ct = CTS[w][k]; if (ct && d.counter !== ct) d.counter = ct; if (NOGUARD[w] && NOGUARD[w][k]) { if (d.counter) d.counter = null; if (d.kind !== 'skill') d.kind = 'skill'; if (d.cat === '架') d.cat = ''; } } } }
+  const ART = { katana: ['p_shion_fx', 'b_kappa'], nodachi: ['b_osakabe', 'b_oni', 'b_ezo'], naginata: ['b_susanoo', 'b_ezo'] }, NOGUARD = { naginata: { special_upright: 1 } }, NAMES = { nodachi: { skill_getsurin: '地走' } }; let loading = 0;
+  function texts(w) { const L = G.WPN.LIST && G.WPN.LIST.find(x => x.id === w), T = TXT[w]; if (!L || !T) return; for (const s of L.sk) { const v = T[s.id]; if (!v) continue; const nm = NAMES[w] && NAMES[w][s.id]; if (nm && s.n !== nm) s.n = nm; if (s.d !== v[0] || s.d7 !== v[3]) { s.d = v[0]; s.d3 = v[1]; s.d5 = v[2]; s.d7 = v[3]; s.d10 = v[4]; } const cd = s.t === '特技' ? 9 : 5; if (s.cd !== cd) s.cd = cd; } }
+  function patch() { const M = G.MV2; if (!M || !M.U) return; for (const w in RUNS) { const U = M.U[w]; if (!U) continue; for (const k in RUNS[w]) { const d = U[k]; if (!d) continue; if (d.run !== RUNS[w][k]) d.run = RUNS[w][k]; const nm = NAMES[w] && NAMES[w][k]; if (nm && d.n !== nm) d.n = nm; const ct = CTS[w][k]; if (ct && d.counter !== ct) d.counter = ct; if (NOGUARD[w] && NOGUARD[w][k]) { if (d.counter) d.counter = null; if (d.kind !== 'skill') d.kind = 'skill'; if (d.cat === '架') d.cat = ''; } } } }
   const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0.apply(this, arguments); try { patch(); } catch (x) { console.warn('wskill', x); } };
   setInterval(() => { try { if (G.mode !== 'play' || !G.WPN || !G.WPN.curId || !G.ANIM) return; const w = G.WPN.curId(), L = ART[w]; for (const q in TXT) texts(q); if (!L) return; for (const k of L) { const u = G.ANIM.get(k); if (u) u.lu = performance.now(); }
       if (loading || L.every(k => G.ANIM.get(k))) return; loading = 1; (async () => { for (const k of L) if (!G.ANIM.get(k)) { try { await G.ANIM.load(k); } catch (e) { } } loading = 0; })(); } catch (e) { } }, 2000);
