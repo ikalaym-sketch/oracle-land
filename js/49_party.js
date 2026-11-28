@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 49_party.js
- * Version : r3.144.0  (2026-11-27)　r3.144.0：夥伴放招的名字改成左邊頭像血條旁的泡泡（統一字色、無符號；大連攜外框閃一下），頭上的字拿掉
+ * Version : r3.222.0  (2026-11-28)　r3.222.0：夥伴跟隨主角裝備 60%、升階改 Lv25／50 並加能力
+ * 舊版    : r3.144.0  (2026-11-27)　r3.144.0：夥伴放招的名字改成左邊頭像血條旁的泡泡（統一字色、無符號；大連攜外框閃一下），頭上的字拿掉
  * 舊版    : r3.59.0  （r3.59.0：招式 noFit 不壓縮事件時點）　r3.58.0：出招名字依定位上色、大連攜字級 18
  * 舊版    : r3.21.0  （r3.21.0：夥伴沿牆滑開，卡住 0.75 秒跟到主角旁）
  * 舊版    : r3.19.2  （r3.19.2：滿版時夥伴頭像貼齊左側）
@@ -33,8 +34,9 @@
   /* ---------- 能力值：等級底值×定位倍率＋主角裝備攻擊 30%＋夥伴自己的裝備 ---------- */
   PY.stats = id => { const def = PY.DEF[id], c = PY.data(id), lv = c.lv, S = R().S, hb = 14 + 3 * (D().lv - 1);
     const s = { atk: (14 + 3 * (lv - 1)) * def.atkK, def: (4 + 1.5 * (lv - 1)) * def.defK, hp: (120 + 18 * (lv - 1)) * def.hpK, crit: 5, critD: 150 };
-    s.atk += Math.max(0, (S ? S.atk : hb) - hb) * 0.3;
+    s.atk += Math.max(0, (S ? S.atk : hb) - hb) * 0.6;   /* r3.222.0：跟著主角裝備成長的比例 30% → 60%（沒幫夥伴穿裝備時太弱） */
     for (const k in c.eq) { const it = c.eq[k]; if (!it) continue; const st = R().itemStats(it); for (const a in st) if (s[a] !== undefined) s[a] += st[a]; }
+    { const g = PY.stage(id), k = g >= 3 ? 1.35 : g === 2 ? 1.15 : 1; if (k > 1) { s.atk *= k; s.hp *= k; s.def *= k; } }   /* r3.222.0：外觀升階同時變強（第 2 階 +15%、第 3 階 +35%） */
     if (PY.passive) PY.passive(id, s); return s; };
 
   /* ---------- 實體 ---------- */
@@ -51,7 +53,7 @@
   };
   PY.load = id => { const def = PY.DEF[id]; if (!def) return Promise.resolve(); const P = PY.list.find(q => q.id === id);
     return Promise.all([A.load(def.unit(P || { id })), def.fx ? A.load(def.fx).catch(() => {}) : 0]).catch(e => err('load ' + id, e)); };
-  PY.stage = id => { const e = PY.earned(id); return e >= 15 ? 3 : e >= 3 ? 2 : 1; };
+  PY.stage = id => { const lv = PY.data(id).lv; return lv >= 50 ? 3 : lv >= 25 ? 2 : 1; };   /* r3.222.0：升階改看等級（Lv25／Lv50）；原本看技能點，Lv3 就會換外觀 */
 
   /* ---------- 仇恨：敵人選目標 ---------- */
   const TH = e => e.th || (e.th = { hero: 0 });
