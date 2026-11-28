@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 68_xue.js
- * Version : r3.210.0  (2026-11-28)　r3.210.0：小雪躲起來後不再顯示盾牌
+ * Version : r3.211.0  (2026-11-28)　r3.211.0：拿掉小雪頭上的盾牌，改成第一次躲起來時提示一次
+ * 舊版    : r3.210.0  (2026-11-28)　r3.210.0：小雪躲起來後不再顯示盾牌
  * 舊版    : r3.191.0  (2026-11-28)　秘傳／奧義演出時不顯示夥伴頭上的小盾牌
  * 舊版    : r3.127.4  (2026-11-27)　r3.127.4：戰鬥時小雪跑回進圖的入口隱身等待（不再跟著主角跑），打完 1.5 秒回到主角身後
  * 舊版    : r3.60.0  (2026-11-24)　r3.60.0：合戰地圖不跟隨　r3.56.0：r3.56.0：小雪縮小到主角的 0.88；封印石旁小雪也套劇情動作
@@ -32,7 +33,7 @@
   function kill() { if (X.o) G.NPC = G.NPC.filter(n => n !== X.o); X.o = null; }
   const foeNear = () => (G.BOSS && G.BOSS.enc && !G.BOSS.enc.done) || G.E.some(e => e.st !== 'dead' && e.hp > 0 && e.delay <= 0 && Math.hypot(e.x - H.x, (e.y - H.y) * 1.5) < 520);
   function target() { const o = X.o;
-    if (foeNear() || o.hid) { o.safe = 1; return X.entry || [o.x, o.y]; }   /* r3.127.4：戰鬥中跑回入口（進圖位置）躲起來等，不跟著主角跑 */
+    if (foeNear() || o.hid) { if (!o.safe && !o.hid && !F().xueHideHint) { F().xueHideHint = 1; G.SAVE.markDirty(); G.UI.toast('戰鬥時小雪會先躲起來，打完就回到你身邊'); }   /* r3.211.0：只在第一次提示一次（取代每次戰鬥頭上的盾牌） */ o.safe = 1; return X.entry || [o.x, o.y]; }   /* r3.127.4：戰鬥中跑回入口（進圖位置）躲起來等，不跟著主角跑 */
     o.safe = 0; let t = null; for (let i = X.trail.length - 1; i >= 0; i--) if (Math.hypot(X.trail[i][0] - H.x, X.trail[i][1] - H.y) > 95) { t = X.trail[i]; break; }
     if (!t) { const x = H.x - (H.face || 1) * 90; t = (SC.snap && SC.snap(x, H.y + 10, 'walk', 120)) || [x, H.y]; } return [t[0], t[1] + 4]; }   // 隊伍最後：沿主角走過的路，約 95px 後
   function step() { if (!want()) { kill(); return; } if (!X.o || !G.NPC.includes(X.o)) make(); const o = X.o;
@@ -64,10 +65,7 @@
     const sd = G.D.scenes.hub_shrine; if (id === 'hub_shrine' && sd && sd.nodes && F().prologue) sd.nodes.xue_stand = STAND.slice();
     en0(id); };
   let tk = 0; const ls0 = G.NPCLIFE.step; G.NPCLIFE.step = function () { ls0(); try { step(); if (++tk % 20 === 0) shrine(); } catch (e) { console.warn('xue', e); } };
-  /* 戰鬥中頭上小盾牌 */
-  const ud0 = G.UI.draw; G.UI.draw = function () { ud0(); const o = X.o; if (!o || !o.safe || o.hid || G.mode !== 'play' || (G.VX && G.VX.dimT > 0)) return;   /* r3.210.0：小雪躲起來（隱身）之後不再畫盾牌——原本她人不見了，盾牌還浮在入口那邊 */   /* r3.191.0：秘傳／奧義演出（畫面壓暗）時不顯示小盾牌 */ const s = SC.depth(o.y), p = SC.toScreen(o.x, o.y - G.HERO_H * s * 1.12), c = G.ctx;
-    if (p.x < 0 || p.x > G.LW || p.y < 0) return; const r = 8 * G.FS(); c.save(); c.globalAlpha = 0.85 + 0.15 * Math.sin(G.t * 0.12); c.fillStyle = '#6fb0f0'; c.strokeStyle = '#e8f4ff'; c.lineWidth = 1.5;
-    c.beginPath(); c.moveTo(p.x, p.y - r); c.lineTo(p.x + r * 0.85, p.y - r * 0.55); c.lineTo(p.x + r * 0.7, p.y + r * 0.3); c.lineTo(p.x, p.y + r); c.lineTo(p.x - r * 0.7, p.y + r * 0.3); c.lineTo(p.x - r * 0.85, p.y - r * 0.55); c.closePath(); c.fill(); c.stroke(); c.restore(); };
+  /* r3.211.0：戰鬥中頭上的小盾牌已拿掉（改成第一次躲起來時提示一次，見上方 target()） */
 })();
 /* ---------- r3.53.0：小雪動作包（a/p/n_xue：idle walk run turn cast lantern record sit mirror_* gate_*） ----------
  * 跟隨：停＝idle（聆聽）、慢＝walk、快＝run、換方向＝turn；主角站著不動 10 秒且附近無敵人＝sit。
