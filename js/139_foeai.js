@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 139_foeai.js
- * Version : r3.222.0  (2026-11-28)　r3.222.0：困難以上敵人等級加成下修
+ * Version : r3.225.0  (2026-11-28)　r3.225.0：第 1 章敵人清單由小到大
+ * 舊版    : r3.222.0  (2026-11-28)　r3.222.0：困難以上敵人等級加成下修
  * 舊版    : r3.221.0  (2026-11-28)　r3.221.0：招式命中停格 0.2 秒；被打依招式擊退（主角、夥伴）；夥伴出手命中也停格
  * 舊版    : r3.214.0  (2026-11-28)　r3.214.0：敵人衝刺起手與速度放慢
  * 舊版    : r3.213.0  (2026-11-28)　r3.213.0：術士法球不再追蹤；招式預警提早出現
@@ -51,11 +52,11 @@
   (function hkB() { const B = G.BOSS; if (!B || !B.start) return setTimeout(hkB, 50); const bs0 = B.start; B.start = function (id, o) { o = Object.assign({}, o || {});
       if (id === 'kama' && !o.lv) o.lv = 9; if (on() || (G.REBIRTH && G.REBIRTH.bonus())) o.lv = lvOf(o.lv || (SC.def.lv || 1) + 2); return bs0.call(this, id, o); }; })();
   /* ======================= 2. 第 1 章等級、各章敵人清單 ======================= */
-  const C1 = { W_R01_03: 3, W_R01_04: 5, W_R01_07: 7 }, C1F = ['akaoni', 'kodama', 'hihi', 'yamauba'], c1f = d => { d.foes = d.foes || []; for (const t of C1F) if (!d.foes.includes(t)) d.foes.push(t); };
+  const C1 = { W_R01_03: 3, W_R01_04: 5, W_R01_07: 7 }, C1F = { W_R01_03: ['kodama', 'baketanuki', 'kogumo'], W_R01_04: ['kodama', 'hihi', 'yamauba'], W_R01_07: ['kodama', 'hihi', 'yamauba', 'akaoni'] }, c1f = (d, id) => { d.foes = (d.foes || []).filter(t => t !== 'akaoni' || id === 'W_R01_07'); for (const t of C1F[id] || []) if (!d.foes.includes(t)) d.foes.push(t); };   /* r3.225.0：第 1 章由小到大——第一張圖只有小型，赤鬼（大型）到第三張才出現 */
   const ADDF = { 2: ['bandit_archer'], 6: ['inugami'], 7: ['kageyumi'] }, ADDD = { IZUMO: ['inugami'] };
   const RECL = { bandit_knife: 'assault', rokuro: 'spirit', nobushi: 'assault', kumohei: 'assault', isoonna: 'spirit', shikome: 'assault', hihi: 'assault', yamauba: 'spirit', kodama: 'swarm' };
   function patch() { const D = G.D && G.D.scenes; if (!D || !G.FOES) return false; for (const t in RECL) G.FOES.CL[t] = RECL[t];
-    for (const id in C1) if (D[id]) { D[id].lv = C1[id]; c1f(D[id]); }
+    for (const id in C1) if (D[id]) { D[id].lv = C1[id]; c1f(D[id], id); }
     const meta = (G.WORLD && G.WORLD.meta) || {};
     for (const id in D) { const d = D[id], m = /^W_R(\d\d)_/.exec(id), dg = /^D_([A-Z]+)_/.exec(id), add = m ? ADDF[+m[1]] : dg ? ADDD[dg[1]] : null; if (!add || !d.foes) continue;
       for (const t of add) if (!d.foes.includes(t)) d.foes.push(t); if (meta[id] && meta[id].foes && meta[id].foes !== d.foes) for (const t of add) if (!meta[id].foes.includes(t)) meta[id].foes.push(t); }

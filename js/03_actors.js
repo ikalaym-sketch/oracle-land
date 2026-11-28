@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 03_actors.js
- * Version : r3.221.0  (2026-11-28)　r3.221.0：敵人普攻命中停格 0.2 秒；打到主角有小擊退
+ * Version : r3.225.0  (2026-11-28)　r3.225.0：狒狒體型 1.35 → 1.0
+ * 舊版    : r3.221.0  (2026-11-28)　r3.221.0：敵人普攻命中停格 0.2 秒；打到主角有小擊退
  * 舊版    : r3.214.0  (2026-11-28)　r3.214.0：敵人普攻起手放慢
  * 舊版    : r3.201.0  (2026-11-28)　r3.201.0：里歐外型時殘影改用里歐的圖
  * 舊版    : r3.199.0  (2026-11-28)　r3.199.0：塵土改手繪塵圈
@@ -275,7 +276,7 @@ G.ONI_RATIO = 1.38;
   };
 
   /* ---------- 敵人（多種妖怪；赤鬼用舊圖集） ---------- */
-  const SZ = { '微': 0.8, '小': 0.9, '人': 1, '大': 1.35, '巨': 1.6 }, SZX = { yokyubi: 1.1, kitsunebi: 1.1 }, CL = {};
+  const SZ = { '微': 0.8, '小': 0.9, '人': 1, '大': 1.35, '巨': 1.6 }, SZX = { yokyubi: 1.1, kitsunebi: 1.1, hihi: 1.0 }   /* r3.225.0：狒狒改成一般人大小（原本算大型 1.35） */, CL = {};
   const CLS = { '微': 'chochin akachochin onichochin kitsunebi kogumo kodama', '小': 'inugami nozuchi gaki karakasa kinkasa hitotsume bamboo itsumade enemy_raiju kumohei ittan yamawaro yokyubi nekomata ubume enemy_ningyo', '大': 'akaoni kurooni aooni kioni midorioni shirooni yoioni ushioni kanakuma hoshikuma torakuma kumadoji hihi nue kasha mizuchi wani jorogumo wanyudo muraiju', '巨': 'umibozu oumibozu nurikabe' };
   for (const c in CLS) for (const t of CLS[c].split(' ')) CL[t] = c;
   const cls = t => CL[t] || '人';

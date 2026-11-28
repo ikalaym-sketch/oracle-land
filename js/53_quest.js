@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 53_quest.js
- * Version : r3.215.0  (2026-11-28)　r3.215.0：匯出 Q.avail
+ * Version : r3.225.0  (2026-11-28)　r3.225.0：任務經驗改成升級所需的 70%／30%
+ * 舊版    : r3.215.0  (2026-11-28)　r3.215.0：匯出 Q.avail
  * 舊版    : r3.131.0  (2026-11-27)　r3.131.0：新增 fn 自訂步驟（進圖執行一次）
  * 舊版    : r3.130.0  (2026-11-27)　r3.130.0：任務步驟支援 skip()（跨章抉擇可省略步驟）
  * 舊版    : r3.91.0  （r3.91.0：「受傷的鼬」委託人「草叢」原本被補成村民，改成站一隻小鼬）
@@ -46,7 +47,7 @@
   Q.start = id => { const q = Q.by[id]; if (q && !st(id)) { st(id) || (SV().qs = SV().qs || {}); start(q); } };
   function reward(q) { const r = q.reward || {}, R = G.RPG, d = R.d(); const out = [];
     /* r3.55.0：獎勵依主角等級補正——錢／經驗設下限；裝備的階級跟主角等級、品質主線≥稀品／支線≥精品、附詞綴與本區套裝 */
-    const lv = Math.max(1, d.lv), gold = Math.max(r.gold || 0, r.gold || r.exp || r.item ? Math.round((20 + lv * 8) * (q.main ? 8 : 5)) : 0), exp = Math.max(r.exp || 0, r.exp || r.gold || r.item ? Math.round((10 + lv * 6) * (q.main ? 22 : 15)) : 0);
+    const lv = Math.max(1, d.lv), gold = Math.max(r.gold || 0, r.gold || r.exp || r.item ? Math.round((20 + lv * 8) * (q.main ? 8 : 5)) : 0), exp = Math.max(r.exp || 0, r.exp || r.gold || r.item ? Math.round(R.need(lv) * (q.main ? 0.7 : 0.3)) : 0);   /* r3.225.0：任務經驗改成「升一級所需」的 70%（主線）／30%（支線），照主線走就跟得上地圖等級 */
     if (gold) { d.gold += gold; out.push('錢 +' + gold); } if (exp) { R.gainExp(exp); out.push('經驗 +' + exp); }
     if (r.item) { const slot = Math.floor(r.item[0] / 16), tier = Math.max(0, Math.min(7, Math.floor((lv - 1) / 5))), tid = slot * 16 + tier * 2 + (r.item[0] % 2);
       const qq = Math.min(5, Math.max(r.item[1] || 1, q.main ? 3 : 2) + (q.main && Math.random() < 0.25 ? 1 : 0)), keys = Object.keys(R.AFF), aff = [];

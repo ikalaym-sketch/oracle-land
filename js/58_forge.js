@@ -1,6 +1,7 @@
 /* ==========================================================================
  * 神諭之地 重製版 — 58_forge.js
- * Version : r3.224.0  (2026-11-28)　r3.224.0：訓練場經驗下修；等級超過本章上限後經驗 25%
+ * Version : r3.225.0  (2026-11-28)　r3.225.0：訓練場四段與全遊戲難度同一套
+ * 舊版    : r3.224.0  (2026-11-28)　r3.224.0：訓練場經驗下修；等級超過本章上限後經驗 25%
  * 舊版    : r3.202.0  (2026-11-28)　r3.202.0：里歐外型時誘敵分身用里歐的圖
  * 舊版    : r3.106.0  (2026-11-26)　r3.106.0：強化按鈕顯示並檢查難度素材（134_econ）
  * 舊版    : r3.102.0  (2026-11-26)　r3.102.0：勾玉改由 129_magatama（舊掉落停用、鍛冶舖勾玉分頁移除、鑲嵌改新清單）
@@ -382,7 +383,7 @@
  * 妖怪村木橋右側出口 → 訓練場；進場先選難度：普通／困難／地獄／無間（敵人等級＝主角等級＋0／5／12／20，經驗 ×1／1.5／2.2／3.2）。
  * 場上持續維持 6～8 隻，種類從全部章節的妖怪中隨機抽；西側出口回妖怪村。 */
 (function () {
-  const SRC = 'Q_mountain_valley', TD = [['普通', 0, 0.5, '#86cf8f'], ['困難', 5, 0.6, '#6fb0f0'], ['地獄', 12, 0.7, '#c095f0'], ['無間', 20, 0.8, '#f0624f']];   /* r3.224.0：訓練場經驗倍率 1／1.5／2.2／3.2 → 0.5／0.6／0.7／0.8（原本無間約 9 隻升一級） */
+  const SRC = 'Q_mountain_valley', TD = [['普通', 0, 0.5, '#86cf8f'], ['困難', 2, 0.65, '#6fb0f0'], ['修羅', 6, 0.8, '#f0624f'], ['無間', 12, 1, '#c095f0']];   /* r3.225.0：訓練場四段改成跟全遊戲難度同一套（等級 +0／+2／+6／+12、血量攻防倍率相同）；經驗用主角等級算 ×0.5／0.65／0.8／1 */
   const TR = G.TRAIN = { on: false, d: 0, pool: [], tag: () => '敵 Lv ' + (G.RPG.d().lv + TD[TR.d][1]) + '・' + TD[TR.d][0] };
   const img0 = G.ASSET.img.bind(G.ASSET); G.ASSET.img = (k, src) => img0(k, k === 'D_TRAIN' ? 'a/m/' + SRC + '.webp' : src);
   function reg() { const S = G.D.scenes, b = S[SRC], M = G.WALK && G.WALK.M; if (!b || S.D_TRAIN) return;
@@ -393,12 +394,12 @@
     const set = new Set(); for (const k in (G.WORLD ? G.WORLD.meta : {})) for (const f of G.WORLD.meta[k].foes || []) set.add(f); TR.pool = [...set]; }
   const boot0 = G.ASSET.boot.bind(G.ASSET); G.ASSET.boot = () => boot0().then(r => { reg(); return r; });
   const en0 = G.STORY.onEnter.bind(G.STORY); G.STORY.onEnter = function (id) { en0(id); TR.on = false; if (id !== 'D_TRAIN') return;
-    G.DLG.start([{ who: '天狗長老', text: '訓練場的妖怪不會停。選個難度吧——這裡是練手感的地方，經驗比外面少。' }, { choice: TD.map(([n, off, x], i) => ({ label: n + '（' + ['和你差不多強', '強一截，經驗稍多', '很強，經驗較多', '極限，經驗最多'][i] + '）', then: [{ do: () => { TR.d = i; TR.on = true; TR.cd = 30; G.UI.banner('訓練開始・' + n, '從左邊出口離開'); } }] })) }]); };
+    G.DLG.start([{ who: '天狗長老', text: '訓練場的妖怪不會停。選個難度吧——強度跟外面同名的難度一樣。這裡是練手感的地方，經驗比外面少。' }, { choice: TD.map(([n, off, x], i) => ({ label: n + '（' + ['經驗 ×0.5', '經驗 ×0.65', '經驗 ×0.8', '經驗 ×1'][i] + '）', then: [{ do: () => { TR.d = i; TR.on = true; TR.cd = 30; G.UI.banner('訓練開始・' + n, '從左邊出口離開'); } }] })) }]); };
   const s0 = G.STORY.step.bind(G.STORY); G.STORY.step = function () { s0(); if (!TR.on || G.SC.id !== 'D_TRAIN' || G.DLG.active()) return;
     if (--TR.cd > 0) return; TR.cd = 45; const alive = G.E.filter(e => e.st !== 'dead').length; if (alive >= 6 + (TR.d >= 2 ? 2 : 0)) return;
     const t = TR.pool[Math.floor(Math.random() * TR.pool.length)], lv = G.RPG.d().lv + TD[TR.d][1], H = G.H;
     Promise.resolve(G.ASSET.enemies([t])).then(() => { if (G.SC.id !== 'D_TRAIN') return; for (let k = 0; k < 20; k++) { const a = Math.random() * 6.283, r = 260 + Math.random() * 260, x = H.x + Math.cos(a) * r, y = H.y + Math.sin(a) * r * 0.5;
-      if (G.SC.walkable(x, y)) { const e = G.spawnOni(x, y, 20, lv, t); e.train = 1; break; } } }, () => 0); };
+      if (G.SC.walkable(x, y)) { const e = G.spawnOni(x, y, 20, lv, t); e.train = 1; const df = G.GDIFF && G.GDIFF[TR.d + 1]; if (df && TR.d > 0) { e.hp = e.hpMax = Math.round(e.hpMax * df.hp); e.atk = Math.round(e.atk * df.atk); e.def = (e.def || 0) * df.def; } break; } } }, () => 0); };
   /* r3.224.0：訓練場的經驗一律用主角等級算、乘上難度倍率（先扣掉一般擊殺已經給的那一份） */
   const k0 = G.RPG.onKill; G.RPG.onKill = function (e) { if (e && e.train && TR.on) { const d = G.RPG.d(), lv0 = d.lv, ex0 = d.exp, want = Math.round((10 + lv0 * 6) * TD[TR.d][2]); k0(e); if (d.lv === lv0) { d.exp = ex0; G.RPG.gainExp(want); } return; } k0(e); };
   /* r3.224.0：等級超過「目前這一章最高的地圖等級＋2」之後，經驗只剩 25%（推進主線就解除） */
